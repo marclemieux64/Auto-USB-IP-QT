@@ -56,6 +56,9 @@ def get_default_config() -> dict:
         "show_vid_pid": False,
         "show_battery": True,
         "show_latency": False,
+        "show_server_temp": True,
+        "show_server_ram": True,
+        "show_server_uptime": True,
         "auto_discover": True,
         "allow_lan_access": True,
         "enable_web_csrf": False,
@@ -165,6 +168,9 @@ class ClientConfig:
         self.show_vid_pid = cfg.get("show_vid_pid", False)
         self.show_battery = cfg.get("show_battery", True)
         self.show_latency = cfg.get("show_latency", False)
+        self.show_server_temp = cfg.get("show_server_temp", True)
+        self.show_server_ram = cfg.get("show_server_ram", True)
+        self.show_server_uptime = cfg.get("show_server_uptime", True)
         self.auto_discover = cfg.get("auto_discover", True)
         self.allow_lan_access = cfg.get("allow_lan_access", True)
         self.power_cycle_on_attach = cfg.get("power_cycle_on_attach", True)
@@ -193,6 +199,9 @@ class ClientConfig:
             "show_vid_pid": self.show_vid_pid,
             "show_battery": self.show_battery,
             "show_latency": self.show_latency,
+            "show_server_temp": getattr(self, "show_server_temp", True),
+            "show_server_ram": getattr(self, "show_server_ram", True),
+            "show_server_uptime": getattr(self, "show_server_uptime", True),
             "auto_discover": self.auto_discover,
             "allow_lan_access": getattr(self, "allow_lan_access", True),
             "power_cycle_on_attach": getattr(self, "power_cycle_on_attach", True),

@@ -180,6 +180,26 @@ function renderServers() {
                 if (cfg.show_latency && s.latency_ms != null) {
                     badges.push(`<span class="badge badge-latency"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
                 }
+
+                // Server Health Metrics Badges (CPU Temp, RAM Usage, Uptime)
+                const srvCache = serverStatusCache[s.ip]?.metrics;
+                if (srvCache) {
+                    if (cfg.show_server_temp !== false && srvCache.cpu_temp && srvCache.cpu_temp !== "N/A") {
+                        const tempNum = parseFloat(srvCache.cpu_temp);
+                        let tempClass = "badge-temp";
+                        if (!isNaN(tempNum)) {
+                            if (tempNum >= 75) tempClass = "badge-danger";
+                            else if (tempNum >= 60) tempClass = "badge-warning";
+                        }
+                        badges.push(`<span class="badge ${tempClass}" title="Server CPU Temperature"><img src="/icons/badge-temp.png"> ${srvCache.cpu_temp}</span>`);
+                    }
+                    if (cfg.show_server_ram !== false && srvCache.ram_usage && srvCache.ram_usage !== "N/A") {
+                        badges.push(`<span class="badge badge-ram" title="Server Memory Usage"><img src="/icons/badge-ram.png"> ${srvCache.ram_usage}</span>`);
+                    }
+                    if (cfg.show_server_uptime !== false && srvCache.uptime && srvCache.uptime !== "N/A") {
+                        badges.push(`<span class="badge badge-uptime" title="Server System Uptime"><img src="/icons/badge-uptime.png"> ${srvCache.uptime}</span>`);
+                    }
+                }
             } else {
                 badges.push('<span class="badge badge-offline">Offline</span>');
             }
@@ -814,6 +834,9 @@ function openClientOptionsModal() {
     document.getElementById("opt-show-vid-pid").checked = cfg.show_vid_pid !== false;
     document.getElementById("opt-show-battery").checked = cfg.show_battery !== false;
     document.getElementById("opt-show-latency").checked = cfg.show_latency !== false;
+    if (document.getElementById("opt-show-server-temp")) document.getElementById("opt-show-server-temp").checked = cfg.show_server_temp !== false;
+    if (document.getElementById("opt-show-server-ram")) document.getElementById("opt-show-server-ram").checked = cfg.show_server_ram !== false;
+    if (document.getElementById("opt-show-server-uptime")) document.getElementById("opt-show-server-uptime").checked = cfg.show_server_uptime !== false;
 
     // Security & Hardening
     if (document.getElementById("opt-enable-csrf")) document.getElementById("opt-enable-csrf").checked = !!cfg.enable_web_csrf;
@@ -852,6 +875,9 @@ async function saveClientOptions() {
         show_vid_pid: document.getElementById("opt-show-vid-pid").checked,
         show_battery: document.getElementById("opt-show-battery").checked,
         show_latency: document.getElementById("opt-show-latency").checked,
+        show_server_temp: document.getElementById("opt-show-server-temp") ? document.getElementById("opt-show-server-temp").checked : true,
+        show_server_ram: document.getElementById("opt-show-server-ram") ? document.getElementById("opt-show-server-ram").checked : true,
+        show_server_uptime: document.getElementById("opt-show-server-uptime") ? document.getElementById("opt-show-server-uptime").checked : true,
         enable_web_csrf: document.getElementById("opt-enable-csrf") ? document.getElementById("opt-enable-csrf").checked : false,
         enable_tls_pinning: document.getElementById("opt-enable-tls-pinning") ? document.getElementById("opt-enable-tls-pinning").checked : false,
         enable_device_class_filter: document.getElementById("opt-enable-class-filter") ? document.getElementById("opt-enable-class-filter").checked : false,
@@ -920,12 +946,14 @@ async function restartClient(event) {
 /* Server Remote Settings Modal */
 function prefetchServerSettings(servers) {
     if (!servers || !Array.isArray(servers)) return;
+    let updated = false;
     for (const s of servers) {
         if (s.ip && s.enabled && s.is_alive) {
             API.getServerStatus(s.ip).then(res => {
                 if (res && res.status === "ok") {
                     serverStatusCache[s.ip] = res;
                     saveServerStatusCache();
+                    renderServers();
                 }
             }).catch(() => {});
         }

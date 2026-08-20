@@ -217,6 +217,9 @@ def handle_status(controller: Any) -> dict:
         "show_vid_pid": controller.config.show_vid_pid,
         "show_battery": controller.config.show_battery,
         "show_latency": controller.config.show_latency,
+        "show_server_temp": getattr(controller.config, "show_server_temp", True),
+        "show_server_ram": getattr(controller.config, "show_server_ram", True),
+        "show_server_uptime": getattr(controller.config, "show_server_uptime", True),
         "allow_lan_access": getattr(controller.config, "allow_lan_access", True),
         "play_sound_cues": getattr(controller.config, "play_sound_cues", True),
         "power_cycle_on_attach": getattr(controller.config, "power_cycle_on_attach", True),
@@ -307,7 +310,7 @@ def handle_export_client_config(controller: Any) -> dict:
 def handle_import_client_config(controller: Any, data: dict) -> dict:
     """Import and apply client configuration backup."""
     cfg = data.get("config", data)
-    for k in ("auto_attach", "remember_detached_devices", "show_notifications", "auto_discover", "enable_nicknames", "show_port", "show_speed", "show_vid_pid", "show_battery", "show_latency", "blacklist", "nicknames"):
+    for k in ("auto_attach", "remember_detached_devices", "show_notifications", "auto_discover", "enable_nicknames", "show_port", "show_speed", "show_vid_pid", "show_battery", "show_latency", "show_server_temp", "show_server_ram", "show_server_uptime", "blacklist", "nicknames"):
         if k in cfg:
             setattr(controller.config, k, cfg[k])
     

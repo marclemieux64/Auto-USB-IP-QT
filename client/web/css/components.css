@@ -190,6 +190,9 @@
 .badge-server { background-color: rgba(14, 165, 233, 0.15); color: #38bdf8; }
 .badge-latency { background-color: rgba(20, 184, 166, 0.15); color: #2dd4bf; }
 .badge-battery { background-color: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.badge-temp { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.badge-ram { background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.badge-uptime { background-color: rgba(167, 139, 250, 0.15); color: #c084fc; }
 .badge-tls {
     background-color: rgba(16, 185, 129, 0.15);
     color: #34d399;
