@@ -971,7 +971,7 @@ async function openServerSettingsModal(encodedIp, nameEnc) {
     
     const titleEl = document.getElementById("modal-server-title");
     if (titleEl) {
-        titleEl.innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name} <span id="modal-server-spinner" class="spinner-inline" style="display:inline-block; width:14px; height:14px; margin-left:6px;" title="Fetching live server state..."></span>`;
+        titleEl.innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name}`;
     }
     
     // Instant cache population (0ms perception lag)
@@ -989,9 +989,6 @@ async function openServerSettingsModal(encodedIp, nameEnc) {
         }
     } catch (e) {
         console.error("Error loading server status:", e);
-    } finally {
-        const spinner = document.getElementById("modal-server-spinner");
-        if (spinner) spinner.style.display = "none";
     }
 }
 
