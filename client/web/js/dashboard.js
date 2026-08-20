@@ -13,7 +13,18 @@ const pendingRemovedServers = {};
 
 let editingNicknameKey = null;
 let activeServerSettingsIp = null;
-const serverStatusCache = {};
+let serverStatusCache = {};
+try {
+    serverStatusCache = JSON.parse(localStorage.getItem("autousbip_server_status_cache") || "{}");
+} catch (e) {
+    serverStatusCache = {};
+}
+
+function saveServerStatusCache() {
+    try {
+        localStorage.setItem("autousbip_server_status_cache", JSON.stringify(serverStatusCache));
+    } catch (e) {}
+}
 const pendingRestartServers = {}; // ip -> { text: 'Restarting...', timestamp: number, timeout: number }
 let serverLogInterval = null;
 
@@ -901,10 +912,11 @@ async function restartClient(event) {
 function prefetchServerSettings(servers) {
     if (!servers || !Array.isArray(servers)) return;
     for (const s of servers) {
-        if (s.ip && s.enabled && s.is_alive && !serverStatusCache[s.ip]) {
+        if (s.ip && s.enabled && s.is_alive) {
             API.getServerStatus(s.ip).then(res => {
                 if (res && res.status === "ok") {
                     serverStatusCache[s.ip] = res;
+                    saveServerStatusCache();
                 }
             }).catch(() => {});
         }
@@ -974,9 +986,17 @@ async function openServerSettingsModal(encodedIp, nameEnc) {
         titleEl.innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name}`;
     }
     
-    // Instant cache population (0ms perception lag)
+    // Instant persistent cache population (0ms even after client restart)
     if (serverStatusCache[ip]) {
         populateServerSettingsForm(serverStatusCache[ip]);
+    } else {
+        // Fallback default state so form is never blank
+        populateServerSettingsForm({
+            status: "ok",
+            metrics: { cpu_temp: "--", ram_usage: "--", uptime: "--", kernel: "--" },
+            config: { enable_tls: true, enable_discovery: true, enable_auth: false, enable_subnet_filter: false, auto_rebind_on_boot: true, startup_power_cycle: false, vbus_off_delay: 2.5, enable_wake_on_lan: false },
+            blacklist: []
+        });
     }
     
     document.getElementById("server-settings-modal").style.display = "flex";
@@ -985,6 +1005,7 @@ async function openServerSettingsModal(encodedIp, nameEnc) {
         const data = await API.getServerStatus(ip);
         if (data && data.status === "ok") {
             serverStatusCache[ip] = data;
+            saveServerStatusCache();
             populateServerSettingsForm(data);
         }
     } catch (e) {
