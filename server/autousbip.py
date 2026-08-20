@@ -203,28 +203,36 @@ def update_zeroconf_broadcast(enable: bool):
         return
     try:
         if enable:
-            if GLOBAL_ZEROCONF is None:
-                local_ip = get_local_ip()
-                hostname = socket.gethostname()
-                cfg = load_server_config()
-                auth_needed = cfg.get("enable_auth", False) and bool(cfg.get("auth_token", ""))
-                service_info = ServiceInfo(
-                    "_usbip._tcp.local.",
-                    f"AutoUSBIPServer-{hostname}._usbip._tcp.local.",
-                    addresses=[socket.inet_aton(local_ip)],
-                    port=PORT,
-                    properties={
-                        "version": "2.0",
-                        "host": hostname,
-                        "auth_required": "true" if auth_needed else "false",
-                        "tls": "true" if cfg.get("enable_tls", True) else "false"
-                    },
-                    server=f"{hostname}.local.",
-                )
-                zc = Zeroconf()
-                zc.register_service(service_info)
-                GLOBAL_ZEROCONF = (zc, service_info)
-                logger.info(f"[mDNS] Registered Zeroconf broadcast on {local_ip}:{PORT} (TLS: {cfg.get('enable_tls', True)})")
+            if GLOBAL_ZEROCONF is not None:
+                try:
+                    zc, s_info = GLOBAL_ZEROCONF
+                    zc.unregister_service(s_info)
+                    zc.close()
+                except Exception:
+                    pass
+                GLOBAL_ZEROCONF = None
+
+            local_ip = get_local_ip()
+            hostname = socket.gethostname()
+            cfg = load_server_config()
+            auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
+            service_info = ServiceInfo(
+                "_usbip._tcp.local.",
+                f"AutoUSBIPServer-{hostname}._usbip._tcp.local.",
+                addresses=[socket.inet_aton(local_ip)],
+                port=PORT,
+                properties={
+                    "version": "2.0",
+                    "host": hostname,
+                    "auth_required": "true" if auth_needed else "false",
+                    "tls": "true" if cfg.get("enable_tls", True) else "false"
+                },
+                server=f"{hostname}.local.",
+            )
+            zc = Zeroconf()
+            zc.register_service(service_info)
+            GLOBAL_ZEROCONF = (zc, service_info)
+            logger.info(f"[mDNS] Registered Zeroconf broadcast on {local_ip}:{PORT} (Auth Required: {auth_needed}, TLS: {cfg.get('enable_tls', True)})")
         else:
             if GLOBAL_ZEROCONF is not None:
                 zc, s_info = GLOBAL_ZEROCONF
@@ -758,11 +766,14 @@ def start_control_socket_thread(killer: GracefulKiller):
                             cmd = data.decode("utf-8").strip()
                             req = {}
 
-                        if cfg_sec.get("enable_auth", False):
-                            token_sent = req.get("token", "") if isinstance(req, dict) else ""
-                            expected_token = cfg_sec.get("auth_token", "")
-                            if expected_token and token_sent != expected_token:
-                                resp = json.dumps({"status": "error", "message": "Unauthorized"})
+                        cfg_sec = load_server_config()
+                        expected_token = str(cfg_sec.get("auth_token", "")).strip()
+                        auth_enabled = (cfg_sec.get("enable_auth", False) or bool(expected_token)) and bool(expected_token)
+                        if auth_enabled:
+                            token_sent = str(req.get("token", "") if isinstance(req, dict) else "").strip()
+                            if token_sent != expected_token:
+                                logger.warning(f"[Security Alert] Rejecting unauthenticated request from {client_ip} for cmd '{cmd}'.")
+                                resp = json.dumps({"status": "error", "message": "Unauthorized: Invalid or missing authentication token."})
                                 conn.sendall(resp.encode("utf-8"))
                                 conn.close()
                                 continue
@@ -822,6 +833,7 @@ def start_control_socket_thread(killer: GracefulKiller):
                                     BLACKLIST_VID_PID.update(new_cfg["blacklist"])
                                     cleanup_blacklisted_bindings()
                                 save_server_config(cfg)
+                                update_zeroconf_broadcast(cfg.get("enable_discovery", True))
                                 resp = json.dumps({"status": "ok", "config": cfg})
                             else:
                                 resp = json.dumps({"status": "error", "message": "Invalid config payload"})

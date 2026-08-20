@@ -193,7 +193,10 @@ class AutoUsbipApp(QObject):
     @pyqtSlot(str, int, str, str, bool)
     def on_server_found(self, ip: str, port: int, name: str, version: str, auth_required: bool):
         existing = next((d for d in self.discovered_servers if d["ip"] == ip and d["port"] == port), None)
-        if not existing:
+        if existing:
+            existing["name"] = name or ip
+            existing["auth_required"] = auth_required
+        else:
             self.discovered_servers.append({
                 "name": name or ip,
                 "port": port,

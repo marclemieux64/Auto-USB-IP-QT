@@ -19,6 +19,20 @@ def handle_add_server(controller: Any, data: dict) -> dict:
     if not ip or not is_valid_server_address(ip):
         return {"status": "error", "message": f"Invalid server IP address or hostname: {ip}"}
 
+    # Verify authentication with server control socket if reachable
+    from core.server_control import ServerControlClient
+    try:
+        test_client = ServerControlClient(ip, port=3241, token=token, timeout=2.5, use_tls=True)
+        resp = test_client.get_devices()
+        if resp is not None and resp.get("status") == "error" and "Unauthorized" in resp.get("message", ""):
+            logger.warning(f"[Security Alert] Cannot add server {ip}: Server rejected connection due to invalid/missing token.")
+            return {
+                "status": "error",
+                "message": "Authentication failed! The server is protected with a security token. Please enter the valid token to connect."
+            }
+    except Exception as e:
+        logger.debug(f"Auth pre-verification warning for {ip}: {e}")
+
     existing = next((s for s in controller.servers if s.ip == ip and s.port == port), None)
     if existing:
         existing.name = name

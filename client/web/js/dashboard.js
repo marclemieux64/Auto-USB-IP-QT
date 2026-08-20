@@ -707,30 +707,36 @@ async function submitAddServer() {
         alert("Please enter an IP address.");
         return;
     }
-    closeAddServerModal();
-    if (currentStatus.servers) {
-        const existing = currentStatus.servers.find(s => s.ip === ip && s.port === port);
-        if (existing) {
-            existing.token = token;
-            if (name) existing.name = name;
-            existing.enabled = true;
-        } else {
-            currentStatus.servers.push({ ip, port, name: name || ip, token, enabled: true, is_alive: true });
-        }
-        if (currentStatus.discovered_servers) {
-            currentStatus.discovered_servers = currentStatus.discovered_servers.filter(d => d.ip !== ip);
-        }
-        renderServers();
-        renderDiscoveredServers();
+    
+    const saveBtn = document.querySelector("#add-server-modal .btn-primary");
+    const origBtnText = saveBtn ? saveBtn.innerHTML : "";
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-inline"></span> Verifying & Connecting...';
     }
-    showToast("Adding server...");
+
     try {
-        await API.addServer({ ip, port, name, token, enabled: true });
+        const res = await API.addServer({ ip, port, name, token, enabled: true });
+        if (res && res.status === "error") {
+            alert(res.message || "Failed to add server: Authentication rejected.");
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origBtnText;
+            }
+            document.getElementById("add-srv-token").focus();
+            return;
+        }
+        closeAddServerModal();
         showToast("Server added successfully.");
+        await fetchStatus();
     } catch (e) {
         console.error("Error adding server:", e);
+        alert("Network error: " + e.message);
     } finally {
-        fetchStatus();
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origBtnText;
+        }
     }
 }
 
