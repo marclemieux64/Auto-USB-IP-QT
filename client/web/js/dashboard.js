@@ -109,6 +109,9 @@ async function fetchStatus() {
         currentStatus = data;
         triggerSyncFlash();
         renderAll();
+        if (data.servers) {
+            prefetchServerSettings(data.servers);
+        }
     } catch (e) {
         console.error("fetchStatus error:", e);
     }
@@ -895,6 +898,19 @@ async function restartClient(event) {
 /* Server Remote Console is managed in console.js */
 
 /* Server Remote Settings Modal */
+function prefetchServerSettings(servers) {
+    if (!servers || !Array.isArray(servers)) return;
+    for (const s of servers) {
+        if (s.ip && s.enabled && s.is_alive && !serverStatusCache[s.ip]) {
+            API.getServerStatus(s.ip).then(res => {
+                if (res && res.status === "ok") {
+                    serverStatusCache[s.ip] = res;
+                }
+            }).catch(() => {});
+        }
+    }
+}
+
 function populateServerSettingsForm(data) {
     if (!data || data.status !== "ok") return;
     const m = data.metrics || {};

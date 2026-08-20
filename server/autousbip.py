@@ -790,14 +790,10 @@ def start_control_socket_thread(killer: GracefulKiller):
                             })
                             conn.sendall(resp.encode("utf-8"))
                         elif cmd == "GET_STATUS":
-                            available = list_available_devices()
-                            dev_map = {b: get_lsusb_device_name_for_busid(b) for b in available}
                             resp = json.dumps({
                                 "status": "ok",
                                 "metrics": get_system_metrics(),
-                                "devices": dev_map,
                                 "blacklist": sorted(list(BLACKLIST_VID_PID)),
-                                "currently_bound": list(get_currently_bound_busids()),
                                 "tls": bool(ssl_ctx is not None and load_server_config().get("enable_tls", True)),
                                 "config": load_server_config(),
                             })
