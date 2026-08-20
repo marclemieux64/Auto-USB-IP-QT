@@ -16,6 +16,22 @@ from config import USB_ID_REGEX
 
 logger = logging.getLogger("auto-usbip-client")
 
+def ensure_vhci_loaded() -> bool:
+    """Ensure the Linux kernel vhci-hcd module is loaded."""
+    if sys.platform != "linux":
+        return True
+    if Path("/sys/devices/platform/vhci_hcd.0").exists() or Path("/sys/devices/platform/vhci_hcd").exists() or Path("/sys/module/vhci_hcd").exists():
+        return True
+    try:
+        subprocess.run(["modprobe", "vhci-hcd"], capture_output=True, timeout=1.0)
+        if Path("/sys/module/vhci_hcd").exists():
+            return True
+        if shutil.which("pkexec"):
+            subprocess.run(["pkexec", "--disable-internal-agent", "modprobe", "vhci-hcd"], capture_output=True, timeout=3.0)
+    except Exception:
+        pass
+    return Path("/sys/module/vhci_hcd").exists()
+
 
 _CAN_RUN_USBIP_DIRECT: bool | None = None
 _HAS_PKEXEC: bool | None = None

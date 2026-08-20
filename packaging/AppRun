@@ -62,6 +62,11 @@ if [ "$1" = "--uninstall" ]; then
     exit 0
 fi
 
+# Auto-load kernel VHCI module if possible
+if [ -d "/sys/module" ] && [ ! -d "/sys/module/vhci_hcd" ]; then
+    modprobe vhci-hcd 2>/dev/null || true
+fi
+
 # Environment configuration
 export PATH="${APPDIR}/usr/bin:${PATH}"
 export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/x86_64-linux-gnu:${APPDIR}/usr/bin/_internal:${LD_LIBRARY_PATH}"
