@@ -68,8 +68,8 @@
 }
 
 .section-header img {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     object-fit: contain;
 }
 
@@ -102,8 +102,8 @@
 }
 
 .card-icon {
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     background: #1d212f;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
@@ -119,8 +119,8 @@
 .card-icon img {
     width: 100%;
     height: 100%;
-    max-width: 38px;
-    max-height: 38px;
+    max-width: 44px;
+    max-height: 44px;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
@@ -177,8 +177,8 @@
 }
 
 .badge img {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
     object-fit: contain;
 }
 
@@ -252,8 +252,8 @@
 }
 
 .btn img {
-    width: 16px;
-    height: 16px;
+    width: 19px;
+    height: 19px;
     object-fit: contain;
 }
 
