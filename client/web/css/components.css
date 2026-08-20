@@ -21,9 +21,9 @@
 }
 
 .title img {
-    height: 28px;
+    height: 48px;
     width: auto;
-    max-width: 140px;
+    max-width: 240px;
     object-fit: contain;
 }
 
