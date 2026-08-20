@@ -123,7 +123,9 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "image/png")
             self.send_header("Content-Length", str(len(png_data)))
-            self.send_header("Cache-Control", "public, max-age=86400")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             self.wfile.write(png_data)
         else:
@@ -137,40 +139,40 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             return custom_map[icon_name].read_bytes()
 
         theme_map = {
-            "add-server": ["list-add-symbolic", "list-add", "document-new", "network-server"],
-            "badge-tls": ["security-high-symbolic", "security-high", "channel-secure-symbolic", "dialog-password", "lock"],
-            "server-card": ["network-server-symbolic", "network-server", "computer", "server-database"],
-            "discovered-server": ["network-wireless-symbolic", "network-wireless", "network-server"],
-            "gamepad": ["input-gaming-symbolic", "input-gaming", "input-gamepad", "applications-games", "preferences-desktop-gaming"],
-            "generic-usb": ["drive-removable-media-usb-symbolic", "drive-removable-media-usb", "drive-removable-media", "media-removable", "network-wired"],
-            "input-keyboard": ["input-keyboard-symbolic", "input-keyboard"],
-            "input-mouse": ["input-mouse-symbolic", "input-mouse"],
-            "camera-web": ["camera-web-symbolic", "camera-web"],
-            "storage": ["drive-harddisk-usb-symbolic", "drive-harddisk-usb", "drive-removable-media-usb", "drive-harddisk", "media-flash"],
-            "drive-harddisk": ["drive-harddisk-usb-symbolic", "drive-harddisk-usb", "drive-harddisk"],
-            "network-connect": ["network-connect", "list-add-symbolic", "list-add", "media-playback-start"],
-            "network-disconnect": ["network-disconnect", "list-remove-symbolic", "list-remove", "media-playback-pause"],
-            "power-cycle": ["system-reboot-symbolic", "system-reboot", "view-refresh-symbolic", "view-refresh", "system-restart"],
-            "settings": ["preferences-system-symbolic", "preferences-system", "configure", "preferences-other"],
-            "configure": ["configure", "preferences-system-symbolic", "preferences-system"],
-            "detach-all": ["list-remove-all-symbolic", "edit-delete-symbolic", "edit-delete", "process-stop", "window-close"],
-            "detach-btn": ["list-remove-symbolic", "list-remove", "window-close", "edit-delete"],
-            "rename": ["document-edit-symbolic", "document-edit", "edit-rename", "accessories-text-editor"],
-            "blacklist": ["dialog-cancel-symbolic", "dialog-cancel", "action-unavailable", "security-medium"],
-            "refresh": ["view-refresh-symbolic", "view-refresh", "reload"],
-            "document-save": ["document-save-symbolic", "document-save", "document-export"],
-            "document-open": ["document-open-symbolic", "document-open", "document-import"],
-            "audio-card": ["audio-card-symbolic", "audio-card", "audio-speakers", "audio-volume-high"],
-            "audio-volume-muted": ["audio-volume-muted-symbolic", "audio-volume-muted", "audio-volume-off"],
-            "utilities-terminal": ["utilities-terminal-symbolic", "utilities-terminal", "terminal"],
-            "attached-header": ["network-wired-symbolic", "network-wired", "network-connect"],
-            "available-header": ["network-workgroup-symbolic", "network-workgroup", "network-server"],
-            "badge-port": ["network-wired-symbolic", "network-wired", "drive-removable-media-usb"],
-            "badge-speed": ["speedometer", "emblem-speed", "utilities-system-monitor-symbolic", "utilities-system-monitor"],
-            "badge-vidpid": ["dialog-information-symbolic", "dialog-information", "help-about"],
-            "badge-server": ["network-server-symbolic", "network-server", "computer"],
-            "badge-battery": ["battery-good-symbolic", "battery-good", "battery-full", "battery"],
-            "badge-latency": ["utilities-system-monitor-symbolic", "utilities-system-monitor", "view-refresh"]
+            "add-server": ["list-add", "document-new", "list-add-symbolic"],
+            "badge-tls": ["security-high", "channel-secure", "dialog-password", "lock", "security-high-symbolic"],
+            "server-card": ["network-server", "computer", "server-database", "network-server-symbolic"],
+            "discovered-server": ["network-wireless", "network-server", "network-wireless-symbolic"],
+            "gamepad": ["input-gaming", "input-gamepad", "applications-games", "preferences-desktop-gaming", "input-gaming-symbolic"],
+            "generic-usb": ["drive-removable-media-usb", "drive-removable-media", "media-removable", "network-wired", "drive-removable-media-usb-symbolic"],
+            "input-keyboard": ["input-keyboard", "input-keyboard-symbolic"],
+            "input-mouse": ["input-mouse", "input-mouse-symbolic"],
+            "camera-web": ["camera-web", "camera-web-symbolic"],
+            "storage": ["drive-harddisk-usb", "drive-removable-media-usb", "drive-harddisk", "media-flash", "drive-harddisk-usb-symbolic"],
+            "drive-harddisk": ["drive-harddisk-usb", "drive-harddisk", "drive-harddisk-usb-symbolic"],
+            "network-connect": ["network-connect", "list-add", "media-playback-start"],
+            "network-disconnect": ["network-disconnect", "list-remove", "media-playback-pause"],
+            "power-cycle": ["system-reboot", "system-restart", "view-refresh", "system-reboot-symbolic"],
+            "settings": ["preferences-system", "configure", "preferences-other", "preferences-system-symbolic"],
+            "configure": ["configure", "preferences-system", "preferences-system-symbolic"],
+            "detach-all": ["edit-delete", "process-stop", "window-close", "list-remove-all-symbolic"],
+            "detach-btn": ["list-remove", "window-close", "edit-delete", "list-remove-symbolic"],
+            "rename": ["document-edit", "edit-rename", "accessories-text-editor", "document-edit-symbolic"],
+            "blacklist": ["dialog-cancel", "action-unavailable", "security-medium", "dialog-cancel-symbolic"],
+            "refresh": ["view-refresh", "reload", "view-refresh-symbolic"],
+            "document-save": ["document-save", "document-export", "document-save-symbolic"],
+            "document-open": ["document-open", "document-import", "document-open-symbolic"],
+            "audio-card": ["audio-card", "audio-speakers", "audio-volume-high", "audio-card-symbolic"],
+            "audio-volume-muted": ["audio-volume-muted", "audio-volume-off", "audio-volume-muted-symbolic"],
+            "utilities-terminal": ["utilities-terminal", "terminal", "utilities-terminal-symbolic"],
+            "attached-header": ["network-wired", "network-connect", "network-wired-symbolic"],
+            "available-header": ["network-workgroup", "network-server", "network-workgroup-symbolic"],
+            "badge-port": ["network-wired", "drive-removable-media-usb", "network-wired-symbolic"],
+            "badge-speed": ["speedometer", "emblem-speed", "utilities-system-monitor"],
+            "badge-vidpid": ["dialog-information", "help-about", "dialog-information-symbolic"],
+            "badge-server": ["network-server", "computer", "network-server-symbolic"],
+            "badge-battery": ["battery-good", "battery-full", "battery", "battery-good-symbolic"],
+            "badge-latency": ["utilities-system-monitor", "view-refresh", "utilities-system-monitor-symbolic"]
         }
 
         names = theme_map.get(icon_name, [icon_name])
