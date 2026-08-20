@@ -88,26 +88,23 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             pass
 
     def serve_static_file(self, file_path: Path):
-        file_key = str(file_path.resolve())
-        if file_key in _STATIC_CACHE:
-            content, mime_type = _STATIC_CACHE[file_key]
-        else:
-            if not file_path.exists() or not file_path.is_file():
-                self.send_error(404, "File Not Found")
-                return
+        if not file_path.exists() or not file_path.is_file():
+            self.send_error(404, "File Not Found")
+            return
+        
+        mime_type, _ = mimetypes.guess_type(str(file_path))
+        if mime_type is None:
+            mime_type = "application/octet-stream"
             
-            mime_type, _ = mimetypes.guess_type(str(file_path))
-            if mime_type is None:
-                mime_type = "application/octet-stream"
-                
-            content = file_path.read_bytes()
-            _STATIC_CACHE[file_key] = (content, mime_type)
+        content = file_path.read_bytes()
 
         self.send_response(200)
         self.send_header("Content-Type", mime_type)
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Cache-Control", "public, max-age=3600")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.end_headers()
         self.wfile.write(content)
 
