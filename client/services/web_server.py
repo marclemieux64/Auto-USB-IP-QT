@@ -132,78 +132,27 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             self.send_error(404, "Icon Not Found")
 
     def render_system_icon(self, icon_name: str) -> bytes | None:
+        # 1. Custom Branding
         custom_map = {
             "systray-logo": self.assets_root / "branding" / "systray-logo.png",
         }
         if icon_name in custom_map and custom_map[icon_name].exists():
             return custom_map[icon_name].read_bytes()
 
-        theme_map = {
-            "add-server": ["list-add", "document-new", "list-add-symbolic"],
-            "badge-tls": ["security-high", "channel-secure", "dialog-password", "lock", "security-high-symbolic"],
-            "server-card": ["network-server", "computer", "server-database", "network-server-symbolic"],
-            "discovered-server": ["network-wireless", "network-server", "network-wireless-symbolic"],
-            "gamepad": ["input-gaming", "input-gamepad", "applications-games", "preferences-desktop-gaming", "input-gaming-symbolic"],
-            "generic-usb": ["drive-removable-media-usb", "drive-removable-media", "media-removable", "network-wired", "drive-removable-media-usb-symbolic"],
-            "input-keyboard": ["input-keyboard", "input-keyboard-symbolic"],
-            "input-mouse": ["input-mouse", "input-mouse-symbolic"],
-            "camera-web": ["camera-web", "camera-web-symbolic"],
-            "storage": ["drive-harddisk-usb", "drive-removable-media-usb", "drive-harddisk", "media-flash", "drive-harddisk-usb-symbolic"],
-            "drive-harddisk": ["drive-harddisk-usb", "drive-harddisk", "drive-harddisk-usb-symbolic"],
-            "network-connect": ["network-connect", "list-add", "media-playback-start"],
-            "network-disconnect": ["network-disconnect", "list-remove", "media-playback-pause"],
-            "power-cycle": ["system-reboot", "system-restart", "view-refresh", "system-reboot-symbolic"],
-            "settings": ["preferences-system", "configure", "preferences-other", "preferences-system-symbolic"],
-            "configure": ["configure", "preferences-system", "preferences-system-symbolic"],
-            "detach-all": ["edit-delete", "process-stop", "window-close", "list-remove-all-symbolic"],
-            "detach-btn": ["list-remove", "window-close", "edit-delete", "list-remove-symbolic"],
-            "rename": ["document-edit", "edit-rename", "accessories-text-editor", "document-edit-symbolic"],
-            "blacklist": ["dialog-cancel", "action-unavailable", "security-medium", "dialog-cancel-symbolic"],
-            "refresh": ["view-refresh", "reload", "view-refresh-symbolic"],
-            "document-save": ["document-save", "document-export", "document-save-symbolic"],
-            "document-open": ["document-open", "document-import", "document-open-symbolic"],
-            "audio-card": ["audio-card", "audio-speakers", "audio-volume-high", "audio-card-symbolic"],
-            "audio-volume-muted": ["audio-volume-muted", "audio-volume-off", "audio-volume-muted-symbolic"],
-            "utilities-terminal": ["utilities-terminal", "terminal", "utilities-terminal-symbolic"],
-            "attached-header": ["network-wired", "network-connect", "network-wired-symbolic"],
-            "available-header": ["network-workgroup", "network-server", "network-workgroup-symbolic"],
-            "badge-port": ["network-wired", "drive-removable-media-usb", "network-wired-symbolic"],
-            "badge-speed": ["speedometer", "emblem-speed", "utilities-system-monitor"],
-            "badge-vidpid": ["dialog-information", "help-about", "dialog-information-symbolic"],
-            "badge-server": ["network-server", "computer", "network-server-symbolic"],
-            "badge-battery": ["battery-good", "battery-full", "battery", "battery-good-symbolic"],
-            "badge-latency": ["utilities-system-monitor", "view-refresh", "utilities-system-monitor-symbolic"]
-        }
+        # 2. Unified Bundled Tabler Vector Suite (Identical on Desktop & Web)
+        bundled_png = self.assets_root / "icons" / f"{icon_name}.png"
+        if bundled_png.exists():
+            return bundled_png.read_bytes()
 
-        names = theme_map.get(icon_name, [icon_name])
-        icon = QIcon()
-        for n in names:
-            icon = QIcon.fromTheme(n)
-            if not icon.isNull():
-                break
-
-        # If desktop theme icon was found, render it into PNG
-        if not icon.isNull():
-            pix = icon.pixmap(QSize(48, 48))
-            if not pix.isNull():
-                buf = QBuffer()
-                buf.open(QIODevice.OpenModeFlag.WriteOnly)
-                pix.save(buf, "PNG")
-                return bytes(buf.data())
-
-        # Fallback to bundled asset if headless / theme icon missing
-        fallback_png = self.assets_root / "icons" / f"{icon_name}.png"
-        if fallback_png.exists():
-            return fallback_png.read_bytes()
-
-        fallback_svg = self.assets_root / "icons" / f"{icon_name}.svg"
-        if fallback_svg.exists():
+        bundled_svg = self.assets_root / "icons" / f"{icon_name}.svg"
+        if bundled_svg.exists():
             from PyQt6.QtSvg import QSvgRenderer
             from PyQt6.QtGui import QPainter, QColor, QImage
-            renderer = QSvgRenderer(str(fallback_svg))
+            renderer = QSvgRenderer(str(bundled_svg))
             img = QImage(48, 48, QImage.Format.Format_ARGB32_Premultiplied)
             img.fill(QColor(0, 0, 0, 0))
             painter = QPainter(img)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             renderer.render(painter)
             painter.end()
             buf = QBuffer()

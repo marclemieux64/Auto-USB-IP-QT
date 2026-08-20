@@ -1,6 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-        <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-        <line x1="12" y1="20" x2="12.01" y2="20"></line>
-    </svg>
+<!--
+tags: [online, connection, signal, wireless, wifi, internet, hardware, technology, network, electronic]
+category: Devices
+version: "1.0"
+unicode: "eb52"
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#10b981"
+  stroke-width="2.2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 18l.01 0" />
+  <path d="M9.172 15.172a4 4 0 0 1 5.656 0" />
+  <path d="M6.343 12.343a8 8 0 0 1 11.314 0" />
+  <path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0" />
+</svg>
