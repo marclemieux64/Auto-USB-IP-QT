@@ -67,6 +67,13 @@ class ServerControlClient:
                         if not data:
                             break
                         chunks.append(data)
+                        try:
+                            raw = b"".join(chunks).decode("utf-8")
+                            parsed = json.loads(raw)
+                            s.close()
+                            return parsed
+                        except Exception:
+                            pass
                     except Exception:
                         break
                 s.close()
@@ -93,6 +100,13 @@ class ServerControlClient:
                     if not data:
                         break
                     chunks.append(data)
+                    try:
+                        raw = b"".join(chunks).decode("utf-8")
+                        parsed = json.loads(raw)
+                        s.close()
+                        return parsed
+                    except Exception:
+                        pass
                 except Exception:
                     break
             s.close()

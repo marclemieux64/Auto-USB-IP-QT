@@ -13,6 +13,7 @@ const pendingRemovedServers = {};
 
 let editingNicknameKey = null;
 let activeServerSettingsIp = null;
+const serverStatusCache = {};
 const pendingRestartServers = {}; // ip -> { text: 'Restarting...', timestamp: number, timeout: number }
 let serverLogInterval = null;
 
@@ -894,54 +895,87 @@ async function restartClient(event) {
 /* Server Remote Console is managed in console.js */
 
 /* Server Remote Settings Modal */
-async function openServerSettingsModal(ip, nameEnc) {
-    activeServerSettingsIp = ip;
+function populateServerSettingsForm(data) {
+    if (!data || data.status !== "ok") return;
+    const m = data.metrics || {};
+    const tempEl = document.getElementById("srv-m-temp");
+    if (tempEl) {
+        tempEl.textContent = m.cpu_temp || "--";
+        tempEl.className = "badge";
+        if (m.cpu_temp && m.cpu_temp !== "N/A") {
+            const tempNum = parseFloat(m.cpu_temp);
+            if (tempNum < 60) tempEl.classList.add("badge-success");
+            else if (tempNum < 75) tempEl.classList.add("badge-warning");
+            else tempEl.classList.add("badge-danger");
+        }
+    }
+    const ramEl = document.getElementById("srv-m-ram");
+    if (ramEl) ramEl.textContent = m.ram_usage || "--";
+    const upEl = document.getElementById("srv-m-uptime");
+    if (upEl) upEl.textContent = m.uptime || "--";
+    const kernEl = document.getElementById("srv-m-kernel");
+    if (kernEl) kernEl.textContent = m.kernel || "--";
+    
+    const cfg = data.config || {};
+    const discEl = document.getElementById("srv-opt-discovery");
+    if (discEl) discEl.checked = cfg.enable_discovery !== false;
+    const authEl = document.getElementById("srv-opt-auth");
+    if (authEl) authEl.checked = !!cfg.enable_auth;
+    const tokenEl = document.getElementById("srv-opt-token");
+    if (tokenEl) tokenEl.value = cfg.auth_token || "";
+    const subEl = document.getElementById("srv-opt-subnet");
+    if (subEl) subEl.checked = !!cfg.enable_subnet_filter;
+    const tlsEl = document.getElementById("srv-opt-tls");
+    if (tlsEl) tlsEl.checked = cfg.enable_tls !== false;
+    const powerEl = document.getElementById("srv-opt-startup-power");
+    if (powerEl) powerEl.checked = cfg.startup_power_cycle !== false;
+    const vbusEl = document.getElementById("srv-opt-vbus-delay");
+    if (vbusEl) vbusEl.value = parseFloat(cfg.vbus_off_delay || cfg.power_reset_off_delay || 2.5);
+    const wolEl = document.getElementById("srv-opt-wol");
+    if (wolEl) wolEl.checked = !!cfg.enable_wake_on_lan;
+    const rebindEl = document.getElementById("srv-opt-rebind");
+    if (rebindEl) rebindEl.checked = cfg.auto_rebind_on_boot !== false;
+    
+    const bl = data.blacklist || [];
+    const blListEl = document.getElementById("srv-blacklist-list");
+    if (blListEl) {
+        blListEl.innerHTML = bl.length === 0 ? '<div style="font-size:0.75rem;color:var(--text-muted);">No blacklisted hardware.</div>' : bl.map(item => `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#12141c; padding:3px 8px; border-radius:4px; border:1px solid var(--border-color); font-size:0.75rem;">
+                <span style="font-family:monospace;">${item}</span>
+                <button class="btn btn-danger" style="padding:1px 5px; font-size:0.7rem;" onclick="removeServerBlacklistItem('${item}')">Unblock</button>
+            </div>
+        `).join("");
+    }
+}
+
+async function openServerSettingsModal(encodedIp, nameEnc) {
+    const ip = decodeURIComponent(encodedIp);
     const name = decodeURIComponent(nameEnc);
-    document.getElementById("modal-server-title").innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name}`;
+    activeServerSettingsIp = ip;
+    
+    const titleEl = document.getElementById("modal-server-title");
+    if (titleEl) {
+        titleEl.innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name} <span id="modal-server-spinner" class="spinner-inline" style="display:inline-block; width:14px; height:14px; margin-left:6px;" title="Fetching live server state..."></span>`;
+    }
+    
+    // Instant cache population (0ms perception lag)
+    if (serverStatusCache[ip]) {
+        populateServerSettingsForm(serverStatusCache[ip]);
+    }
+    
     document.getElementById("server-settings-modal").style.display = "flex";
     
     try {
         const data = await API.getServerStatus(ip);
         if (data && data.status === "ok") {
-            const m = data.metrics || {};
-            const tempEl = document.getElementById("srv-m-temp");
-            tempEl.textContent = m.cpu_temp || "--";
-            tempEl.className = "badge";
-            if (m.cpu_temp && m.cpu_temp !== "N/A") {
-                const tempNum = parseFloat(m.cpu_temp);
-                if (tempNum < 60) tempEl.classList.add("badge-success");
-                else if (tempNum < 75) tempEl.classList.add("badge-warning");
-                else tempEl.classList.add("badge-danger");
-            }
-            document.getElementById("srv-m-ram").textContent = m.ram_usage || "--";
-            document.getElementById("srv-m-uptime").textContent = m.uptime || "--";
-            document.getElementById("srv-m-kernel").textContent = m.kernel || "--";
-            
-            const cfg = data.config || {};
-            const discEl = document.getElementById("srv-opt-discovery");
-            if (discEl) discEl.checked = cfg.enable_discovery !== false;
-            document.getElementById("srv-opt-auth").checked = !!cfg.enable_auth;
-            document.getElementById("srv-opt-token").value = cfg.auth_token || "";
-            document.getElementById("srv-opt-subnet").checked = !!cfg.enable_subnet_filter;
-            if (document.getElementById("srv-opt-tls")) document.getElementById("srv-opt-tls").checked = cfg.enable_tls !== false;
-            if (document.getElementById("srv-opt-startup-power")) document.getElementById("srv-opt-startup-power").checked = cfg.startup_power_cycle !== false;
-            if (document.getElementById("srv-opt-vbus-delay")) document.getElementById("srv-opt-vbus-delay").value = parseFloat(cfg.vbus_off_delay || cfg.power_reset_off_delay || 2.5);
-            if (document.getElementById("srv-opt-wol")) document.getElementById("srv-opt-wol").checked = !!cfg.enable_wake_on_lan;
-            document.getElementById("srv-opt-rebind").checked = cfg.auto_rebind_on_boot !== false;
-            
-            const bl = data.blacklist || [];
-            const blListEl = document.getElementById("srv-blacklist-list");
-            if (blListEl) {
-                blListEl.innerHTML = bl.length === 0 ? '<div style="font-size:0.75rem;color:var(--text-muted);">No blacklisted hardware.</div>' : bl.map(item => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#12141c; padding:3px 8px; border-radius:4px; border:1px solid var(--border-color); font-size:0.75rem;">
-                        <span style="font-family:monospace;">${item}</span>
-                        <button class="btn btn-danger" style="padding:1px 5px; font-size:0.7rem;" onclick="removeServerBlacklistItem('${item}')">Unblock</button>
-                    </div>
-                `).join("");
-            }
+            serverStatusCache[ip] = data;
+            populateServerSettingsForm(data);
         }
     } catch (e) {
         console.error("Error loading server status:", e);
+    } finally {
+        const spinner = document.getElementById("modal-server-spinner");
+        if (spinner) spinner.style.display = "none";
     }
 }
 

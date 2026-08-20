@@ -257,26 +257,38 @@ def get_device_vid_pid(busid: str) -> str | None:
     return None
 
 
+_LSUSB_CACHE: tuple[float, dict[str, str]] = (0.0, {})
+
 def get_lsusb_device_name_for_busid(busid: str) -> str:
+    global _LSUSB_CACHE
     sys_path = Path(f"/sys/bus/usb/devices/{busid}")
     manufacturer = safe_read_sysfs(sys_path / "manufacturer")
     product = safe_read_sysfs(sys_path / "product")
     if product:
         return f"{manufacturer} {product}".strip() if manufacturer else product
 
+    vid_pid = get_device_vid_pid(busid)
+    if not vid_pid:
+        return f"USB Device ({busid})"
+
+    now = time.time()
+    if (now - _LSUSB_CACHE[0]) < 10.0 and vid_pid in _LSUSB_CACHE[1]:
+        return _LSUSB_CACHE[1][vid_pid]
+
     try:
-        res = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=1.0)
-        vid_pid = get_device_vid_pid(busid)
-        if vid_pid:
-            for line in res.stdout.splitlines():
-                if vid_pid in line.lower():
-                    parts = line.split(vid_pid, 1)
-                    if len(parts) > 1:
-                        return parts[1].strip()
+        res = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=0.25)
+        cache_map = {}
+        for line in res.stdout.splitlines():
+            m = re.search(r"ID\s+([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\s*(.*)", line)
+            if m:
+                cache_map[m.group(1).lower()] = m.group(2).strip() or f"USB Device ({m.group(1)})"
+        _LSUSB_CACHE = (now, cache_map)
+        if vid_pid in cache_map:
+            return cache_map[vid_pid]
     except Exception:
         pass
 
-    return f"USB Device ({busid})"
+    return f"USB Device ({vid_pid})"
 
 
 def is_usb_hub(busid: str) -> bool:
