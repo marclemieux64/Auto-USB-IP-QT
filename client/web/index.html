@@ -7,8 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="/assets/branding/app-icon.svg">
     <link rel="alternate icon" type="image/png" href="/assets/branding/app-icon.png">
     <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/components.css?v=1787268201">
-    <link rel="stylesheet" href="/css/gamepad.css?v=1787268201">
+    <link rel="stylesheet" href="/css/components.css?v=1787268350">
+    <link rel="stylesheet" href="/css/gamepad.css?v=1787268350">
 </head>
 <body>
     <div class="header">
@@ -239,7 +239,34 @@
         </div>
     </div>
 
-        <!-- Server Remote Settings Modal -->
+        <!-- Server Auth Token Prompt Modal -->
+    <div id="server-auth-prompt-modal" class="modal" style="z-index: 1200;">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:24px;height:24px;object-fit:contain;"> Authorization Required</h3>
+                <button class="btn btn-danger" onclick="cancelServerAuthPrompt()">Cancel</button>
+            </div>
+            <div class="modal-body">
+                <div id="auth-prompt-msg" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                    Enter the server security token to authorize this configuration change.
+                </div>
+                <div class="form-group">
+                    <label>Server Security Token:</label>
+                    <div style="position:relative;">
+                        <input type="password" id="auth-prompt-token-input" class="form-control" placeholder="Enter authentication token" autocomplete="new-password" style="padding-right:36px;" onkeydown="if(event.key==='Enter')confirmServerAuthPrompt(); if(event.key==='Escape')cancelServerAuthPrompt();">
+                        <button type="button" onclick="toggleAuthPromptPasswordVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem;" title="Show/Hide Token">👁️</button>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Leave blank if the server does not currently require authentication.</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:flex-end; gap:6px;">
+                <button class="btn" onclick="cancelServerAuthPrompt()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmServerAuthPrompt()"><img src="/icons/document-save.png"> Authorize & Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Remote Settings Modal -->
     <div id="server-settings-modal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
@@ -578,9 +605,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/js/api.js?v=1787268201.3.3"></script>
-    <script src="/js/dashboard.js?v=1787268201.3.3"></script>
-    <script src="/js/gamepad.js?v=1787268201.3.3"></script>
-    <script src="/js/console.js?v=1787268201.3.3"></script>
+    <script src="/js/api.js?v=1787268350.3.3"></script>
+    <script src="/js/dashboard.js?v=1787268350.3.3"></script>
+    <script src="/js/gamepad.js?v=1787268350.3.3"></script>
+    <script src="/js/console.js?v=1787268350.3.3"></script>
 </body>
 </html>

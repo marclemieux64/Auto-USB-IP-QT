@@ -1027,18 +1027,65 @@ function closeServerSettingsModal() {
     activeServerSettingsIp = null;
 }
 
+let authPromptResolver = null;
+
+function promptServerAuthToken(message = "Enter the server security token to authorize this configuration change.") {
+    return new Promise((resolve) => {
+        authPromptResolver = resolve;
+        const msgEl = document.getElementById("auth-prompt-msg");
+        if (msgEl) msgEl.textContent = message;
+        
+        const inputEl = document.getElementById("auth-prompt-token-input");
+        if (inputEl) {
+            inputEl.type = "password";
+            inputEl.value = ""; // Strictly empty by default, masked password
+        }
+        
+        const modal = document.getElementById("server-auth-prompt-modal");
+        if (modal) modal.style.display = "flex";
+        
+        setTimeout(() => {
+            if (inputEl) inputEl.focus();
+        }, 120);
+    });
+}
+
+function cancelServerAuthPrompt() {
+    const modal = document.getElementById("server-auth-prompt-modal");
+    if (modal) modal.style.display = "none";
+    if (authPromptResolver) {
+        authPromptResolver(null);
+        authPromptResolver = null;
+    }
+}
+
+function confirmServerAuthPrompt() {
+    const inputEl = document.getElementById("auth-prompt-token-input");
+    const val = inputEl ? inputEl.value.trim() : "";
+    const modal = document.getElementById("server-auth-prompt-modal");
+    if (modal) modal.style.display = "none";
+    if (authPromptResolver) {
+        authPromptResolver(val);
+        authPromptResolver = null;
+    }
+}
+
+function toggleAuthPromptPasswordVisibility() {
+    const inputEl = document.getElementById("auth-prompt-token-input");
+    if (inputEl) {
+        inputEl.type = inputEl.type === "password" ? "text" : "password";
+    }
+}
+
 async function saveServerSettings() {
     if (!activeServerSettingsIp) return;
     const ip = activeServerSettingsIp;
-    const srv = (currentStatus.servers || []).find(s => s.ip === ip);
-    const existingToken = srv ? (srv.token || "") : "";
     
-    // Prompt user for authentication token before saving
-    let token = prompt("Enter Server Security Token to authorize saving configuration on " + ip + " (leave blank if no token is set):", existingToken);
+    // Prompt user with dedicated masked password modal (never prefilled, masked)
+    const token = await promptServerAuthToken("Enter the server security token to authorize saving configuration changes on " + ip + ":");
     if (token === null) {
         return;
     }
-    token = token.trim();
 
     const discEl = document.getElementById("srv-opt-discovery");
     const cfgPayload = {
@@ -1072,7 +1119,7 @@ async function saveServerSettings() {
             closeServerSettingsModal();
             fetchStatus();
         } else {
-            alert(res.message || "Failed to save server settings: Unauthorized or invalid token.");
+            alert(res.message || "Failed to save server settings: Unauthorized or invalid security token.");
             document.getElementById("srv-opt-token").focus();
         }
     } catch (e) {
@@ -1091,14 +1138,12 @@ async function restoreServerDefaultSettings() {
     if (!confirm("Are you sure you want to reset all server options on " + ip + " back to factory default configuration?")) {
         return;
     }
-    const srv = (currentStatus.servers || []).find(s => s.ip === ip);
-    const existingToken = srv ? (srv.token || "") : "";
 
-    let token = prompt("Enter Server Security Token to authorize resetting default configuration on " + ip + " (leave blank if no token is set):", existingToken);
+    // Prompt user with dedicated masked password modal (never prefilled, masked)
+    const token = await promptServerAuthToken("Enter the server security token to authorize resetting factory defaults on " + ip + ":");
     if (token === null) {
         return;
     }
-    token = token.trim();
 
     const defaultCfg = {
         auto_bind: true,
@@ -1131,7 +1176,7 @@ async function restoreServerDefaultSettings() {
             closeServerSettingsModal();
             fetchStatus();
         } else {
-            alert(res.message || "Failed to reset defaults: Unauthorized or invalid token.");
+            alert(res.message || "Failed to reset defaults: Unauthorized or invalid security token.");
         }
     } catch (e) {
         alert("Error resetting default settings: " + e.message);
