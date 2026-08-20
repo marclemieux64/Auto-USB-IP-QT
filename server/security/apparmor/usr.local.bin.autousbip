@@ -1,0 +1,46 @@
+# AppArmor profile for auto-usbip server daemon
+#include <tunables/global>
+
+/usr/local/bin/autousbip.py {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/nameservice>
+
+  # Sysfs USB control
+  /sys/bus/usb/** rw,
+  /sys/devices/** rw,
+  /sys/class/thermal/** r,
+  /proc/uptime r,
+  /proc/meminfo r,
+  /proc/loadavg r,
+
+  # Hardware devices
+  /dev/input/** r,
+  /dev/bus/usb/** rw,
+
+  # Network (Kernel USBIP, Control Socket, mDNS)
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+
+  # Linux Capabilities (No sudo required)
+  capability net_admin,
+  capability sys_admin,
+  capability sys_rawio,
+
+  # Allowed helper executions
+  /usr/bin/usbip rix,
+  /usr/sbin/usbip rix,
+  /usr/sbin/uhubctl rix,
+  /usr/bin/uhubctl rix,
+  /usr/bin/lsusb rix,
+  /usr/bin/systemctl rix,
+  /usr/sbin/modprobe rix,
+
+  # Config & State
+  owner /root/.config/auto-usbip/** rwk,
+  owner /etc/auto-usbip/** rwk,
+  owner @{HOME}/.config/auto-usbip/** rwk,
+  /var/log/** rw,
+}

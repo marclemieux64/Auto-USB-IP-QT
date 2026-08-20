@@ -1,0 +1,5 @@
+# Auto USB/IP Client udev rules
+# Grant active desktop users direct access to VHCI USB/IP driver and gamepad hidraw devices
+KERNEL=="vhci_hcd", TAG+="uaccess", MODE="0660", GROUP="plugdev"
+SUBSYSTEM=="usb", TAG+="uaccess", MODE="0660", GROUP="plugdev"
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", TAG+="uaccess", MODE="0660", GROUP="plugdev"

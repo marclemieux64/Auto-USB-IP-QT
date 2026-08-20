@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Auto USB/IP Project</vendor>
+  <vendor_url>https://github.com/your-username/auto-usbip</vendor_url>
+  <icon_name>network-wired</icon_name>
+
+  <action id="org.autousbip.client.usbip">
+    <description>Attach and detach remote USB devices via USB/IP</description>
+    <message>Authentication is required to manage remote USB/IP devices</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/usbip</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+  <action id="org.autousbip.client.tuning">
+    <description>Tune USB interrupt polling rates</description>
+    <message>Authentication is required to optimize USB controller polling latency</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

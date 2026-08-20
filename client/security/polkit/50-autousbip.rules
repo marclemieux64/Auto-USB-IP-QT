@@ -1,0 +1,10 @@
+/* Polkit rules for Auto USB/IP Client
+ * Authorizes members of wheel/sudo/plugdev and active desktop sessions to manage USB/IP without password prompts
+ */
+polkit.addRule(function(action, subject) {
+    if (action.id === "org.autousbip.client.usbip" || action.id === "org.autousbip.client.tuning") {
+        if (subject.isInGroup("wheel") || subject.isInGroup("sudo") || subject.isInGroup("plugdev") || subject.active) {
+            return polkit.Result.YES;
+        }
+    }
+});

@@ -1,0 +1,23 @@
+[Unit]
+Description=Auto USB/IP Server Daemon
+Documentation=https://github.com/your-username/auto-usbip
+After=network-online.target systemd-udevd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/autousbip.py
+Restart=on-failure
+RestartSec=3s
+
+# Security Hardening & Linux Capabilities (No sudo required)
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/auto-usbip /root/.config/auto-usbip /var/log /sys /dev
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

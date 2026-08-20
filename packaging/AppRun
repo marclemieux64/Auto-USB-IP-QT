@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Auto USB/IP Client - AppImage Entry Point
+# ==============================================================================
+
+set -e
+
+# Resolve AppDir root
+APPDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export APPDIR
+
+# Self-Integration Handling
+if [ "$1" = "--install" ]; then
+    APPIMAGE_PATH="${APPIMAGE:-$(readlink -f "$0")}"
+    echo "📦 Integrating Auto USB/IP Client into your desktop application menu..."
+    
+    DESKTOP_DIR="${HOME}/.local/share/applications"
+    ICON_SVG_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
+    ICON_PNG_DIR="${HOME}/.local/share/icons/hicolor/256x256/apps"
+    
+    mkdir -p "${DESKTOP_DIR}" "${ICON_SVG_DIR}" "${ICON_PNG_DIR}"
+    
+    # Copy icons
+    cp -f "${APPDIR}/org.autousbip.client.svg" "${ICON_SVG_DIR}/org.autousbip.client.svg" 2>/dev/null || true
+    cp -f "${APPDIR}/org.autousbip.client.png" "${ICON_PNG_DIR}/org.autousbip.client.png" 2>/dev/null || true
+    
+    # Create desktop file pointing to this AppImage
+    cat << DESKTOP_EOF > "${DESKTOP_DIR}/org.autousbip.client.desktop"
+[Desktop Entry]
+Name=Auto USB/IP Client
+Comment=Automatic USB-over-IP device manager and gamepad tester
+Exec="${APPIMAGE_PATH}" %u
+Icon=org.autousbip.client
+Terminal=false
+Type=Application
+Categories=Utility;Network;
+Keywords=usb;usbip;remote;gamepad;controller;
+StartupNotify=true
+StartupWMClass=auto-usbip-client
+X-AppImage-Version=2.0.0
+DESKTOP_EOF
+    
+    chmod 644 "${DESKTOP_DIR}/org.autousbip.client.desktop"
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "${DESKTOP_DIR}" 2>/dev/null || true
+    fi
+    echo "✅ Desktop menu shortcut successfully installed!"
+    echo "   Launcher: ${DESKTOP_DIR}/org.autousbip.client.desktop"
+    echo "   Target:   ${APPIMAGE_PATH}"
+    exit 0
+fi
+
+if [ "$1" = "--uninstall" ]; then
+    echo "🗑️ Removing Auto USB/IP Client desktop shortcuts..."
+    rm -f "${HOME}/.local/share/applications/org.autousbip.client.desktop"
+    rm -f "${HOME}/.local/share/icons/hicolor/scalable/apps/org.autousbip.client.svg"
+    rm -f "${HOME}/.local/share/icons/hicolor/256x256/apps/org.autousbip.client.png"
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
+    fi
+    echo "✅ Desktop shortcuts removed successfully."
+    exit 0
+fi
+
+# Environment configuration
+export PATH="${APPDIR}/usr/bin:${PATH}"
+export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/x86_64-linux-gnu:${APPDIR}/usr/bin/_internal:${LD_LIBRARY_PATH}"
+
+# Qt6 and WebEngine configuration
+export QT_PLUGIN_PATH="${APPDIR}/usr/bin/_internal/PyQt6/Qt6/plugins:${APPDIR}/usr/plugins:${QT_PLUGIN_PATH}"
+export QTWEBENGINEPROCESS_PATH="${APPDIR}/usr/bin/_internal/PyQt6/Qt6/libexec/QtWebEngineProcess"
+export QTWEBENGINE_DISABLE_SANDBOX="1"
+export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-gpu --disable-dev-shm-usage"
+export QT_AUTO_SCREEN_SCALE_FACTOR="1"
+export QT_ENABLE_HIGHDPI_SCALING="1"
+
+# Wayland & X11 auto-selection
+if [ -n "${WAYLAND_DISPLAY}" ]; then
+    export QT_QPA_PLATFORM="wayland;xcb"
+else
+    export QT_QPA_PLATFORM="xcb"
+fi
+
+# Launch application binary
+BIN="${APPDIR}/usr/bin/autousbip-client"
+if [ ! -f "${BIN}" ]; then
+    BIN="${APPDIR}/usr/bin/autousbip-client/autousbip-client"
+fi
+
+exec "${BIN}" "$@"
