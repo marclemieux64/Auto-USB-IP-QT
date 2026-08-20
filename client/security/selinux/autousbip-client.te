@@ -1,0 +1,40 @@
+policy_module(autousbip-client, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+type autousbip_client_t;
+type autousbip_client_exec_t;
+application_domain(autousbip_client_t, autousbip_client_exec_t)
+
+########################################
+#
+# Policy Rules
+#
+
+# Process & Capabilities
+allow autousbip_client_t self:capability { net_admin sys_rawio };
+allow autousbip_client_t self:process { getsched setsched fork signal sigchld };
+
+# Network Sockets
+allow autousbip_client_t self:tcp_socket create_stream_socket_perms;
+allow autousbip_client_t self:udp_socket create_socket_perms;
+corenet_tcp_bind_generic_node(autousbip_client_t)
+corenet_udp_bind_generic_node(autousbip_client_t)
+corenet_tcp_bind_generic_port(autousbip_client_t)
+corenet_tcp_connect_generic_port(autousbip_client_t)
+
+# sysfs and USB hardware devices
+dev_read_sysfs(autousbip_client_t)
+dev_rw_sysfs(autousbip_client_t)
+dev_rw_generic_usb_dev(autousbip_client_t)
+
+# D-Bus (Polkit, Logind)
+dbus_system_bus_client(autousbip_client_t)
+dbus_connect_system_bus(autousbip_client_t)
+
+# User Config (~/.config/auto-usbip/)
+userdom_manage_user_config_dirs(autousbip_client_t)
+userdom_manage_user_config_files(autousbip_client_t)

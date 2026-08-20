@@ -1,0 +1,43 @@
+policy_module(autousbip-server, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+type autousbip_t;
+type autousbip_exec_t;
+init_daemon_domain(autousbip_t, autousbip_exec_t)
+
+########################################
+#
+# Policy Rules
+#
+
+# Linux Capabilities
+allow autousbip_t self:capability { net_admin sys_admin sys_rawio net_bind_service };
+allow autousbip_t self:process { getsched setsched fork signal sigchld };
+
+# Network Sockets
+allow autousbip_t self:tcp_socket create_stream_socket_perms;
+allow autousbip_t self:udp_socket create_socket_perms;
+corenet_tcp_bind_generic_node(autousbip_t)
+corenet_udp_bind_generic_node(autousbip_t)
+corenet_tcp_bind_generic_port(autousbip_t)
+corenet_udp_bind_generic_port(autousbip_t)
+
+# sysfs and USB hardware devices
+dev_read_sysfs(autousbip_t)
+dev_rw_sysfs(autousbip_t)
+dev_rw_generic_usb_dev(autousbip_t)
+
+# Kernel module loading (usbip-core, usbip-host)
+kernel_request_load_module(autousbip_t)
+
+# Logging & systemd
+logging_send_syslog_msg(autousbip_t)
+init_stream_connect(autousbip_t)
+
+# Configuration (/etc/autousbip/)
+files_read_etc_files(autousbip_t)
+files_manage_etc_files(autousbip_t)

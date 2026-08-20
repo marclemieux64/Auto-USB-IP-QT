@@ -83,9 +83,10 @@ Auto USB/IP Qt provides a multi-layered, enterprise-grade defense-in-depth secur
 
 ### 1. Zero-Sudo Privilege Model
 * **Polkit (PolicyKit)**: Rules defined in [`client/security/polkit/`](client/security/polkit/) allow non-root users to attach/detach kernel USB devices via D-Bus without `sudoers` or root shells.
-* **AppArmor MAC Profiles**: Confines client and server binaries ([`client/security/apparmor/`](client/security/apparmor/) & [`server/security/apparmor/`](server/security/apparmor/)).
-* **udev `uaccess` Rules**: Non-root desktop access to physical gamepad telemetry and sysfs nodes.
-* **Automated Security Installer**: Run `./install-security.sh` on both client and server to deploy all policies.
+* **AppArmor MAC Profiles**: Confines client and server binaries on Debian/Ubuntu/openSUSE ([`client/security/apparmor/`](client/security/apparmor/) & [`server/security/apparmor/`](server/security/apparmor/)).
+* **SELinux Policy Modules**: Native CIL & Type Enforcement policies for Fedora, Bazzite, RHEL, and CentOS ([`client/security/selinux/`](client/security/selinux/) & [`server/security/selinux/`](server/security/selinux/)).
+* **udev `uaccess` Rules**: Non-root desktop access to physical gamepad telemetry and sysfs nodes ([`client/security/udev/`](client/security/udev/) & [`server/security/udev/`](server/security/udev/)).
+* **Automated Security Installer**: Run `./install-security.sh` on both client and server to auto-detect and deploy all policies.
 
 ### 2. Optional Hardening Controls (Configurable in Dashboard)
 * 🔒 **Web API CSRF & Cross-Origin Protection**: Restricts mutating API actions (attach, detach, restart, reboot) to requests originating from `localhost` or verified client IP addresses.
