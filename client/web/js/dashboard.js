@@ -1080,11 +1080,17 @@ function toggleAuthPromptPasswordVisibility() {
 async function saveServerSettings() {
     if (!activeServerSettingsIp) return;
     const ip = activeServerSettingsIp;
+
+    // Check if remote server currently requires authentication or if authentication is being enabled
+    const currentCfg = serverStatusCache[ip]?.config || {};
+    const authCurrentlyRequired = (currentCfg.enable_auth || Boolean(currentCfg.auth_token)) && Boolean(String(currentCfg.auth_token || "").trim());
     
-    // Prompt user with dedicated masked password modal (never prefilled, masked)
-    const token = await promptServerAuthToken("Enter the server security token to authorize saving configuration changes on " + ip + ":");
-    if (token === null) {
-        return;
+    let token = "";
+    if (authCurrentlyRequired) {
+        token = await promptServerAuthToken("Enter the server security token to authorize saving configuration changes on " + ip + ":");
+        if (token === null) {
+            return;
+        }
     }
 
     const discEl = document.getElementById("srv-opt-discovery");
@@ -1139,10 +1145,16 @@ async function restoreServerDefaultSettings() {
         return;
     }
 
-    // Prompt user with dedicated masked password modal (never prefilled, masked)
-    const token = await promptServerAuthToken("Enter the server security token to authorize resetting factory defaults on " + ip + ":");
-    if (token === null) {
-        return;
+    // Check if remote server currently requires authentication
+    const currentCfg = serverStatusCache[ip]?.config || {};
+    const authCurrentlyRequired = (currentCfg.enable_auth || Boolean(currentCfg.auth_token)) && Boolean(String(currentCfg.auth_token || "").trim());
+
+    let token = "";
+    if (authCurrentlyRequired) {
+        token = await promptServerAuthToken("Enter the server security token to authorize resetting factory defaults on " + ip + ":");
+        if (token === null) {
+            return;
+        }
     }
 
     const defaultCfg = {
