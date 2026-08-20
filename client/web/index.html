@@ -117,57 +117,63 @@
 
     <!-- Client Options Modal -->
     <div id="options-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 660px;">
             <div class="modal-header">
                 <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:26px;height:26px;object-fit:contain;"> Client Options</h3>
                 <button class="btn btn-danger" onclick="closeClientOptionsModal()">Close</button>
             </div>
-            <div class="modal-body">
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 8px;">General Behavior</div>
-                <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
-                <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
-                <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
-                <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port / clear zombies on attach error</label>
-                <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
-                <label class="form-check" title="When enabled, allows other phones, laptops, and PCs on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
-                <div id="lan-url-info" style="display:none; font-size:0.75rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:4px 8px; margin:2px 0 6px 20px; font-family:var(--font-mono);">
-                    🌐 Dashboard LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+            <div class="modal-body" style="overflow-y: visible;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- Left Column: General Behavior & Security -->
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">⚙️ General Behavior</div>
+                        <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
+                        <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
+                        <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
+                        <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port on attach error</label>
+                        <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
+                        <label class="form-check" title="When enabled, allows other devices on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
+                        <div id="lan-url-info" style="display:none; font-size:0.72rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:3px 6px; margin:2px 0 4px 18px; font-family:var(--font-mono);">
+                            🌐 LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+                        </div>
+                        <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
+                        <label class="form-check" title="When enabled, your PC automatically wakes from sleep on remote device activity."><input type="checkbox" id="opt-enable-wol"> Wake this PC on device activity (Wake-on-LAN)</label>
+                        
+                        <div class="form-group" style="margin-top: 6px; margin-bottom: 6px;">
+                            <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span>Polling Interval:</span>
+                                <span id="opt-polling-val" style="color:var(--accent-color); font-weight:700;">1.0s</span>
+                            </label>
+                            <input type="range" id="opt-polling-interval" min="0.5" max="5.0" step="0.5" value="1.0" class="form-control" style="cursor:pointer; padding: 1px 0;" oninput="document.getElementById('opt-polling-val').textContent = parseFloat(this.value).toFixed(1) + 's'">
+                        </div>
+
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 8px 0 4px 0;">🔒 Security & Hardening</div>
+                        <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF Protection</label>
+                        <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning</label>
+                        <label class="form-check" title="Protect against BadUSB attacks"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filter</label>
+                        <div id="badusb-options" style="display:none; margin:2px 0 4px 18px; font-size:0.72rem; background:rgba(0,0,0,0.25); padding:4px 8px; border-radius:4px;">
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage (Class 08h)</label>
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Network Adapters (02h/E0h)</label>
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards</label>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Device & Server Badge Overlays -->
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">🏷️ Device Badge Overlays</div>
+                        <label class="form-check"><input type="checkbox" id="opt-show-port"> Show USB/IP Port / Bus ID Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-speed"> Show USB Bus Speed Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-vid-pid"> Show Hardware VID:PID Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery %</label>
+
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">🖥️ Server Badge Overlays</div>
+                        <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-temp"> Show Server CPU Temperature</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-ram"> Show Server RAM Usage</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-uptime"> Show Server Uptime</label>
+                    </div>
                 </div>
-                <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
-                <label class="form-check" title="When enabled, your PC automatically wakes from sleep when any remote device is used (controllers, keyboards, mice) or when a new USB device is plugged into the server."><input type="checkbox" id="opt-enable-wol"> Wake this PC on remote device activity or new device plug-in (Wake-on-LAN)</label>
-                
-                <div class="form-group" style="margin-top: 8px;">
-                    <label style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>Background Polling Interval:</span>
-                        <span id="opt-polling-val" style="color:var(--accent-color); font-weight:700;">1.0s</span>
-                    </label>
-                    <input type="range" id="opt-polling-interval" min="0.5" max="5.0" step="0.5" value="1.0" class="form-control" style="cursor:pointer; padding: 2px 0;" oninput="document.getElementById('opt-polling-val').textContent = parseFloat(this.value).toFixed(1) + 's'">
-                </div>
-
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">🔒 Security & Hardening</div>
-                <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests to prevent Cross-Site Request Forgery (CSRF)"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF & Cross-Origin Protection</label>
-                <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints on first use (TOFU) to detect server spoofing"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning (Trust-On-First-Use)</label>
-                <label class="form-check" title="Protect against BadUSB attacks by restricting which device classes are allowed to auto-attach"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filtering</label>
-                <div id="badusb-options" style="display:none; margin:4px 0 6px 20px; font-size:0.75rem; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:4px;">
-                    <div style="color:var(--text-muted); margin-bottom:4px; font-weight:600;">Block auto-attaching these device types:</div>
-                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage / Flash Drives (Class 08h)</label>
-                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Virtual USB Network / Ethernet / Wi-Fi Adapters (Classes 02h/E0h)</label>
-                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards (Keystroke Injection Defense)</label>
-                </div>
-
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">🏷️ Device Badge Overlays</div>
-                <label class="form-check"><input type="checkbox" id="opt-show-port"> Show USB/IP Port / Bus ID Badges</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-speed"> Show USB Bus Speed Badges</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-vid-pid"> Show Hardware VID:PID Badges</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery Percentage</label>
-
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">🖥️ Server Badge Overlays</div>
-                <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-server-temp"> Show Server CPU Temperature Badges</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-server-ram"> Show Server RAM Usage Badges</label>
-                <label class="form-check"><input type="checkbox" id="opt-show-server-uptime"> Show Server Uptime Badges</label>
-
             </div>
             <div class="modal-footer" style="justify-content:space-between;">
                 <div style="display:flex; gap:6px;">
