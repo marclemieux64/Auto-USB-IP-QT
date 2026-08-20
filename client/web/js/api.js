@@ -120,11 +120,11 @@ const API = {
         return await res.json();
     },
 
-    async saveServerConfig(ip, config) {
+    async saveServerConfig(ip, config, token = "") {
         const res = await fetch("/api/save_server_config", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ip, config })
+            body: JSON.stringify({ ip, config, token })
         });
         return await res.json();
     },

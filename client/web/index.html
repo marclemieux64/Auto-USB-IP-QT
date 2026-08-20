@@ -7,8 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="/assets/branding/app-icon.svg">
     <link rel="alternate icon" type="image/png" href="/assets/branding/app-icon.png">
     <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/components.css?v=1787267658">
-    <link rel="stylesheet" href="/css/gamepad.css?v=1787267658">
+    <link rel="stylesheet" href="/css/components.css?v=1787268201">
+    <link rel="stylesheet" href="/css/gamepad.css?v=1787268201">
 </head>
 <body>
     <div class="header">
@@ -279,14 +279,15 @@
             </div>
 
             <!-- Remote Power & Action Controls -->
-            <div class="modal-footer" style="justify-content:space-between;">
-                <div style="display:flex; gap:6px;">
+            <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="restoreServerDefaultSettings()" title="Restore server options to default factory configuration"><img src="/icons/undo.png"> Restore Defaults</button>
                     <button class="btn btn-warning" onclick="restartServerDaemon()"><img src="/icons/refresh.png"> Restart Daemon</button>
                     <button class="btn btn-danger" onclick="rebootServerSystem()"><img src="/icons/power-cycle.png"> Reboot System</button>
                 </div>
                 <div style="display:flex; gap:6px;">
                     <button class="btn" onclick="closeServerSettingsModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveServerSettings()">Save Settings</button>
+                    <button class="btn btn-primary" onclick="saveServerSettings()"><img src="/icons/document-save.png"> Save Settings</button>
                 </div>
             </div>
         </div>
@@ -577,9 +578,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/js/api.js?v=1787267658.3.3"></script>
-    <script src="/js/dashboard.js?v=1787267658.3.3"></script>
-    <script src="/js/gamepad.js?v=1787267658.3.3"></script>
-    <script src="/js/console.js?v=1787267658.3.3"></script>
+    <script src="/js/api.js?v=1787268201.3.3"></script>
+    <script src="/js/dashboard.js?v=1787268201.3.3"></script>
+    <script src="/js/gamepad.js?v=1787268201.3.3"></script>
+    <script src="/js/console.js?v=1787268201.3.3"></script>
 </body>
 </html>

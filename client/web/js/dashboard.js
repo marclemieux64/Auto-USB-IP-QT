@@ -1029,6 +1029,17 @@ function closeServerSettingsModal() {
 
 async function saveServerSettings() {
     if (!activeServerSettingsIp) return;
+    const ip = activeServerSettingsIp;
+    const srv = (currentStatus.servers || []).find(s => s.ip === ip);
+    const existingToken = srv ? (srv.token || "") : "";
+    
+    // Prompt user for authentication token before saving
+    let token = prompt("Enter Server Security Token to authorize saving configuration on " + ip + " (leave blank if no token is set):", existingToken);
+    if (token === null) {
+        return;
+    }
+    token = token.trim();
+
     const discEl = document.getElementById("srv-opt-discovery");
     const cfgPayload = {
         enable_discovery: discEl ? discEl.checked : true,
@@ -1042,14 +1053,88 @@ async function saveServerSettings() {
         enable_wake_on_lan: document.getElementById("srv-opt-wol") ? document.getElementById("srv-opt-wol").checked : false,
         auto_rebind_on_boot: document.getElementById("srv-opt-rebind").checked
     };
+
+    const saveBtn = document.querySelector("#server-settings-modal .btn-primary");
+    const origText = saveBtn ? saveBtn.innerHTML : "";
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-inline"></span> Saving...';
+    }
+
     try {
-        const res = await API.saveServerConfig(activeServerSettingsIp, cfgPayload);
-        if (res.status === "ok") {
+        const res = await API.saveServerConfig(ip, cfgPayload, token);
+        if (res && res.status === "ok") {
             showToast("Server settings saved successfully.");
+            if (serverStatusCache[ip]) {
+                serverStatusCache[ip].config = res.config || cfgPayload;
+                saveServerStatusCache();
+            }
             closeServerSettingsModal();
+            fetchStatus();
+        } else {
+            alert(res.message || "Failed to save server settings: Unauthorized or invalid token.");
+            document.getElementById("srv-opt-token").focus();
         }
     } catch (e) {
-        alert("Failed to save server settings: " + e);
+        alert("Failed to save server settings: " + e.message);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origText;
+        }
+    }
+}
+
+async function restoreServerDefaultSettings() {
+    if (!activeServerSettingsIp) return;
+    const ip = activeServerSettingsIp;
+    if (!confirm("Are you sure you want to reset all server options on " + ip + " back to factory default configuration?")) {
+        return;
+    }
+    const srv = (currentStatus.servers || []).find(s => s.ip === ip);
+    const existingToken = srv ? (srv.token || "") : "";
+
+    let token = prompt("Enter Server Security Token to authorize resetting default configuration on " + ip + " (leave blank if no token is set):", existingToken);
+    if (token === null) {
+        return;
+    }
+    token = token.trim();
+
+    const defaultCfg = {
+        auto_bind: true,
+        startup_power_cycle: true,
+        vbus_off_delay: 2.5,
+        enable_auth: false,
+        auth_token: "",
+        enable_subnet_filter: false,
+        enable_discovery: true,
+        enable_wake_on_lan: false,
+        enable_tls: true,
+        auto_rebind_on_boot: true
+    };
+
+    populateServerSettingsForm({
+        status: "ok",
+        metrics: serverStatusCache[ip]?.metrics || { cpu_temp: "--", ram_usage: "--", uptime: "--", kernel: "--" },
+        config: defaultCfg,
+        blacklist: serverStatusCache[ip]?.blacklist || []
+    });
+
+    try {
+        const res = await API.saveServerConfig(ip, defaultCfg, token);
+        if (res && res.status === "ok") {
+            showToast("Server settings restored to defaults.");
+            if (serverStatusCache[ip]) {
+                serverStatusCache[ip].config = defaultCfg;
+                saveServerStatusCache();
+            }
+            closeServerSettingsModal();
+            fetchStatus();
+        } else {
+            alert(res.message || "Failed to reset defaults: Unauthorized or invalid token.");
+        }
+    } catch (e) {
+        alert("Error resetting default settings: " + e.message);
     }
 }
 

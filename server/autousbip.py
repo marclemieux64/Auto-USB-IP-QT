@@ -812,6 +812,12 @@ def start_control_socket_thread(killer: GracefulKiller):
                         elif cmd == "GET_CONFIG":
                             resp = json.dumps({"status": "ok", "config": load_server_config()})
                             conn.sendall(resp.encode("utf-8"))
+                        elif cmd in ("RESET_DEFAULT_CONFIG", "RESET_CONFIG"):
+                            cfg = dict(DEFAULT_SERVER_CONFIG)
+                            save_server_config(cfg)
+                            update_zeroconf_broadcast(cfg.get("enable_discovery", True))
+                            resp = json.dumps({"status": "ok", "config": cfg, "message": "Server settings restored to defaults."})
+                            conn.sendall(resp.encode("utf-8"))
                         elif cmd == "SET_CONFIG":
                             cfg = load_server_config()
                             new_cfg = req.get("config", {})

@@ -150,10 +150,17 @@ def handle_save_server_config(controller: Any, data: dict) -> dict:
     """Save remote server daemon configuration."""
     ip = data.get("ip", "")
     cfg = data.get("config", {})
+    token = str(data.get("token", "")).strip()
     srv = next((s for s in controller.servers if s.ip == ip), None)
-    token = srv.token if srv else ""
+    if not token and srv:
+        token = str(srv.token or "").strip()
     from core.server_control import set_server_config
-    return set_server_config(ip, cfg, token=token)
+    res = set_server_config(ip, cfg, token=token)
+    if res and res.get("status") == "ok":
+        if "auth_token" in cfg and srv:
+            srv.token = str(cfg["auth_token"]).strip()
+            controller.save_servers_to_config()
+    return res or {"status": "error", "message": "Failed to connect to server control socket."}
 
 
 def handle_restart_server_daemon(controller: Any, ip: str) -> dict:
