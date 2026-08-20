@@ -131,41 +131,46 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
 
     def render_system_icon(self, icon_name: str) -> bytes | None:
         custom_map = {
-            "systray-logo": self.web_root.parent / "assets" / "branding" / "systray-logo.png",
+            "systray-logo": self.assets_root / "branding" / "systray-logo.png",
         }
         if icon_name in custom_map and custom_map[icon_name].exists():
             return custom_map[icon_name].read_bytes()
 
         theme_map = {
-            "server-card": ["network-server", "computer", "server-database"],
-            "gamepad": ["input-gaming", "input-gamepad", "applications-games", "preferences-desktop-gaming"],
-            "generic-usb": ["drive-removable-media-usb", "drive-removable-media", "media-removable", "network-wired"],
-            "storage": ["drive-harddisk-usb", "drive-removable-media-usb", "drive-harddisk", "media-flash"],
-            "network-connect": ["network-connect", "list-add", "media-playback-start"],
-            "network-disconnect": ["network-disconnect", "list-remove", "media-playback-pause"],
-            "power-cycle": ["system-reboot", "view-refresh", "system-restart"],
-            "settings": ["preferences-system", "configure", "preferences-other"],
-            "add-server": ["network-server", "list-add", "server-database"],
-            "detach-all": ["edit-delete", "process-stop", "window-close"],
-            "detach-btn": ["list-remove", "window-close", "edit-delete"],
-            "rename": ["document-edit", "edit-rename", "accessories-text-editor"],
-            "blacklist": ["dialog-cancel", "action-unavailable", "security-medium"],
-            "refresh": ["view-refresh", "reload"],
-            "configure": ["configure", "preferences-system"],
-            "document-save": ["document-save", "document-export"],
-            "document-open": ["document-open", "document-import"],
-            "audio-card": ["audio-card", "audio-speakers", "audio-volume-high"],
-            "audio-volume-muted": ["audio-volume-muted", "audio-volume-off"],
-            "utilities-terminal": ["utilities-terminal", "terminal"],
-            "attached-header": ["network-wired", "network-connect"],
-            "available-header": ["network-workgroup", "network-server"],
-            "discovered-server": ["network-wireless", "network-server"],
-            "badge-port": ["network-wired", "drive-removable-media-usb"],
-            "badge-speed": ["speedometer", "emblem-speed", "utilities-system-monitor"],
-            "badge-vidpid": ["dialog-information", "help-about"],
-            "badge-server": ["network-server", "computer"],
-            "badge-battery": ["battery-good", "battery-full", "battery"],
-            "badge-latency": ["utilities-system-monitor", "view-refresh"]
+            "add-server": ["list-add-symbolic", "list-add", "document-new", "network-server"],
+            "badge-tls": ["security-high-symbolic", "security-high", "channel-secure-symbolic", "dialog-password", "lock"],
+            "server-card": ["network-server-symbolic", "network-server", "computer", "server-database"],
+            "discovered-server": ["network-wireless-symbolic", "network-wireless", "network-server"],
+            "gamepad": ["input-gaming-symbolic", "input-gaming", "input-gamepad", "applications-games", "preferences-desktop-gaming"],
+            "generic-usb": ["drive-removable-media-usb-symbolic", "drive-removable-media-usb", "drive-removable-media", "media-removable", "network-wired"],
+            "input-keyboard": ["input-keyboard-symbolic", "input-keyboard"],
+            "input-mouse": ["input-mouse-symbolic", "input-mouse"],
+            "camera-web": ["camera-web-symbolic", "camera-web"],
+            "storage": ["drive-harddisk-usb-symbolic", "drive-harddisk-usb", "drive-removable-media-usb", "drive-harddisk", "media-flash"],
+            "drive-harddisk": ["drive-harddisk-usb-symbolic", "drive-harddisk-usb", "drive-harddisk"],
+            "network-connect": ["network-connect", "list-add-symbolic", "list-add", "media-playback-start"],
+            "network-disconnect": ["network-disconnect", "list-remove-symbolic", "list-remove", "media-playback-pause"],
+            "power-cycle": ["system-reboot-symbolic", "system-reboot", "view-refresh-symbolic", "view-refresh", "system-restart"],
+            "settings": ["preferences-system-symbolic", "preferences-system", "configure", "preferences-other"],
+            "configure": ["configure", "preferences-system-symbolic", "preferences-system"],
+            "detach-all": ["list-remove-all-symbolic", "edit-delete-symbolic", "edit-delete", "process-stop", "window-close"],
+            "detach-btn": ["list-remove-symbolic", "list-remove", "window-close", "edit-delete"],
+            "rename": ["document-edit-symbolic", "document-edit", "edit-rename", "accessories-text-editor"],
+            "blacklist": ["dialog-cancel-symbolic", "dialog-cancel", "action-unavailable", "security-medium"],
+            "refresh": ["view-refresh-symbolic", "view-refresh", "reload"],
+            "document-save": ["document-save-symbolic", "document-save", "document-export"],
+            "document-open": ["document-open-symbolic", "document-open", "document-import"],
+            "audio-card": ["audio-card-symbolic", "audio-card", "audio-speakers", "audio-volume-high"],
+            "audio-volume-muted": ["audio-volume-muted-symbolic", "audio-volume-muted", "audio-volume-off"],
+            "utilities-terminal": ["utilities-terminal-symbolic", "utilities-terminal", "terminal"],
+            "attached-header": ["network-wired-symbolic", "network-wired", "network-connect"],
+            "available-header": ["network-workgroup-symbolic", "network-workgroup", "network-server"],
+            "badge-port": ["network-wired-symbolic", "network-wired", "drive-removable-media-usb"],
+            "badge-speed": ["speedometer", "emblem-speed", "utilities-system-monitor-symbolic", "utilities-system-monitor"],
+            "badge-vidpid": ["dialog-information-symbolic", "dialog-information", "help-about"],
+            "badge-server": ["network-server-symbolic", "network-server", "computer"],
+            "badge-battery": ["battery-good-symbolic", "battery-good", "battery-full", "battery"],
+            "badge-latency": ["utilities-system-monitor-symbolic", "utilities-system-monitor", "view-refresh"]
         }
 
         names = theme_map.get(icon_name, [icon_name])
@@ -175,15 +180,35 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             if not icon.isNull():
                 break
 
-        if icon.isNull():
-            icon = QIcon.fromTheme("drive-removable-media-usb", QIcon.fromTheme("dialog-information"))
-
+        # If desktop theme icon was found, render it into PNG
         if not icon.isNull():
             pix = icon.pixmap(QSize(48, 48))
+            if not pix.isNull():
+                buf = QBuffer()
+                buf.open(QIODevice.OpenModeFlag.WriteOnly)
+                pix.save(buf, "PNG")
+                return bytes(buf.data())
+
+        # Fallback to bundled asset if headless / theme icon missing
+        fallback_png = self.assets_root / "icons" / f"{icon_name}.png"
+        if fallback_png.exists():
+            return fallback_png.read_bytes()
+
+        fallback_svg = self.assets_root / "icons" / f"{icon_name}.svg"
+        if fallback_svg.exists():
+            from PyQt6.QtSvg import QSvgRenderer
+            from PyQt6.QtGui import QPainter, QColor, QImage
+            renderer = QSvgRenderer(str(fallback_svg))
+            img = QImage(48, 48, QImage.Format.Format_ARGB32_Premultiplied)
+            img.fill(QColor(0, 0, 0, 0))
+            painter = QPainter(img)
+            renderer.render(painter)
+            painter.end()
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
-            pix.save(buf, "PNG")
+            img.save(buf, "PNG")
             return bytes(buf.data())
+
         return None
 
     def do_HEAD(self):
@@ -195,7 +220,13 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             path = parsed.path
             query = parse_qs(parsed.query)
 
-            # 1. Root & Static Files
+            # 1. Dynamic Desktop Theme Icons (/icons/<name>.png) - Highest priority to reflect system theme!
+            if path.startswith("/icons/"):
+                icon_name = path[len("/icons/"):].replace(".png", "").replace(".svg", "")
+                self.serve_icon(icon_name)
+                return
+
+            # 2. Root & Static Files
             if path == "/" or path == "/index.html":
                 index_path = self.web_root / "index.html"
                 self.serve_static_file(index_path)
@@ -226,12 +257,6 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             parent_file = self.web_root.parent / path.lstrip("/")
             if parent_file.exists() and parent_file.is_file():
                 self.serve_static_file(parent_file)
-                return
-
-            # 2. Dynamic Desktop Icons
-            if path.startswith("/icons/"):
-                icon_name = path[len("/icons/"):].replace(".png", "")
-                self.serve_icon(icon_name)
                 return
 
             # 3. REST API Routes
