@@ -358,21 +358,41 @@
     border-radius: 10px;
     width: 100%;
     max-width: 520px;
-    max-height: 90vh;
+    max-height: 88vh;
     display: flex;
     flex-direction: column;
     padding: 14px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .modal-header h3 {

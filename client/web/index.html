@@ -68,23 +68,25 @@
                 <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/add-server.png" style="width:20px;height:20px;object-fit:contain;"> Add USB/IP Server</h3>
                 <button class="btn btn-danger" onclick="closeAddServerModal()">Close</button>
             </div>
-            <div class="form-group">
-                <label>Server IP / Hostname:</label>
-                <input type="text" id="add-srv-ip" class="form-control" placeholder="192.168.1.100">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Server IP / Hostname:</label>
+                    <input type="text" id="add-srv-ip" class="form-control" placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label>Port (Default 3240):</label>
+                    <input type="number" id="add-srv-port" class="form-control" value="3240">
+                </div>
+                <div class="form-group">
+                    <label>Display Name (Optional Alias):</label>
+                    <input type="text" id="add-srv-name" class="form-control" placeholder="e.g. Raspberry Pi Living Room">
+                </div>
+                <div class="form-group">
+                    <label>Auth Token (If server requires authentication):</label>
+                    <input type="password" id="add-srv-token" class="form-control" placeholder="Optional security token">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Port (Default 3240):</label>
-                <input type="number" id="add-srv-port" class="form-control" value="3240">
-            </div>
-            <div class="form-group">
-                <label>Display Name (Optional Alias):</label>
-                <input type="text" id="add-srv-name" class="form-control" placeholder="e.g. Raspberry Pi Living Room">
-            </div>
-            <div class="form-group">
-                <label>Auth Token (If server requires authentication):</label>
-                <input type="password" id="add-srv-token" class="form-control" placeholder="Optional security token">
-            </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+            <div class="modal-footer">
                 <button class="btn" onclick="closeAddServerModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="submitAddServer()">Save & Connect</button>
             </div>
@@ -98,12 +100,14 @@
                 <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/rename.png" style="width:20px;height:20px;object-fit:contain;"> Set Custom Nickname</h3>
                 <button class="btn btn-danger" onclick="closeNicknameModal()">Close</button>
             </div>
-            <div id="nick-device-title" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;"></div>
-            <div class="form-group">
-                <label>Custom Name / Alias:</label>
-                <input type="text" id="nick-input" class="form-control" placeholder="e.g. My DualSense Controller">
+            <div class="modal-body">
+                <div id="nick-device-title" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;"></div>
+                <div class="form-group">
+                    <label>Custom Name / Alias:</label>
+                    <input type="text" id="nick-input" class="form-control" placeholder="e.g. My DualSense Controller">
+                </div>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+            <div class="modal-footer">
                 <button class="btn" onclick="closeNicknameModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveNickname()">Save Nickname</button>
             </div>
@@ -117,54 +121,55 @@
                 <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Client Options</h3>
                 <button class="btn btn-danger" onclick="closeClientOptionsModal()">Close</button>
             </div>
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 8px;">General Behavior</div>
-            <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
-            <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
-            <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
-            <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
-            <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port / clear zombies on attach error</label>
-            <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
-            <label class="form-check" title="When enabled, allows other phones, laptops, and PCs on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
-            <div id="lan-url-info" style="display:none; font-size:0.75rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:4px 8px; margin:2px 0 6px 20px; font-family:var(--font-mono);">
-                🌐 Dashboard LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
-            </div>
-            <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
-            <label class="form-check" title="When enabled, your PC automatically wakes from sleep when any remote device is used (controllers, keyboards, mice) or when a new USB device is plugged into the server."><input type="checkbox" id="opt-enable-wol"> Wake this PC on remote device activity or new device plug-in (Wake-on-LAN)</label>
-            
-            <div class="form-group" style="margin-top: 8px;">
-                <label style="display:flex; justify-content:space-between; align-items:center;">
-                    <span>Background Polling Interval:</span>
-                    <span id="opt-polling-val" style="color:var(--accent-color); font-weight:700;">1.0s</span>
-                </label>
-                <input type="range" id="opt-polling-interval" min="0.5" max="5.0" step="0.5" value="1.0" class="form-control" style="cursor:pointer; padding: 2px 0;" oninput="document.getElementById('opt-polling-val').textContent = parseFloat(this.value).toFixed(1) + 's'">
-            </div>
+            <div class="modal-body">
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 8px;">General Behavior</div>
+                <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
+                <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
+                <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
+                <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
+                <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port / clear zombies on attach error</label>
+                <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
+                <label class="form-check" title="When enabled, allows other phones, laptops, and PCs on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
+                <div id="lan-url-info" style="display:none; font-size:0.75rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:4px 8px; margin:2px 0 6px 20px; font-family:var(--font-mono);">
+                    🌐 Dashboard LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+                </div>
+                <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
+                <label class="form-check" title="When enabled, your PC automatically wakes from sleep when any remote device is used (controllers, keyboards, mice) or when a new USB device is plugged into the server."><input type="checkbox" id="opt-enable-wol"> Wake this PC on remote device activity or new device plug-in (Wake-on-LAN)</label>
+                
+                <div class="form-group" style="margin-top: 8px;">
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>Background Polling Interval:</span>
+                        <span id="opt-polling-val" style="color:var(--accent-color); font-weight:700;">1.0s</span>
+                    </label>
+                    <input type="range" id="opt-polling-interval" min="0.5" max="5.0" step="0.5" value="1.0" class="form-control" style="cursor:pointer; padding: 2px 0;" oninput="document.getElementById('opt-polling-val').textContent = parseFloat(this.value).toFixed(1) + 's'">
+                </div>
 
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">🔒 Security & Hardening</div>
-            <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests to prevent Cross-Site Request Forgery (CSRF)"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF & Cross-Origin Protection</label>
-            <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints on first use (TOFU) to detect server spoofing"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning (Trust-On-First-Use)</label>
-            <label class="form-check" title="Protect against BadUSB attacks by restricting which device classes are allowed to auto-attach"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filtering</label>
-            <div id="badusb-options" style="display:none; margin:4px 0 6px 20px; font-size:0.75rem; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:4px;">
-                <div style="color:var(--text-muted); margin-bottom:4px; font-weight:600;">Block auto-attaching these device types:</div>
-                <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage / Flash Drives (Class 08h)</label>
-                <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Virtual USB Network / Ethernet / Wi-Fi Adapters (Classes 02h/E0h)</label>
-                <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards (Keystroke Injection Defense)</label>
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">🔒 Security & Hardening</div>
+                <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests to prevent Cross-Site Request Forgery (CSRF)"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF & Cross-Origin Protection</label>
+                <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints on first use (TOFU) to detect server spoofing"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning (Trust-On-First-Use)</label>
+                <label class="form-check" title="Protect against BadUSB attacks by restricting which device classes are allowed to auto-attach"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filtering</label>
+                <div id="badusb-options" style="display:none; margin:4px 0 6px 20px; font-size:0.75rem; background:rgba(0,0,0,0.25); padding:6px 10px; border-radius:4px;">
+                    <div style="color:var(--text-muted); margin-bottom:4px; font-weight:600;">Block auto-attaching these device types:</div>
+                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage / Flash Drives (Class 08h)</label>
+                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Virtual USB Network / Ethernet / Wi-Fi Adapters (Classes 02h/E0h)</label>
+                    <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards (Keystroke Injection Defense)</label>
+                </div>
+
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">Badge & Display Overlays</div>
+                <label class="form-check"><input type="checkbox" id="opt-show-port"> Show USB/IP Port / Bus ID Badges</label>
+                <label class="form-check"><input type="checkbox" id="opt-show-speed"> Show USB Bus Speed Badges</label>
+                <label class="form-check"><input type="checkbox" id="opt-show-vid-pid"> Show Hardware VID:PID Badges</label>
+                <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery Percentage</label>
+                <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
+
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">Backup & Restore</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="exportClientBackup()"><img src="/icons/document-save.png"> Export Backup</button>
+                    <button class="btn" onclick="triggerImportClientBackup()"><img src="/icons/document-open.png"> Import Backup</button>
+                    <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
+                </div>
             </div>
-
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">Badge & Display Overlays</div>
-            <label class="form-check"><input type="checkbox" id="opt-show-port"> Show USB/IP Port / Bus ID Badges</label>
-            <label class="form-check"><input type="checkbox" id="opt-show-speed"> Show USB Bus Speed Badges</label>
-            <label class="form-check"><input type="checkbox" id="opt-show-vid-pid"> Show Hardware VID:PID Badges</label>
-            <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery Percentage</label>
-            <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
-
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">Backup & Restore</div>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn" onclick="exportClientBackup()"><img src="/icons/document-save.png"> Export Backup</button>
-                <button class="btn" onclick="triggerImportClientBackup()"><img src="/icons/document-open.png"> Import Backup</button>
-                <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
-            </div>
-
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px; border-top:1px solid var(--border-color); padding-top:10px;">
+            <div class="modal-footer">
                 <button class="btn" onclick="closeClientOptionsModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveClientOptions()">Apply Settings</button>
             </div>
@@ -240,39 +245,39 @@
                 <button class="btn btn-danger" onclick="closeServerSettingsModal()">Close</button>
             </div>
 
-            <!-- Server System Health Metrics -->
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; background: #12141c; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">CPU Temp:</span> <span id="srv-m-temp" class="badge">--</span></div>
-                <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">RAM:</span> <span id="srv-m-ram" style="font-weight:600; color:#fff;">--</span></div>
-                <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">Uptime:</span> <span id="srv-m-uptime" style="font-weight:600; color:#fff;">--</span></div>
-                <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">Kernel:</span> <span id="srv-m-kernel" style="font-weight:600; color:#fff;">--</span></div>
+            <div class="modal-body">
+                <!-- Server System Health Metrics -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; background: #12141c; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">CPU Temp:</span> <span id="srv-m-temp" class="badge">--</span></div>
+                    <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">RAM:</span> <span id="srv-m-ram" style="font-weight:600; color:#fff;">--</span></div>
+                    <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">Uptime:</span> <span id="srv-m-uptime" style="font-weight:600; color:#fff;">--</span></div>
+                    <div style="font-size: 0.75rem;"><span style="color:var(--text-muted);">Kernel:</span> <span id="srv-m-kernel" style="font-weight:600; color:#fff;">--</span></div>
+                </div>
+
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">Remote Daemon Configuration</div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-tls"> Enable TLS 1.3 / 1.2 Socket Encryption</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-discovery"> Broadcast Network Discovery (mDNS / Zeroconf)</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-auth"> Enable Security Token Authentication</label>
+                <div class="form-group" style="margin-left: 20px;">
+                    <label>Required Auth Token:</label>
+                    <input type="password" id="srv-opt-token" class="form-control" placeholder="Server authentication secret">
+                </div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-subnet"> Restrict control socket to local LAN subnets</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-rebind"> Auto re-bind physical devices on boot & hotplug</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-startup-power"> Power cycle USB ports (VBUS) on daemon startup</label>
+                <div class="form-group" style="margin-left: 20px; display:flex; align-items:center; gap:8px;">
+                    <label style="margin:0; font-size:0.8rem;">VBUS Power-off Delay (seconds):</label>
+                    <input type="number" id="srv-opt-vbus-delay" class="form-control" style="width:75px; padding:2px 6px;" step="0.5" min="0.5" max="10.0" value="2.5">
+                </div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-wol"> Send Wake-on-LAN to registered clients on USB input activity</label>
+
+                <!-- Blacklist Management -->
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">Server-Side Hardware Blacklist</div>
+                <div id="srv-blacklist-list" style="display:flex; flex-direction:column; gap:4px; max-height:100px; overflow-y:auto; margin-bottom:4px;"></div>
             </div>
 
-
-
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">Remote Daemon Configuration</div>
-            <label class="form-check"><input type="checkbox" id="srv-opt-tls"> Enable TLS 1.3 / 1.2 Socket Encryption</label>
-            <label class="form-check"><input type="checkbox" id="srv-opt-discovery"> Broadcast Network Discovery (mDNS / Zeroconf)</label>
-            <label class="form-check"><input type="checkbox" id="srv-opt-auth"> Enable Security Token Authentication</label>
-            <div class="form-group" style="margin-left: 20px;">
-                <label>Required Auth Token:</label>
-                <input type="password" id="srv-opt-token" class="form-control" placeholder="Server authentication secret">
-            </div>
-            <label class="form-check"><input type="checkbox" id="srv-opt-subnet"> Restrict control socket to local LAN subnets</label>
-            <label class="form-check"><input type="checkbox" id="srv-opt-rebind"> Auto re-bind physical devices on boot & hotplug</label>
-            <label class="form-check"><input type="checkbox" id="srv-opt-startup-power"> Power cycle USB ports (VBUS) on daemon startup</label>
-            <div class="form-group" style="margin-left: 20px; display:flex; align-items:center; gap:8px;">
-                <label style="margin:0; font-size:0.8rem;">VBUS Power-off Delay (seconds):</label>
-                <input type="number" id="srv-opt-vbus-delay" class="form-control" style="width:75px; padding:2px 6px;" step="0.5" min="0.5" max="10.0" value="2.5">
-            </div>
-            <label class="form-check"><input type="checkbox" id="srv-opt-wol"> Send Wake-on-LAN to registered clients on USB input activity</label>
-
-            <!-- Blacklist Management -->
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">Server-Side Hardware Blacklist</div>
-            <div id="srv-blacklist-list" style="display:flex; flex-direction:column; gap:4px; max-height:80px; overflow-y:auto; margin-bottom:12px;"></div>
-
-            <!-- Remote Power Controls -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px solid var(--border-color); padding-top:10px;">
+            <!-- Remote Power & Action Controls -->
+            <div class="modal-footer" style="justify-content:space-between;">
                 <div style="display:flex; gap:6px;">
                     <button class="btn btn-warning" onclick="restartServerDaemon()"><img src="/icons/refresh.png"> Restart Daemon</button>
                     <button class="btn btn-danger" onclick="rebootServerSystem()"><img src="/icons/power-cycle.png"> Reboot System</button>
