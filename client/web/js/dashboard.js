@@ -269,11 +269,9 @@ window.getKenneyControllerHero = getKenneyControllerHero;
 
 function getDeviceIllustrationUrl(d) {
     if (!d) return "/icons/generic-usb.png";
-    if (d.is_storage) return "/icons/drive-harddisk.png";
+    if (d.is_storage) return "/icons/storage.png";
     if (d.has_audio && !d.is_controller) return "/icons/audio-card.png";
-    if (d.is_controller) {
-        return getKenneyControllerHero(d.family || "", d.clean_name || "", d.controller_type || "", (d.desc || "") + " " + (d.raw_desc || "") + " " + (d.vid_pid || "") + " " + (d.identifier_key || ""));
-    }
+    if (d.is_controller) return "/icons/gamepad.png";
     if (d.icon_alias) return `/icons/${d.icon_alias}.png`;
     return "/icons/generic-usb.png";
 }
@@ -307,7 +305,7 @@ function renderAttachedDevices() {
         const isAudioActive = (d.audio_enabled !== false);
         const btnAudio = d.has_audio ? `<button class="btn ${isAudioActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleDeviceAudio('${d.port}', ${isAudioActive})"><img src="/icons/${isAudioActive ? 'audio-card' : 'audio-volume-muted'}.png"> Audio: ${isAudioActive ? 'On' : 'Off'}</button>` : "";
         const isMouseActive = (d.touchpad_mouse_enabled !== false);
-        const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/assets/kenney_input/Keyboard%20&%20Mouse/Vector/mouse.svg" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
+        const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/icons/input-mouse.png" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
 
         return `
             <div class="card">

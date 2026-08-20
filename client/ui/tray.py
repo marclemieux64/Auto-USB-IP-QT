@@ -18,25 +18,27 @@ class TrayManager(QObject):
         self.tray = QSystemTrayIcon(self.icon, self.app)
         self.tray_menu = QMenu()
 
+        icons_dir = Path(__file__).resolve().parent.parent / "assets" / "icons"
+
         act_detach_all = self.tray_menu.addAction(
-            QIcon.fromTheme("list-remove-all-symbolic", QIcon.fromTheme("edit-delete")), "Detach All Devices"
+            QIcon(str(icons_dir / "detach-all.png")), "Detach All Devices"
         )
         act_detach_all.triggered.connect(self.controller.detach_all_devices)
 
         act_restart = self.tray_menu.addAction(
-            QIcon.fromTheme("view-refresh"), "Restart Client"
+            QIcon(str(icons_dir / "refresh.png")), "Restart Client"
         )
         act_restart.triggered.connect(self.controller.restart)
 
         act_options = self.tray_menu.addAction(
-            QIcon.fromTheme("configure"), "Options..."
+            QIcon(str(icons_dir / "configure.png")), "Options..."
         )
         act_options.triggered.connect(self.controller.open_options_dialog)
 
         self.tray_menu.addSeparator()
 
         act_quit = self.tray_menu.addAction(
-            QIcon.fromTheme("application-exit"), "Quit"
+            QIcon(str(icons_dir / "detach-btn.png")), "Quit"
         )
         act_quit.triggered.connect(self.app.quit)
 

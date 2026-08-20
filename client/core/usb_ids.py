@@ -217,6 +217,12 @@ class UsbIdsDatabase:
         d_lower = desc.lower()
         if any(w in d_lower for w in ("controller", "gamepad", "joystick", "xbox", "playstation", "nintendo", "steam", "dualshock", "dualsense", "pad", "8bitdo")):
             return "gamepad"
+        if any(w in d_lower for w in ("keyboard", "keypad")):
+            return "input-keyboard"
+        if any(w in d_lower for w in ("mouse", "trackball", "touchpad")):
+            return "input-mouse"
+        if any(w in d_lower for w in ("camera", "webcam", "video")):
+            return "camera-web"
         if any(w in d_lower for w in ("storage", "flash", "drive", "disk", "usb mass")):
             return "storage"
         if any(w in d_lower for w in ("audio", "headset", "headphone", "sound", "dac", "mic", "microphone", "speaker")):
