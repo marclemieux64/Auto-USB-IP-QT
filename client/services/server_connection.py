@@ -199,6 +199,7 @@ class ServerConnection:
         self.name = name.strip()
         self.token = token.strip()
         self.tls = tls
+        self.auth_failed = getattr(self, "auth_failed", False)
         self.latency_ms: float | None = None
         self._ping_result: tuple[float, bool] = (0.0, False)
 
@@ -233,7 +234,7 @@ class ServerConnection:
         return status
 
     def to_dict(self) -> dict:
-        return {"ip": self.ip, "port": self.port, "enabled": self.enabled, "name": self.name, "token": self.token, "tls": self.tls}
+        return {"ip": self.ip, "port": self.port, "enabled": self.enabled, "name": self.name, "token": self.token, "tls": self.tls, "auth_failed": bool(getattr(self, "auth_failed", False))}
 
     @classmethod
     def from_dict(cls, data: dict) -> ServerConnection:

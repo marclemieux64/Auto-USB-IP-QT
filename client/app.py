@@ -204,6 +204,12 @@ class AutoUsbipApp(QObject):
     # Device Operations
     def attach_single_device(self, dev: AvailableDevice):
         if hasattr(self, "scanner"):
+            srv = next((s for s in self.scanner.servers if s.ip == dev.server_ip), None)
+            if srv and getattr(srv, "enabled", True):
+                res_devs = get_remote_usb_devices_info(srv.ip, token=getattr(srv, "token", ""))
+                if res_devs is None:
+                    logger.warning(f"[Security] Rejecting attach: Server {dev.server_ip} requires a valid authentication token.")
+                    return
             self.scanner.ignored_devices.pop((dev.server_ip, dev.busid), None)
         attach_device(dev.server_ip, dev.busid)
         if hasattr(self, "scanner"):

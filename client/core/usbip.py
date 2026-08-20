@@ -82,11 +82,13 @@ def get_remote_usb_devices_info(ip: str, token: str = "") -> list[tuple[str, str
     devices: list[tuple[str, str]] = []
 
     # 1. Query server control socket on port 3241 via encrypted TLS ServerControlClient
+    server_has_control_daemon = False
     try:
         from core.server_control import ServerControlClient
         client = ServerControlClient(ip, token=token, timeout=1.5, use_tls=True)
-        resp_data = client.get_status()
-        if resp_data:
+        resp_data = client.get_devices()
+        if resp_data is not None:
+            server_has_control_daemon = True
             if resp_data.get("status") == "ok" and "devices" in resp_data:
                 bound = set(resp_data.get("currently_bound", []))
                 for bus_id, dev_title in resp_data["devices"].items():
@@ -96,11 +98,17 @@ def get_remote_usb_devices_info(ip: str, token: str = "") -> list[tuple[str, str
                     REMOTE_DEVICE_NAME_CACHE[(ip.strip(), bus_id.strip())] = dev_title
                 return devices
             elif resp_data.get("status") == "error" and "Unauthorized" in resp_data.get("message", ""):
+                # Authentication token is missing or invalid! Strictly return None so no devices are attached or exposed.
+                logger.warning(f"[Security] Server {ip} authentication failed: Valid token required.")
                 return None
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Server control client check error for {ip}: {e}")
 
-    # 2. Fallback to standard usbip list -p -r
+    # If the server has an Auto-USBIP daemon with auth or was reached, do not bypass auth.
+    if server_has_control_daemon:
+        return None
+
+    # 2. Fallback to standard raw usbip list -p -r only for legacy/unmanaged USB/IP servers without Auto-USBIP daemon
     try:
         p = subprocess.run(_get_usbip_cmd(["list", "-p", "-r", ip]), capture_output=True, text=True, timeout=1.5)
         if p.returncode != 0:

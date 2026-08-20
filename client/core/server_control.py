@@ -118,6 +118,9 @@ class ServerControlClient:
 
         return None
 
+    def get_devices(self) -> dict | None:
+        return self._send_cmd({"cmd": "GET_DEVICES"})
+
     def get_status(self) -> dict | None:
         return self._send_cmd({"cmd": "GET_STATUS"})
 

@@ -113,11 +113,13 @@ class DeviceScanner(QThread):
                     online_servers.append(s)
                     res_devs = get_remote_usb_devices_info(s.ip, token=getattr(s, "token", ""))
                     if res_devs is None:
+                        s.auth_failed = True
                         if (s.ip, "auth_prompted") not in self.ignored_devices:
                             self.ignored_devices[(s.ip, "auth_prompted")] = "true"
                             self.signals.auth_required.emit(s)
                         continue
                     else:
+                        s.auth_failed = False
                         self.ignored_devices.pop((s.ip, "auth_prompted"), None)
 
                     for dev_id, dev_desc in res_devs:
