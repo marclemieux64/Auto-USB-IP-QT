@@ -162,16 +162,17 @@
                 <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery Percentage</label>
                 <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
 
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 12px 0 8px 0;">Backup & Restore</div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn" onclick="exportClientBackup()"><img src="/icons/document-save.png"> Export Backup</button>
-                    <button class="btn" onclick="triggerImportClientBackup()"><img src="/icons/document-open.png"> Import Backup</button>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="exportClientBackup()" title="Export all client settings and server configs to JSON"><img src="/icons/document-save.png"> Export Backup</button>
+                    <button class="btn" onclick="triggerImportClientBackup()" title="Import settings from a previously exported JSON backup"><img src="/icons/document-open.png"> Import Backup</button>
                     <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeClientOptionsModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveClientOptions()">Apply Settings</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="closeClientOptionsModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveClientOptions()">Apply Settings</button>
+                </div>
             </div>
         </div>
     </div>
