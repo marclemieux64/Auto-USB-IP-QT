@@ -46,16 +46,12 @@ def handle_remove_server(controller: Any, ip: str, port: int) -> dict:
         if not (s.ip.strip().lower() == clean_ip and int(s.port) == port)
     ]
     
-    # Detach any device originating from this server or all if no servers remain
-    for d in get_imported_devices():
-        d_s_ip = getattr(d, "server_ip", "").strip().lower()
-        d_port = getattr(d, "port", "")
-        pair = port_map.get(str(d_port))
-        if d_s_ip == clean_ip or (pair and pair[0].strip().lower() == clean_ip) or not remaining_servers:
-            detach_port(str(d_port))
-
+    # 1. Update controller server state and save immediately so status calls see it removed instantly
+    controller.servers = remaining_servers
+    controller.save_servers_to_config()
+    
     if hasattr(controller, "scanner"):
-        # Immediately update scanner in-memory maps so next status call is instantaneous
+        controller.scanner.set_servers(controller.servers)
         if not remaining_servers:
             if hasattr(controller.scanner, "last_device_map"):
                 controller.scanner.last_device_map.clear()
@@ -65,27 +61,31 @@ def handle_remove_server(controller: Any, ip: str, port: int) -> dict:
             if hasattr(controller.scanner, "last_device_map"):
                 controller.scanner.last_device_map = {
                     k: d for k, d in controller.scanner.last_device_map.items()
-                    if getattr(d, "server_ip", "") != ip
+                    if getattr(d, "server_ip", "").strip().lower() != clean_ip
                 }
             if hasattr(controller.scanner, "available_devices"):
                 controller.scanner.available_devices = [
                     d for d in controller.scanner.available_devices
-                    if getattr(d, "server_ip", "") != ip
+                    if getattr(d, "server_ip", "").strip().lower() != clean_ip
                 ]
 
-        # Clear all memory of this server's ignored/attached devices
         keys_to_del = [
             k for k in list(controller.scanner.ignored_devices.keys())
-            if (isinstance(k, tuple) and len(k) > 0 and str(k[0]).strip().lower() == ip.strip().lower())
-            or (isinstance(k, str) and ip.strip().lower() in k.lower())
+            if (isinstance(k, tuple) and len(k) > 0 and str(k[0]).strip().lower() == clean_ip)
+            or (isinstance(k, str) and clean_ip in k.lower())
         ]
         for k in keys_to_del:
             controller.scanner.ignored_devices.pop(k, None)
 
-    controller.servers = remaining_servers
-    controller.save_servers_to_config()
+    # 2. Detach any devices originating from this removed server
+    for d in get_imported_devices():
+        d_s_ip = getattr(d, "server_ip", "").strip().lower()
+        d_port = getattr(d, "port", "")
+        pair = port_map.get(str(d_port))
+        if d_s_ip == clean_ip or (pair and pair[0].strip().lower() == clean_ip) or not remaining_servers:
+            detach_port(str(d_port))
+
     if hasattr(controller, "scanner"):
-        controller.scanner.set_servers(controller.servers)
         controller.scanner.trigger_scan()
 
     return {"status": "ok", "message": f"Server {ip}:{port} removed and devices detached"}

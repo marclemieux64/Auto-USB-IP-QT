@@ -9,6 +9,7 @@ let currentStatus = {
 
 const pendingDetachedPorts = {};
 const pendingAttachDevices = {};
+const pendingRemovedServers = {};
 
 let editingNicknameKey = null;
 let activeServerSettingsIp = null;
@@ -75,6 +76,20 @@ async function fetchStatus() {
                     if (!exists) {
                         data.available_devices.push(item.dev);
                     }
+                }
+            }
+        }
+
+        // Reconcile pending removed servers
+        for (const [ip, ts] of Object.entries(pendingRemovedServers)) {
+            if (now - ts > 6000) {
+                delete pendingRemovedServers[ip];
+            } else {
+                if (data.servers) {
+                    data.servers = data.servers.filter(s => s.ip !== ip);
+                }
+                if (data.available_devices) {
+                    data.available_devices = data.available_devices.filter(d => d.server_ip !== ip);
                 }
             }
         }
@@ -467,6 +482,7 @@ async function toggleServer(encodedIp) {
 async function removeServer(encodedIp, port) {
     const ip = decodeURIComponent(encodedIp);
     if (!confirm(`Remove server ${ip}:${port}?`)) return;
+    pendingRemovedServers[ip] = Date.now();
     if (currentStatus.servers) {
         currentStatus.servers = currentStatus.servers.filter(s => !(s.ip === ip && s.port === port));
         if (currentStatus.available_devices) {
