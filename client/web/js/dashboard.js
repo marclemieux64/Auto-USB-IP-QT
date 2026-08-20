@@ -170,7 +170,7 @@ function renderServers() {
             if (s.is_alive) {
                 badges.push('<span class="badge badge-online">Online</span>');
                 if (s.tls !== false) {
-                    badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2">🔒 TLS</span>');
+                    badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png" style="width:12px;height:12px;object-fit:contain;vertical-align:-1px;margin-right:3px;">TLS</span>');
                 }
                 if (cfg.show_latency && s.latency_ms != null) {
                     badges.push(`<span class="badge badge-latency"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
