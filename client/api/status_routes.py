@@ -184,11 +184,23 @@ def handle_status(controller: Any) -> dict:
         d_name = d.get("name", "").strip().lower()
         if d_ip in configured_ips or (d_name and (d_name in configured_ips or d_name in configured_names)):
             continue
+        
+        auth_req = bool(d.get("auth_required", False))
+        if not auth_req and d.get("ip"):
+            try:
+                from core.server_control import ServerControlClient
+                probe = ServerControlClient(d.get("ip", ""), port=3241, token="", timeout=0.3, use_tls=True).get_devices()
+                if probe and probe.get("status") == "error" and "Unauthorized" in probe.get("message", ""):
+                    auth_req = True
+                    d["auth_required"] = True
+            except Exception:
+                pass
+
         discovered_data.append({
             "name": d.get("name", ""),
             "ip": d.get("ip", ""),
             "port": d.get("port", 3240),
-            "auth_required": d.get("auth_required", False),
+            "auth_required": auth_req,
         })
 
     cfg_dict = {

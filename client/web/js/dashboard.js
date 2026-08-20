@@ -176,9 +176,7 @@ function renderServers() {
                 if (s.tls !== false) {
                     badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png" style="width:15px;height:15px;object-fit:contain;vertical-align:-1px;margin-right:3px;">TLS</span>');
                 }
-                if (s.token && !s.auth_failed) {
-                    badges.push('<span class="badge badge-warning" title="Server authentication token active">🔒 Authenticated</span>');
-                }
+
                 if (cfg.show_latency && s.latency_ms != null) {
                     badges.push(`<span class="badge badge-latency"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
                 }
@@ -397,7 +395,7 @@ function renderDiscoveredServers() {
             `<span class="badge"><img src="/icons/badge-server.png"> Port ${d.port}</span>`
         ];
         if (d.auth_required) {
-            badges.push('<span class="badge badge-warning">🔒 Token Protected</span>');
+            badges.push('<span class="badge badge-warning" title="This server requires an authentication token"><img src="/icons/configure.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;">Token Required</span>');
         }
         return `
             <div class="card">
