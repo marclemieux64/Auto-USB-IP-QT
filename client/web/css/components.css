@@ -68,8 +68,8 @@
 }
 
 .section-header img {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
 }
 
@@ -102,8 +102,8 @@
 }
 
 .card-icon {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     background: #1d212f;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
@@ -111,7 +111,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding: 3px;
+    padding: 4px;
     box-sizing: border-box;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -119,8 +119,8 @@
 .card-icon img {
     width: 100%;
     height: 100%;
-    max-width: 34px;
-    max-height: 34px;
+    max-width: 38px;
+    max-height: 38px;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
@@ -177,8 +177,8 @@
 }
 
 .badge img {
-    width: 11px;
-    height: 11px;
+    width: 13px;
+    height: 13px;
     object-fit: contain;
 }
 
@@ -252,8 +252,8 @@
 }
 
 .btn img {
-    width: 13px;
-    height: 13px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
 }
 

@@ -170,7 +170,7 @@ function renderServers() {
             if (s.is_alive) {
                 badges.push('<span class="badge badge-online">Online</span>');
                 if (s.tls !== false) {
-                    badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png" style="width:12px;height:12px;object-fit:contain;vertical-align:-1px;margin-right:3px;">TLS</span>');
+                    badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;">TLS</span>');
                 }
                 if (cfg.show_latency && s.latency_ms != null) {
                     badges.push(`<span class="badge badge-latency"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
@@ -305,7 +305,7 @@ function renderAttachedDevices() {
         const isAudioActive = (d.audio_enabled !== false);
         const btnAudio = d.has_audio ? `<button class="btn ${isAudioActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleDeviceAudio('${d.port}', ${isAudioActive})"><img src="/icons/${isAudioActive ? 'audio-card' : 'audio-volume-muted'}.png"> Audio: ${isAudioActive ? 'On' : 'Off'}</button>` : "";
         const isMouseActive = (d.touchpad_mouse_enabled !== false);
-        const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/icons/input-mouse.png" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
+        const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/icons/input-mouse.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
 
         return `
             <div class="card">
@@ -981,7 +981,7 @@ async function openServerSettingsModal(encodedIp, nameEnc) {
     
     const titleEl = document.getElementById("modal-server-title");
     if (titleEl) {
-        titleEl.innerHTML = `<img src="/icons/configure.png" style="width:20px;height:20px;object-fit:contain;"> Server Settings — ${name}`;
+        titleEl.innerHTML = `<img src="/icons/configure.png" style="width:22px;height:22px;object-fit:contain;"> Server Settings — ${name}`;
     }
     
     // Instant persistent cache population (0ms even after client restart)
