@@ -19,7 +19,7 @@ cat << DESKTOP_EOF > "${DESKTOP_DIR}/org.autousbip.client.desktop"
 [Desktop Entry]
 Name=Auto USB/IP Client
 Comment=Automatic USB-over-IP device manager and gamepad tester
-Exec="${BIN}" %u
+Exec="${BIN}"
 Icon=org.autousbip.client
 Terminal=false
 Type=Application

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Auto USB/IP Client
 Comment=Automatic USB-over-IP device manager and gamepad tester
-Exec=autousbip-client %u
+Exec=autousbip-client
 Icon=org.autousbip.client
 Terminal=false
 Type=Application

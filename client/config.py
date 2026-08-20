@@ -72,6 +72,19 @@ def get_default_config() -> dict:
     }
 
 
+def is_valid_server_address(addr: str) -> bool:
+    """Validate if a string is a valid IPv4, IPv6, or domain/hostname."""
+    if not addr or not isinstance(addr, str):
+        return False
+    addr = addr.strip()
+    if not addr or addr.startswith("-") or addr.startswith("%") or "/" in addr or "\\" in addr:
+        return False
+    # Check for IPv4, IPv6, or valid hostname/domain
+    ip_pattern = r"^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+    host_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9\-\.\_]{0,61}[a-zA-Z0-9])?$"
+    return bool(re.match(ip_pattern, addr) or re.match(host_pattern, addr) or ":" in addr)
+
+
 def load_config() -> dict:
     default_config = get_default_config()
     if CONFIG_PATH.exists():
@@ -79,6 +92,12 @@ def load_config() -> dict:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 default_config.update(data)
+                # Sanitize loaded servers: drop any non-address or path entries
+                if "servers" in default_config and isinstance(default_config["servers"], list):
+                    default_config["servers"] = [
+                        s for s in default_config["servers"]
+                        if isinstance(s, dict) and is_valid_server_address(s.get("ip", ""))
+                    ]
         except Exception as e:
             logger.error(f"Error loading config: {e}")
     return default_config

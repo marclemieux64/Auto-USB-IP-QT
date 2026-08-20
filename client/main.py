@@ -35,7 +35,12 @@ def main():
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
 
-    initial_servers = [ServerConnection(ip, PORT) for ip in sys.argv[1:]]
+    from config import is_valid_server_address
+    initial_servers = [
+        ServerConnection(ip.strip(), PORT)
+        for ip in sys.argv[1:]
+        if is_valid_server_address(ip)
+    ]
 
     if hasattr(Qt.HighDpiScaleFactorRoundingPolicy, "PassThrough"):
         QGuiApplication.setHighDpiScaleFactorRoundingPolicy(

@@ -9,14 +9,15 @@ logger = logging.getLogger("auto-usbip-client")
 
 def handle_add_server(controller: Any, data: dict) -> dict:
     """Add a new server or update an existing server configuration."""
+    from config import is_valid_server_address
     ip = data.get("ip", "").strip()
     port = int(data.get("port", 3240))
     name = data.get("name", "").strip()
     token = data.get("token", "").strip()
     enabled = bool(data.get("enabled", True))
 
-    if not ip:
-        return {"status": "error", "message": "Missing IP address"}
+    if not ip or not is_valid_server_address(ip):
+        return {"status": "error", "message": f"Invalid server IP address or hostname: {ip}"}
 
     existing = next((s for s in controller.servers if s.ip == ip and s.port == port), None)
     if existing:
@@ -37,15 +38,20 @@ def handle_remove_server(controller: Any, ip: str, port: int) -> dict:
     """Remove a server connection and detach all its imported devices."""
     from core.usbip import get_port_to_bus_map, detach_port, get_imported_devices
     port_map = get_port_to_bus_map()
+    clean_ip = str(ip).strip().lower()
+    port = int(port)
     
-    remaining_servers = [s for s in controller.servers if not (s.ip == ip and s.port == port)]
+    remaining_servers = [
+        s for s in controller.servers
+        if not (s.ip.strip().lower() == clean_ip and int(s.port) == port)
+    ]
     
     # Detach any device originating from this server or all if no servers remain
     for d in get_imported_devices():
-        d_s_ip = getattr(d, "server_ip", "")
+        d_s_ip = getattr(d, "server_ip", "").strip().lower()
         d_port = getattr(d, "port", "")
         pair = port_map.get(str(d_port))
-        if d_s_ip == ip or (pair and pair[0] == ip) or not remaining_servers:
+        if d_s_ip == clean_ip or (pair and pair[0].strip().lower() == clean_ip) or not remaining_servers:
             detach_port(str(d_port))
 
     if hasattr(controller, "scanner"):

@@ -40,11 +40,16 @@ class AutoUsbipApp(QObject):
         self.usb_db = UsbIdsDatabase()
 
         # 1. Load Server Connections
+        from config import is_valid_server_address
         cfg = load_config()
-        saved_servers = [ServerConnection.from_dict(d) for d in cfg.get("servers", []) if d.get("ip")]
+        saved_servers = [
+            ServerConnection.from_dict(d)
+            for d in cfg.get("servers", [])
+            if d.get("ip") and is_valid_server_address(d.get("ip"))
+        ]
         self.servers: list[ServerConnection] = []
         for s in initial_servers + saved_servers:
-            if s not in self.servers:
+            if is_valid_server_address(s.ip) and s not in self.servers:
                 self.servers.append(s)
         self.save_servers_to_config()
 

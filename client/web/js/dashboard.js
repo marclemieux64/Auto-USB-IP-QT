@@ -162,10 +162,10 @@ function renderServers() {
                         </div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn" onclick="toggleServer('${s.ip}')"><img src="${s.enabled ? '/icons/network-disconnect.png' : '/icons/network-connect.png'}"> ${s.enabled ? 'Disable' : 'Enable'}</button>
-                        <button class="btn" onclick="openServerLogsModal('${s.ip}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/utilities-terminal.png"> Console</button>
-                        <button class="btn" onclick="openServerSettingsModal('${s.ip}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/settings.png"> Settings</button>
-                        <button class="btn btn-danger" onclick="removeServer('${s.ip}', ${s.port})"><img src="/icons/detach-btn.png"> Remove</button>
+                        <button class="btn" onclick="toggleServer('${encodeURIComponent(s.ip)}')"><img src="${s.enabled ? '/icons/network-disconnect.png' : '/icons/network-connect.png'}"> ${s.enabled ? 'Disable' : 'Enable'}</button>
+                        <button class="btn" onclick="openServerLogsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/utilities-terminal.png"> Console</button>
+                        <button class="btn" onclick="openServerSettingsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/settings.png"> Settings</button>
+                        <button class="btn btn-danger" onclick="removeServer('${encodeURIComponent(s.ip)}', ${s.port})"><img src="/icons/detach-btn.png"> Remove</button>
                     </div>
                 </div>
             </div>
@@ -458,12 +458,14 @@ function checkGlobalEmpty() {
 }
 
 /* User Action Handlers */
-async function toggleServer(ip) {
+async function toggleServer(encodedIp) {
+    const ip = decodeURIComponent(encodedIp);
     await API.toggleServer(ip);
     fetchStatus();
 }
 
-async function removeServer(ip, port) {
+async function removeServer(encodedIp, port) {
+    const ip = decodeURIComponent(encodedIp);
     if (!confirm(`Remove server ${ip}:${port}?`)) return;
     if (currentStatus.servers) {
         currentStatus.servers = currentStatus.servers.filter(s => !(s.ip === ip && s.port === port));

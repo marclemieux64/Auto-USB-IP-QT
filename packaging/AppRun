@@ -29,7 +29,7 @@ if [ "$1" = "--install" ]; then
 [Desktop Entry]
 Name=Auto USB/IP Client
 Comment=Automatic USB-over-IP device manager and gamepad tester
-Exec="${APPIMAGE_PATH}" %u
+Exec="${APPIMAGE_PATH}"
 Icon=org.autousbip.client
 Terminal=false
 Type=Application
