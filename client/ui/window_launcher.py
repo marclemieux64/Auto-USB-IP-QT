@@ -38,8 +38,7 @@ class StandalonePanelWindow(QWidget):
 
         self.browser.page().profile().downloadRequested.connect(self.on_download_requested)
         try:
-            self.browser.page().profile().setHttpCacheType(QWebEngineProfile.HttpCacheType.NoCache)
-            self.browser.page().profile().clearHttpCache()
+            self.browser.page().profile().setHttpCacheType(QWebEngineProfile.HttpCacheType.DiskHttpCache)
         except Exception:
             pass
 

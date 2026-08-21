@@ -127,34 +127,50 @@ async function fetchStatus() {
 function updateElementHTMLIfChanged(el, items, renderCardFn) {
     if (!el) return;
     
-    // If items is empty, clear
     if (!items || items.length === 0) {
         el.innerHTML = "";
-        el._renderedKeys = [];
+        el._cachedHTML = "";
         return;
     }
 
-    // Build map of new items
-    const newKeys = items.map((item, idx) => item.identifier_key || item.ip || item.port || item.bus_id || `item-${idx}`);
-    const existingCards = Array.from(el.children);
-    
-    // Check if simple text content updates can be done in-place
     const renderedHTML = items.map(renderCardFn).join("");
     if (el._cachedHTML === renderedHTML) {
         return;
     }
 
-    // Create a temporary parser to compare and mutate only changed nodes
     const temp = document.createElement("div");
     temp.innerHTML = renderedHTML;
     const newCardNodes = Array.from(temp.children);
+    const existingCards = Array.from(el.children);
 
-    // Fast in-place DOM sync:
-    // If child counts match, update innerHTML per card only when changed to avoid full list reflow
+    // If structure matches 1:1, perform surgical attribute & badge sub-node updates:
     if (existingCards.length === newCardNodes.length) {
         for (let i = 0; i < existingCards.length; i++) {
-            if (existingCards[i].outerHTML !== newCardNodes[i].outerHTML) {
-                existingCards[i].innerHTML = newCardNodes[i].innerHTML;
+            const oldCard = existingCards[i];
+            const newCard = newCardNodes[i];
+            if (oldCard.outerHTML === newCard.outerHTML) {
+                continue;
+            }
+            
+            // 1. Update card-sub (badges & metrics) surgically without destroying card-left or images
+            const oldSub = oldCard.querySelector(".card-sub");
+            const newSub = newCard.querySelector(".card-sub");
+            if (oldSub && newSub && oldSub.innerHTML !== newSub.innerHTML) {
+                oldSub.innerHTML = newSub.innerHTML;
+            }
+
+            // 2. Update card-title if text changed
+            const oldTitle = oldCard.querySelector(".card-title");
+            const newTitle = newCard.querySelector(".card-title");
+            if (oldTitle && newTitle && oldTitle.innerHTML !== newTitle.innerHTML) {
+                oldTitle.innerHTML = newTitle.innerHTML;
+            }
+
+            // 3. Update actions only if buttons changed
+            const oldActions = oldCard.querySelector(".card-actions");
+            const newActions = newCard.querySelector(".card-actions");
+            if (oldActions && newActions && oldActions.innerHTML !== newActions.innerHTML) {
+                oldActions.innerHTML = newActions.innerHTML;
             }
         }
     } else {
