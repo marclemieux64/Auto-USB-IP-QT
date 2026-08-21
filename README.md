@@ -105,33 +105,31 @@ Auto USB/IP Qt provides a multi-layered, enterprise-grade defense-in-depth secur
 
 ## 📦 Server Installation (Raspberry Pi / Linux)
 
-### 1. Prerequisites
+### Option A: Standalone Self-Installing Binary (Zero-Dependencies)
 ```bash
-# Install USB/IP tools and dependencies
-sudo apt update
-sudo apt install -y usbip hwdata python3 python3-pip
+# Run temporarily in foreground (leaves no trace when stopped):
+sudo ./dist/autousbip-qt-server
 
-# Enable usbip-host kernel module at boot
-echo "usbip-host" | sudo tee -a /etc/modules
-sudo modprobe usbip-host
+# OR permanently self-install as a systemd background service (starts on boot):
+sudo ./dist/autousbip-qt-server --install
+
+# To uninstall later:
+sudo ./dist/autousbip-qt-server --uninstall
 ```
 
-### 2. Deploy Server Daemon & Security Policies
+### Option B: Automated 1-Command Web Installer
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/auto-usbip.git
-cd auto-usbip
+curl -fsSL https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/server/install-server.sh | sudo bash
+```
 
-# 1. Install security policies (Polkit, AppArmor, udev, Systemd capabilities)
-sudo ./install-security.sh
-
-# 2. Deploy daemon and start service
-sudo cp server/autousbip.py /usr/local/bin/autousbip.py
-sudo chmod 755 /usr/local/bin/autousbip.py
-
-sudo cp server/autousbip.service /etc/systemd/system/autousbip.service
+### Option C: Manual Setup
+```bash
+sudo apt update && sudo apt install -y usbip hwdata openssl uhubctl avahi-utils
+sudo cp server/autousbip.py /usr/local/bin/autousbip-qt-server.py
+sudo chmod 755 /usr/local/bin/autousbip-qt-server.py
+sudo cp server/autousbip.service /etc/systemd/system/autousbip-qt-server.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now autousbip.service
+sudo systemctl enable --now autousbip-qt-server.service
 ```
 
 ---
