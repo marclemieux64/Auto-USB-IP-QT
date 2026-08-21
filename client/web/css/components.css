@@ -194,10 +194,8 @@
 .badge-ram { background-color: rgba(56, 189, 248, 0.15); color: #38bdf8; }
 .badge-uptime { background-color: rgba(167, 139, 250, 0.15); color: #c084fc; }
 .badge-tls {
-    background-color: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    font-weight: 600;
+    background-color: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
 }
 
 .badge-success { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
