@@ -1,0 +1,8 @@
+/* Allow members of the wheel or sudo group or system autousbip user to manage server USB/IP */
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.autousbip.server.") === 0) {
+        if (subject.isInGroup("wheel") || subject.isInGroup("sudo") || subject.user === "root" || subject.user === "autousbip") {
+            return polkit.Result.YES;
+        }
+    }
+});

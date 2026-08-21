@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Auto USB/IP Project</vendor>
+  <vendor_url>https://github.com/marclemieux64/Auto-USB-IP-QT</vendor_url>
+  <icon_name>network-server</icon_name>
+
+  <!-- Server USB/IP device binding and unbinding -->
+  <action id="org.autousbip.server.usbip">
+    <description>Bind and unbind local USB devices for network export</description>
+    <message>Authentication is required to export USB devices via USB/IP</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/usbip</annotate>
+  </action>
+
+  <!-- Server VBUS Port Power Cycling (uhubctl) -->
+  <action id="org.autousbip.server.powercycle">
+    <description>Power-cycle physical USB VBUS ports</description>
+    <message>Authentication is required to power-cycle USB hardware ports</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/sbin/uhubctl</annotate>
+  </action>
+
+  <!-- Server Daemon Control and Configuration -->
+  <action id="org.autousbip.server.manage">
+    <description>Manage Auto USB/IP Server daemon service</description>
+    <message>Authentication is required to manage the Auto USB/IP Server service</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

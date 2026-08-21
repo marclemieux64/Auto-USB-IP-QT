@@ -51,7 +51,19 @@ else
 fi
 chmod 755 /usr/local/bin/autousbip.py
 
-echo -e "${BLUE}[4/4] Configuring and starting systemd service...${NC}"
+echo -e "${BLUE}[4/4] Installing Polkit security policy & configuring systemd...${NC}"
+# Install Polkit policy and rules if polkit is present
+if [ -d "/usr/share/polkit-1/actions" ]; then
+    if [ -f "$SCRIPT_DIR/security/polkit/org.autousbip.server.policy" ]; then
+        cp "$SCRIPT_DIR/security/polkit/org.autousbip.server.policy" /usr/share/polkit-1/actions/
+    fi
+fi
+if [ -d "/etc/polkit-1/rules.d" ]; then
+    if [ -f "$SCRIPT_DIR/security/polkit/10-autousbip-server.rules" ]; then
+        cp "$SCRIPT_DIR/security/polkit/10-autousbip-server.rules" /etc/polkit-1/rules.d/
+    fi
+fi
+
 cat << 'EOF_SVC' > /etc/systemd/system/autousbip.service
 [Unit]
 Description=Auto USB/IP Server Daemon
