@@ -275,6 +275,10 @@ function renderServers() {
     const srvs = currentStatus.servers || [];
     if (srvs.length === 0) {
         if (sec) sec.style.display = "none";
+        if (c) {
+            c.innerHTML = "";
+            c._cachedHTML = "";
+        }
         return;
     }
     if (sec) sec.style.display = "block";
@@ -407,6 +411,10 @@ function renderAttachedDevices() {
     const devs = currentStatus.attached_devices || [];
     if (devs.length === 0) {
         if (sec) sec.style.display = "none";
+        if (c) {
+            c.innerHTML = "";
+            c._cachedHTML = "";
+        }
         return;
     }
     if (sec) sec.style.display = "block";
@@ -450,10 +458,41 @@ function renderAvailableDevices() {
     const devs = currentStatus.available_devices || [];
     if (devs.length === 0) {
         if (sec) sec.style.display = "none";
+        if (c) {
+            c.innerHTML = "";
+            c._cachedHTML = "";
+        }
         return;
     }
     if (sec) sec.style.display = "block";
     updateElementHTMLIfChanged(c, devs, renderSingleAvailableDeviceCard);
+}
+
+function renderSingleDiscoveredServerCard(d) {
+    const title = d.name ? `${d.name} (${d.ip})` : d.ip;
+    let badges = [
+        '<span class="badge badge-online" title="Automatically discovered via local mDNS / Zeroconf network broadcast"><img src="/icons/badge-online.png"> mDNS Discovered</span>',
+        `<span class="badge" title="Remote server USB/IP daemon TCP listening port"><img src="/icons/badge-server.png"> Port ${d.port}</span>`
+    ];
+    if (d.auth_required) {
+        badges.push('<span class="badge badge-warning" title="This server requires an authentication token"><img src="/icons/configure.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;">Token Required</span>');
+    }
+    return `
+        <div class="card" data-key="disc-${d.ip}:${d.port}">
+            <div class="card-main">
+                <div class="card-left">
+                    <div class="card-icon"><img src="/icons/discovered-server.png"></div>
+                    <div class="card-info">
+                        <div class="card-title">${title}</div>
+                        <div class="card-sub">${badges.join(" ")}</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="addDiscoveredServer('${d.ip}', ${d.port}, '${encodeURIComponent(d.name || d.ip)}', ${d.auth_required})"><img src="/icons/add-server.png"> Add Server</button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderDiscoveredServers() {
@@ -462,36 +501,67 @@ function renderDiscoveredServers() {
     const dSrvs = currentStatus.discovered_servers || [];
     if (dSrvs.length === 0) {
         if (sec) sec.style.display = "none";
+        if (c) {
+            c.innerHTML = "";
+            c._cachedHTML = "";
+        }
         return;
     }
     if (sec) sec.style.display = "block";
-    const html = dSrvs.map(d => {
-        const title = d.name ? `${d.name} (${d.ip})` : d.ip;
-        let badges = [
-            '<span class="badge badge-online" title="Automatically discovered via local mDNS / Zeroconf network broadcast"><img src="/icons/badge-online.png"> mDNS Discovered</span>',
-            `<span class="badge" title="Remote server USB/IP daemon TCP listening port"><img src="/icons/badge-server.png"> Port ${d.port}</span>`
-        ];
-        if (d.auth_required) {
-            badges.push('<span class="badge badge-warning" title="This server requires an authentication token"><img src="/icons/configure.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;">Token Required</span>');
+    updateElementHTMLIfChanged(c, dSrvs, renderSingleDiscoveredServerCard);
+}
+
+function renderSingleBlacklistedDeviceCard(item) {
+    const isObj = (typeof item === "object" && item !== null);
+    const ident = isObj ? (item.identifier || item.vid_pid || item.name) : item;
+    const name = isObj ? (item.name || item.identifier) : item;
+    const vidPid = isObj ? item.vid_pid : "";
+    const busId = isObj ? item.bus_id : "";
+
+    let iconName = "generic-usb";
+    if (isObj && item.is_controller) {
+        iconName = "gamepad";
+    } else if (isObj && item.icon_alias) {
+        iconName = item.icon_alias;
+    } else if (typeof name === "string") {
+        const nl = name.toLowerCase();
+        if (nl.includes("controller") || nl.includes("gamepad") || nl.includes("dualsense") || nl.includes("nes") || nl.includes("joystick")) {
+            iconName = "gamepad";
+        } else if (nl.includes("storage") || nl.includes("flash") || nl.includes("drive") || nl.includes("disk")) {
+            iconName = "drive-harddisk";
+        } else if (nl.includes("audio") || nl.includes("sound") || nl.includes("dac") || nl.includes("speaker") || nl.includes("headset")) {
+            iconName = "audio-card";
+        } else if (nl.includes("keyboard")) {
+            iconName = "input-keyboard";
+        } else if (nl.includes("mouse")) {
+            iconName = "input-mouse";
+        } else if (nl.includes("camera") || nl.includes("webcam")) {
+            iconName = "camera-web";
         }
-        return `
-            <div class="card">
-                <div class="card-main">
-                    <div class="card-left">
-                        <div class="card-icon"><img src="/icons/discovered-server.png"></div>
-                        <div class="card-info">
-                            <div class="card-title">${title}</div>
-                            <div class="card-sub">${badges.join(" ")}</div>
-                        </div>
+    }
+
+    let badges = [];
+    if (vidPid) badges.push(`<span class="badge badge-vidpid"><img src="/icons/badge-vidpid.png"> ${vidPid}</span>`);
+    if (busId) badges.push(`<span class="badge badge-port"><img src="/icons/badge-port.png"> Bus ${busId}</span>`);
+
+    return `
+        <div class="card" data-key="bl-${ident}" style="margin-bottom: 6px;">
+            <div class="card-main">
+                <div class="card-left">
+                    <div class="card-icon" style="position: relative;">
+                        <img src="/icons/${iconName}.png">
                     </div>
-                    <div class="card-actions">
-                        <button class="btn btn-primary" onclick="addDiscoveredServer('${d.ip}', ${d.port}, '${encodeURIComponent(d.name || d.ip)}', ${d.auth_required})"><img src="/icons/add-server.png"> Add Server</button>
+                    <div class="card-info">
+                        <div class="card-title" style="color: #f87171;">${name}</div>
+                        <div class="card-sub">${badges.join(" ")} <span class="badge badge-offline"><img src="/icons/blacklist.png"> Blocked</span></div>
                     </div>
                 </div>
+                <div class="card-actions">
+                    <button class="btn btn-danger" onclick="unblacklistDevice('${encodeURIComponent(ident)}')"><img src="/icons/detach-btn.png"> Unblock</button>
+                </div>
             </div>
-        `;
-    }).join("");
-    updateElementHTMLIfChanged(c, html);
+        </div>
+    `;
 }
 
 function renderBlacklistedDevices() {
@@ -500,62 +570,14 @@ function renderBlacklistedDevices() {
     const list = currentStatus.blacklisted_devices || [];
     if (list.length === 0) {
         if (sec) sec.style.display = "none";
+        if (c) {
+            c.innerHTML = "";
+            c._cachedHTML = "";
+        }
         return;
     }
     if (sec) sec.style.display = "block";
-    const html = list.map(item => {
-        const isObj = (typeof item === "object" && item !== null);
-        const ident = isObj ? (item.identifier || item.vid_pid || item.name) : item;
-        const name = isObj ? (item.name || item.identifier) : item;
-        const vidPid = isObj ? item.vid_pid : "";
-        const busId = isObj ? item.bus_id : "";
-
-        let iconName = "generic-usb";
-        if (isObj && item.is_controller) {
-            iconName = "gamepad";
-        } else if (isObj && item.icon_alias) {
-            iconName = item.icon_alias;
-        } else if (typeof name === "string") {
-            const nl = name.toLowerCase();
-            if (nl.includes("controller") || nl.includes("gamepad") || nl.includes("dualsense") || nl.includes("nes") || nl.includes("joystick")) {
-                iconName = "gamepad";
-            } else if (nl.includes("storage") || nl.includes("flash") || nl.includes("drive") || nl.includes("disk")) {
-                iconName = "drive-harddisk";
-            } else if (nl.includes("audio") || nl.includes("sound") || nl.includes("dac") || nl.includes("speaker") || nl.includes("headset")) {
-                iconName = "audio-card";
-            } else if (nl.includes("keyboard")) {
-                iconName = "input-keyboard";
-            } else if (nl.includes("mouse")) {
-                iconName = "input-mouse";
-            } else if (nl.includes("camera") || nl.includes("webcam")) {
-                iconName = "camera-web";
-            }
-        }
-
-        let badges = [];
-        if (vidPid) badges.push(`<span class="badge badge-vidpid"><img src="/icons/badge-vidpid.png"> ${vidPid}</span>`);
-        if (busId) badges.push(`<span class="badge badge-port"><img src="/icons/badge-port.png"> Bus ${busId}</span>`);
-
-        return `
-            <div class="card" style="margin-bottom: 6px;">
-                <div class="card-main">
-                    <div class="card-left">
-                        <div class="card-icon" style="position: relative;">
-                            <img src="/icons/${iconName}.png">
-                        </div>
-                        <div class="card-info">
-                            <div class="card-title" style="color: #f87171;">${name}</div>
-                            <div class="card-sub">${badges.join(" ")} <span class="badge badge-offline"><img src="/icons/blacklist.png"> Blocked</span></div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-danger" onclick="unblacklistDevice('${encodeURIComponent(ident)}')"><img src="/icons/detach-btn.png"> Unblock</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join("");
-    updateElementHTMLIfChanged(c, html);
+    updateElementHTMLIfChanged(c, list, renderSingleBlacklistedDeviceCard);
 }
 
 function checkGlobalEmpty() {
