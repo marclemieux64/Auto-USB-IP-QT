@@ -29,6 +29,12 @@ elif command -v dnf &>/dev/null; then
     dnf install -y usbip hwdata openssl uhubctl avahi-tools || true
 elif command -v pacman &>/dev/null; then
     pacman -Sy --noconfirm usbip hwdata openssl uhubctl || true
+elif command -v zypper &>/dev/null; then
+    zypper --non-interactive install usbip hwdata openssl uhubctl avahi-utils || true
+elif command -v apk &>/dev/null; then
+    apk add --no-cache usbip-tools hwdata openssl uhubctl avahi || true
+elif command -v xbps-install &>/dev/null; then
+    xbps-install -Sy usbip hwdata openssl uhubctl avahi || true
 fi
 
 echo -e "${BLUE}[2/4] Loading USB/IP kernel modules...${NC}"

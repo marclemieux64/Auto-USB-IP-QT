@@ -37,6 +37,37 @@ _CAN_RUN_USBIP_DIRECT: bool | None = None
 _HAS_PKEXEC: bool | None = None
 
 
+def _find_usbip_bin() -> str:
+    """Find the usbip executable across all Linux distributions (Ubuntu, Debian, Fedora, Arch, Alpine, NixOS, openSUSE)."""
+    # 1. Check standard PATH
+    found = shutil.which("usbip")
+    if found:
+        return found
+    
+    # 2. Check standard system binary locations
+    candidate_paths = [
+        "/usr/sbin/usbip",
+        "/usr/bin/usbip",
+        "/sbin/usbip",
+        "/bin/usbip",
+        "/usr/local/sbin/usbip",
+        "/usr/local/bin/usbip",
+        "/run/current-system/sw/bin/usbip",  # NixOS
+    ]
+    for p in candidate_paths:
+        if Path(p).is_file() and os.access(p, os.X_OK):
+            return p
+
+    # 3. Check Debian/Ubuntu linux-tools kernel specific paths: /usr/lib/linux-tools/*/usbip
+    linux_tools_matches = list(Path("/usr/lib/linux-tools").glob("*/usbip"))
+    if linux_tools_matches:
+        # Sort to pick highest kernel version
+        linux_tools_matches.sort(key=lambda x: str(x), reverse=True)
+        return str(linux_tools_matches[0])
+
+    return "usbip"
+
+
 def _get_usbip_cmd(args: list[str]) -> list[str]:
     global _CAN_RUN_USBIP_DIRECT, _HAS_PKEXEC
     if sys.platform == "win32":
@@ -47,28 +78,29 @@ def _get_usbip_cmd(args: list[str]) -> list[str]:
         return ["usbip.exe"] + args
 
     if hasattr(os, "geteuid") and os.geteuid() == 0:
-        return ["usbip"] + args
+        return [_find_usbip_bin()] + args
 
     # 1. Direct execution (udev TAG+="uaccess" or cap_net_admin,cap_sys_admin+ep)
     if _CAN_RUN_USBIP_DIRECT is None:
         try:
-            test_res = subprocess.run(["usbip", "port"], capture_output=True, text=True, timeout=0.4)
+            test_res = subprocess.run([_find_usbip_bin(), "port"], capture_output=True, text=True, timeout=0.4)
             _CAN_RUN_USBIP_DIRECT = (test_res.returncode == 0 or "permission denied" not in test_res.stderr.lower())
         except Exception:
             _CAN_RUN_USBIP_DIRECT = False
 
+    usbip_path = _find_usbip_bin()
     if _CAN_RUN_USBIP_DIRECT:
-        return ["usbip"] + args
+        return [usbip_path] + args
 
     # 2. Polkit pkexec integration (org.autousbip.client.policy)
     if _HAS_PKEXEC is None:
         _HAS_PKEXEC = shutil.which("pkexec") is not None
 
     if _HAS_PKEXEC:
-        return ["pkexec", "--disable-internal-agent", "usbip"] + args
+        return ["pkexec", "--disable-internal-agent", usbip_path] + args
 
     # 3. Graceful fallback to passwordless sudo if Polkit is not available
-    return ["sudo", "-n", "usbip"] + args
+    return ["sudo", "-n", usbip_path] + args
 
 
 REMOTE_DEV_REGEX = re.compile(r"^\s*([A-Za-z0-9.\-_]+):\s*(.+)$")
