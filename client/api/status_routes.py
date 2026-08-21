@@ -178,10 +178,24 @@ def handle_status(controller: Any) -> dict:
     configured_ips = {s.ip.strip().lower() for s in controller.servers if s.ip}
     configured_names = {s.name.strip().lower() for s in controller.servers if s.name}
 
+    # Prune unreachable or dead discovered servers
+    valid_discovered = []
     discovered_data = []
-    for d in getattr(controller, "discovered_servers", []):
+    for d in list(getattr(controller, "discovered_servers", [])):
         d_ip = d.get("ip", "").strip().lower()
         d_name = d.get("name", "").strip().lower()
+        port = int(d.get("port", 3240))
+        
+        # Test TCP reachability (50ms fast probe) so shut down servers vanish immediately
+        if d.get("ip"):
+            try:
+                with socket.create_connection((d.get("ip"), port), timeout=0.08):
+                    pass
+            except Exception:
+                continue
+
+        valid_discovered.append(d)
+
         if d_ip in configured_ips or (d_name and (d_name in configured_ips or d_name in configured_names)):
             continue
         
@@ -199,9 +213,13 @@ def handle_status(controller: Any) -> dict:
         discovered_data.append({
             "name": d.get("name", ""),
             "ip": d.get("ip", ""),
-            "port": d.get("port", 3240),
+            "port": port,
             "auth_required": auth_req,
         })
+    
+    # Sync pruned list back to controller
+    if hasattr(controller, "discovered_servers"):
+        controller.discovered_servers = valid_discovered
 
     cfg_dict = {
         "auto_attach": controller.config.auto_attach,

@@ -216,13 +216,25 @@ class AutoUsbipApp(QObject):
         if existing:
             existing["name"] = name or ip
             existing["auth_required"] = auth_required
+            existing["service_name"] = name
         else:
             self.discovered_servers.append({
                 "name": name or ip,
                 "port": port,
                 "ip": ip,
-                "auth_required": auth_required
+                "auth_required": auth_required,
+                "service_name": name
             })
+
+    @pyqtSlot(str)
+    def on_server_lost(self, service_name: str):
+        clean_name = service_name.replace("._usbip._tcp.local.", "").replace("AutoUSBIP-QT-", "").replace("AutoUSBIPServer-", "").strip().lower()
+        self.discovered_servers = [
+            d for d in self.discovered_servers
+            if d.get("service_name") != service_name
+            and d.get("name", "").strip().lower() != clean_name
+            and d.get("ip", "").strip().lower() != clean_name
+        ]
 
     # Device Operations
     def attach_single_device(self, dev: AvailableDevice):

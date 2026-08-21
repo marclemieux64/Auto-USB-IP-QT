@@ -22,6 +22,7 @@ class ScannerSignals(QObject):
 
 class ServerDiscoveryWorker(QThread):
     server_found = pyqtSignal(str, int, str, str, bool)
+    server_lost = pyqtSignal(str)
 
     def __init__(self, controller, parent=None):
         super().__init__(parent)
@@ -42,7 +43,7 @@ class ServerDiscoveryWorker(QThread):
                 self.worker = worker
 
             def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
-                pass
+                self.worker.server_lost.emit(name)
 
             def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
                 # Fast timeout (500ms max) to prevent blocking the socket thread
