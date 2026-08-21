@@ -160,9 +160,17 @@ class NativePlasmaPanel(QWidget):
         self.browser.page().runJavaScript(f"if (window.openGamepadTesterModal) openGamepadTesterModal('{port}', '{enc}');")
 
     def closeEvent(self, event):
-        # Hide to tray instead of terminating client when user clicks title bar X
+        # Hide to tray without triggering Chromium render widget buffer unmap crash
         event.ignore()
-        self.hide()
+        self.hide_to_tray()
+
+    def hide_to_tray(self):
+        self.lower()
+        self.move(-99999, -99999)
+        self._is_docked_tray = True
+
+    def is_panel_open(self) -> bool:
+        return self.isVisible() and not getattr(self, "_is_docked_tray", False) and self.pos().x() > -5000
 
     def sizeHint(self):
         return QSize(780, 840)
