@@ -403,8 +403,7 @@ async function updateServerStatusPill() {
     try {
         const data = await API.getServerStatus(activeServerConsoleIp);
         if (data && data.status === "ok") {
-            const m = data.metrics || {};
-            pill.textContent = `Online • ${m.cpu_temp || 'Active'} • Uptime ${m.uptime || 'N/A'}`;
+            pill.textContent = "Online";
             pill.style.color = "#34d399";
             pill.style.background = "rgba(52, 211, 153, 0.1)";
             pill.style.borderColor = "#059669";
