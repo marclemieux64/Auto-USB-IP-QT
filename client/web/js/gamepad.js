@@ -11,22 +11,22 @@ function getKenneyButtonPrompt(family, buttonIndex, label, alt) {
     // PlayStation Family (DualSense, PS4, PS3)
     if (fam.includes("playstation") || fam.includes("sony") || fam.includes("dualsense")) {
         const basePath = "/assets/kenney_input/PlayStation%20Series/Vector/";
-        if (l.includes("cross") || l === "x" || idx === 0) return basePath + "playstation_button_cross.png";
-        if (l.includes("circle") || idx === 1) return basePath + "playstation_button_circle.png";
-        if (l.includes("square") || idx === 2) return basePath + "playstation_button_square.png";
-        if (l.includes("triangle") || idx === 3) return basePath + "playstation_button_triangle.png";
-        if (l.includes("l1") || idx === 4) return basePath + "playstation_trigger_l1.png";
-        if (l.includes("r1") || idx === 5) return basePath + "playstation_trigger_r1.png";
-        if (l.includes("l2") || idx === 6) return basePath + "playstation_trigger_l2.png";
-        if (l.includes("r2") || idx === 7) return basePath + "playstation_trigger_r2.png";
-        if (l.includes("share") || l.includes("create") || idx === 8) return basePath + "playstation5_button_create.png";
-        if (l.includes("options") || l.includes("start") || idx === 9) return basePath + "playstation5_button_options.png";
+        if (l.includes("cross") || l === "x" || idx === 0) return basePath + "playstation_button_color_cross.svg";
+        if (l.includes("circle") || idx === 1) return basePath + "playstation_button_color_circle.svg";
+        if (l.includes("square") || idx === 2) return basePath + "playstation_button_color_square.svg";
+        if (l.includes("triangle") || idx === 3) return basePath + "playstation_button_color_triangle.svg";
+        if (l.includes("l1") || idx === 4) return basePath + "playstation_trigger_l1.svg";
+        if (l.includes("r1") || idx === 5) return basePath + "playstation_trigger_r1.svg";
+        if (l.includes("l2") || idx === 6) return basePath + "playstation_trigger_l2.svg";
+        if (l.includes("r2") || idx === 7) return basePath + "playstation_trigger_r2.svg";
+        if (l.includes("share") || l.includes("create") || idx === 8) return basePath + "playstation5_button_create.svg";
+        if (l.includes("options") || l.includes("start") || idx === 9) return basePath + "playstation5_button_options.svg";
         if (l.includes("ps") || l.includes("home") || idx === 10) return null; // Custom ultra-bold PS badge
-        if (l.includes("l3") || l.includes("left stick") || idx === 11) return basePath + "playstation_button_l3.png";
-        if (l.includes("r3") || l.includes("right stick") || idx === 12) return basePath + "playstation_button_r3.png";
-        if (l.includes("touchpad") && !l.includes("mic")) return basePath + "playstation5_touchpad.png";
-        if (l.includes("mute") || l.includes("mic") || idx === 13) return "/assets/kenney_input/PlayStation%20Series/Vector/playstation5_button_mute.svg";
-        return basePath + "playstation_button_cross.png";
+        if (l.includes("l3") || l.includes("left stick") || idx === 11) return basePath + "playstation_button_l3.svg";
+        if (l.includes("r3") || l.includes("right stick") || idx === 12) return basePath + "playstation_button_r3.svg";
+        if (l.includes("touchpad") && !l.includes("mic")) return basePath + "playstation5_touchpad.svg";
+        if (l.includes("mute") || l.includes("mic") || idx === 13) return basePath + "playstation5_button_mute.svg";
+        return basePath + "playstation_button_color_cross.svg";
     }
 
     // Xbox Family

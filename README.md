@@ -13,7 +13,7 @@
 [![Packaging: AppImage & Tarball](https://img.shields.io/badge/Packaging-AppImage%20%7C%20Tarball-blueviolet.svg)](dist/)
 [![Linux](https://img.shields.io/badge/OS-Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/)
 
-[Key Features](#-key-features) • [Architecture](#-architecture) • [Security & Privileges](#-security--privilege-model) • [Server Setup](#-server-installation-raspberry-pi--linux) • [Client Setup](#-client-distribution--installation) • [Gamepad Diagnostics](#-integrated-gamepad-tester) • [Credits & Licenses](#-credits--licenses) • [AI Disclosure](#-ai-assisted-development-disclosure)
+[Key Features](#-key-features) • [Screenshots](#-screenshots--ui-tour) • [Architecture](#-architecture) • [Security & Privileges](#-security--privilege-model) • [Server Setup](#-server-installation-raspberry-pi--linux) • [Client Setup](#-client-distribution--installation) • [Gamepad Diagnostics](#-integrated-gamepad-tester) • [Credits & Licenses](#-credits--licenses) • [AI Disclosure](#-ai-assisted-development-disclosure)
 
 </div>
 
@@ -43,6 +43,49 @@
   * **Sony DualSense** interactive hardware controls: 24-bit RGB lightbar illumination, player LEDs, microphone mute button, motorized adaptive triggers (resistance, recoil, vibration), and rumble tests.
 * 💤 **Sleep & Wake Auto-Recovery**: Automatically cleans zombie connections and re-binds remote USB ports upon system resume using `systemd-login1` D-Bus signals and a monotonic jump watchdog.
 * 📦 **Portable Release Packaging**: 1-click build script producing both self-contained **AppImage** and portable **Tarball** releases with zero host dependency requirements.
+
+---
+
+---
+
+## 📸 Screenshots & UI Tour
+
+<div align="center">
+
+### 🖥️ Main Dashboard & Device Manager
+*Clean dark-mode interface with live server metrics, latency telemetry, instant attach/detach controls, and USB power cycling.*
+
+<img src="assets/screenshots/dashboard_overview.png" alt="Auto USB/IP Qt Dashboard Overview" width="900">
+
+<br><br>
+
+### 🎮 Interactive Gamepad Latency & Calibration Tester
+*Live input telemetry with Kenney vector prompts, deadzone mapping, multi-touch trackpad, 6-axis IMU gyro/accel, and DualSense adaptive triggers.*
+
+<img src="assets/screenshots/gamepad_tester.png" alt="Gamepad Latency and Calibration Tester" width="900">
+
+<br><br>
+
+### ⚙️ Client Options & Security Hardening
+*Extensive customization toggles, LAN dashboard sharing, visual badge overlays, and BadUSB hardware class isolation.*
+
+<img src="assets/screenshots/options_settings.png" alt="Client Options & Security Settings" width="900">
+
+<br><br>
+
+### 🎛️ Remote Server Configuration
+*Remote daemon TLS management, mDNS discovery, VBUS reboot delays, and server-side hardware access control.*
+
+<img src="assets/screenshots/server_settings.png" alt="Remote Server Settings Modal" width="900">
+
+<br><br>
+
+### 📟 Diagnostic Console & Live Event Stream
+*Interactive developer shell with structured real-time logging, severity level filters, search, and one-click log export.*
+
+<img src="assets/screenshots/console_diagnostics.png" alt="Client Diagnostics Console" width="900">
+
+</div>
 
 ---
 
