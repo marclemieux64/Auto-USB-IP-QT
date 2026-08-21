@@ -955,6 +955,151 @@ def start_control_socket_thread(killer: GracefulKiller):
     return t
 
 
+def install_as_system_service():
+    """Install this binary/script as a persistent systemd service with Polkit & kernel modules."""
+    if os.geteuid() != 0:
+        print("[!] Installation requires root privileges. Please run with sudo: sudo ./autousbip-qt-server --install")
+        sys.exit(1)
+
+    print("🚀 Installing AutoUSBIP-QT Server as a permanent system service...")
+    
+    # 1. Determine executable source
+    is_frozen = getattr(sys, "frozen", False)
+    target_bin = "/usr/local/bin/autousbip-qt-server"
+    
+    if is_frozen:
+        shutil.copyfile(sys.executable, target_bin)
+        os.chmod(target_bin, 0o755)
+        print(f"📦 Copied standalone binary to {target_bin}")
+    else:
+        src_py = Path(__file__).resolve()
+        target_py = "/usr/local/bin/autousbip-qt-server.py"
+        shutil.copyfile(src_py, target_py)
+        os.chmod(target_py, 0o755)
+        target_bin = target_py
+        print(f"📦 Copied script to {target_py}")
+
+    # 2. Kernel modules configuration
+    try:
+        Path("/etc/modules-load.d").mkdir(parents=True, exist_ok=True)
+        Path("/etc/modules-load.d/autousbip.conf").write_text("usbip_core\nusbip_host\n", encoding="utf-8")
+        subprocess.run(["modprobe", "usbip_core"], capture_output=True)
+        subprocess.run(["modprobe", "usbip_host"], capture_output=True)
+        print("🔧 Configured kernel modules (usbip_core, usbip_host)")
+    except Exception as e:
+        print(f"⚠️ Warning configuring kernel modules: {e}")
+
+    # 3. Polkit Security Policies
+    polkit_actions = Path("/usr/share/polkit-1/actions")
+    polkit_rules = Path("/etc/polkit-1/rules.d")
+    
+    policy_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Auto USB/IP Project</vendor>
+  <vendor_url>https://github.com/marclemieux64/Auto-USB-IP-QT</vendor_url>
+  <icon_name>network-server</icon_name>
+
+  <action id="org.autousbip.server.usbip">
+    <description>Bind and unbind local USB devices for network export</description>
+    <message>Authentication is required to export USB devices via USB/IP</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/usbip</annotate>
+  </action>
+</policyconfig>
+"""
+    rules_js = """polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.autousbip.server.") === 0) {
+        if (subject.isInGroup("wheel") || subject.isInGroup("sudo") || subject.user === "root" || subject.user === "autousbip") {
+            return polkit.Result.YES;
+        }
+    }
+});
+"""
+    if polkit_actions.exists():
+        try:
+            (polkit_actions / "org.autousbip.server.policy").write_text(policy_xml, encoding="utf-8")
+            print("🛡️ Installed Polkit policy")
+        except Exception:
+            pass
+    if polkit_rules.exists():
+        try:
+            (polkit_rules / "10-autousbip-server.rules").write_text(rules_js, encoding="utf-8")
+            print("🛡️ Installed Polkit rules")
+        except Exception:
+            pass
+
+    # 4. Create systemd unit
+    service_content = f"""[Unit]
+Description=AutoUSBIP-QT Server Daemon
+After=network-online.target systemd-udevd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart={target_bin}
+Restart=on-failure
+RestartSec=3s
+
+# Security Hardening & Linux Capabilities
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/auto-usbip /root/.config/auto-usbip /var/log /sys /dev
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+"""
+    try:
+        Path("/etc/systemd/system/autousbip-qt-server.service").write_text(service_content, encoding="utf-8")
+        subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
+        subprocess.run(["systemctl", "enable", "autousbip-qt-server.service"], capture_output=True)
+        subprocess.run(["systemctl", "restart", "autousbip-qt-server.service"], capture_output=True)
+        print("✅ Successfully installed and started autousbip-qt-server.service!")
+        print("   Status check: sudo systemctl status autousbip-qt-server.service")
+    except Exception as e:
+        print(f"⚠️ Error creating systemd unit: {e}")
+
+    sys.exit(0)
+
+
+def uninstall_system_service():
+    """Stop and completely remove systemd service, binaries, and polkit rules."""
+    if os.geteuid() != 0:
+        print("[!] Uninstall requires root privileges. Please run with sudo: sudo ./autousbip-qt-server --uninstall")
+        sys.exit(1)
+
+    print("🗑️ Removing AutoUSBIP-QT Server system service...")
+    subprocess.run(["systemctl", "stop", "autousbip-qt-server.service", "autousbip.service"], capture_output=True)
+    subprocess.run(["systemctl", "disable", "autousbip-qt-server.service", "autousbip.service"], capture_output=True)
+    
+    for f in [
+        "/etc/systemd/system/autousbip-qt-server.service",
+        "/etc/systemd/system/autousbip.service",
+        "/usr/local/bin/autousbip-qt-server",
+        "/usr/local/bin/autousbip-qt-server.py",
+        "/usr/share/polkit-1/actions/org.autousbip.server.policy",
+        "/etc/polkit-1/rules.d/10-autousbip-server.rules",
+        "/etc/modules-load.d/autousbip.conf"
+    ]:
+        p = Path(f)
+        if p.exists():
+            p.unlink()
+
+    subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
+    print("✅ AutoUSBIP-QT Server service and files uninstalled successfully.")
+    sys.exit(0)
+
+
 def main():
     global logger
     buf_h = BufferLogHandler()
@@ -1072,7 +1217,12 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
+    if "--install" in sys.argv:
+        install_as_system_service()
+    elif "--uninstall" in sys.argv:
+        uninstall_system_service()
+
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
         logging.basicConfig(filename=sys.argv[1], filemode="w", level=logging.INFO)
     else:
         logging.basicConfig(level=logging.INFO)
