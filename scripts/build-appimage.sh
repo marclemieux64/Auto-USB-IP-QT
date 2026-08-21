@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Auto USB/IP Client - Release Builder (AppImage + Portable Tarball)
+# AutoUSBIP-QT Client - Release Builder (AppImage + Portable Tarball)
 # ==============================================================================
 
 set -e
@@ -9,7 +9,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
 echo "🔨 ============================================================="
-echo "   Auto USB/IP Client — Release Builder (AppImage & Tarball)    "
+echo "   AutoUSBIP-QT Client — Release Builder (AppImage & Tarball)    "
 echo "============================================================="
 
 # 1. Determine Python and AppImageTool

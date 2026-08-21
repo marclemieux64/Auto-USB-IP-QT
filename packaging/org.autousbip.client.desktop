@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Auto USB/IP Client
+Name=AutoUSBIP-QT
 Comment=Automatic USB-over-IP device manager and gamepad tester
 Exec=autousbip-client
 Icon=org.autousbip.client

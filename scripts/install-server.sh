@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Auto USB/IP Server — Automated 1-Command Installer
+# AutoUSBIP-QT Server — Automated 1-Command Installer
 # Works on Raspberry Pi OS, Debian, Ubuntu, Fedora, Arch Linux, Alpine
 # ==============================================================================
 
@@ -13,7 +13,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}=====================================================${NC}"
-echo -e "${GREEN}  ⚡ Auto USB/IP Server Daemon Installer${NC}"
+echo -e "${GREEN}  ⚡ AutoUSBIP-QT Server Daemon Installer${NC}"
 echo -e "${BLUE}=====================================================${NC}"
 
 if [ "$EUID" -ne 0 ]; then
@@ -66,7 +66,7 @@ fi
 
 cat << 'EOF_SVC' > /etc/systemd/system/autousbip.service
 [Unit]
-Description=Auto USB/IP Server Daemon
+Description=AutoUSBIP-QT Server Daemon
 After=network-online.target systemd-udevd.service
 Wants=network-online.target
 
@@ -94,7 +94,7 @@ systemctl enable autousbip.service
 systemctl restart autousbip.service
 
 echo -e "${GREEN}=====================================================${NC}"
-echo -e "${GREEN}  🎉 Auto USB/IP Server installed & running!${NC}"
+echo -e "${GREEN}  🎉 AutoUSBIP-QT Server installed & running!${NC}"
 echo -e "${BLUE}  • Status:  sudo systemctl status autousbip${NC}"
 echo -e "${BLUE}  • Logs:    sudo journalctl -u autousbip -f${NC}"
 echo -e "${BLUE}  • TCP:     Ports 3240 (USB/IP) and 3241 (Control/TLS)${NC}"

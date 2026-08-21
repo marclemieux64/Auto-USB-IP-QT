@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Auto USB/IP Client - Desktop Menu Integrator for Portable Tarball
+# AutoUSBIP-QT Client - Desktop Menu Integrator for Portable Tarball
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +17,7 @@ fi
 # Create desktop entry pointing to this folder
 cat << DESKTOP_EOF > "${DESKTOP_DIR}/org.autousbip.client.desktop"
 [Desktop Entry]
-Name=Auto USB/IP Client
+Name=AutoUSBIP-QT
 Comment=Automatic USB-over-IP device manager and gamepad tester
 Exec="${BIN}"
 Icon=org.autousbip.client
@@ -35,6 +35,6 @@ if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "${DESKTOP_DIR}" 2>/dev/null || true
 fi
 
-echo "✅ Auto USB/IP Client successfully added to your Application Menu!"
+echo "✅ AutoUSBIP-QT Client successfully added to your Application Menu!"
 echo "   Launcher: ${DESKTOP_DIR}/org.autousbip.client.desktop"
 echo "   Binary:   ${BIN}"

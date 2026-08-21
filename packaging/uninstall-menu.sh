@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Auto USB/IP Client - Desktop Menu Remover
+# AutoUSBIP-QT Client - Desktop Menu Remover
 set -e
 
-echo "🗑️ Removing Auto USB/IP Client from Application Menu..."
+echo "🗑️ Removing AutoUSBIP-QT Client from Application Menu..."
 rm -f "${HOME}/.local/share/applications/org.autousbip.client.desktop"
 rm -f "${HOME}/.local/share/icons/hicolor/scalable/apps/org.autousbip.client.svg"
 

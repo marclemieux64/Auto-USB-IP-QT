@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Build Standalone Single-Binary Executable for Auto USB/IP Server
+# Build Standalone Single-Binary Executable for AutoUSBIP-QT Server
 # Output: dist/autousbip-server
 # ==============================================================================
 

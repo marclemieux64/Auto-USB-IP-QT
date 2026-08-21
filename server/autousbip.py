@@ -53,7 +53,7 @@ def log_op(level: str, tag: str, message: str):
 def get_recent_logs(max_lines=150) -> list[str]:
     if LOG_BUFFER:
         return list(LOG_BUFFER)[-max_lines:]
-    return [f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] [INFO] Auto USB/IP daemon active on {get_local_ip()}:{PORT} (Monitoring USB ports)"]
+    return [f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] [INFO] AutoUSBIP-QT daemon active on {get_local_ip()}:{PORT} (Monitoring USB ports)"]
 
 
 try:
@@ -221,7 +221,7 @@ def update_zeroconf_broadcast(enable: bool):
                 auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
                 service_info = ServiceInfo(
                     "_usbip._tcp.local.",
-                    f"AutoUSBIPServer-{hostname}._usbip._tcp.local.",
+                    f"AutoUSBIP-QT-{hostname}._usbip._tcp.local.",
                     addresses=[socket.inet_aton(local_ip)],
                     port=PORT,
                     properties={
@@ -256,7 +256,7 @@ def update_zeroconf_broadcast(enable: bool):
                     f"auth_required={'true' if auth_needed else 'false'}",
                     f"tls={'true' if cfg.get('enable_tls', True) else 'false'}"
                 ]
-                cmd = ["avahi-publish-service", f"AutoUSBIPServer-{hostname}", "_usbip._tcp", str(PORT)] + txt_records
+                cmd = ["avahi-publish-service", f"AutoUSBIP-QT-{hostname}", "_usbip._tcp", str(PORT)] + txt_records
                 GLOBAL_AVAHI_PROC = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 logger.info(f"[mDNS] Registered native Avahi service broadcast on port {PORT}")
         else:
@@ -960,7 +960,7 @@ def main():
     buf_h = BufferLogHandler()
     buf_h.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
     logger.addHandler(buf_h)
-    logger.info("Starting auto-usbip server daemon...")
+    logger.info("Starting AutoUSBIP-QT server daemon...")
     ensure_kernel_modules()
     configure_tcp_keepalive()
     power_cycle_vbus_ports()
@@ -1056,7 +1056,7 @@ def main():
     except Exception as e:
         logger.error(f"Server exception: {e}")
     finally:
-        logger.info("Shutting down auto-usbip server...")
+        logger.info("Shutting down AutoUSBIP-QT server...")
         if udev_observer:
             try:
                 udev_observer.stop()

@@ -57,7 +57,7 @@ class TrayManager(QObject):
             status = f"{count} devices attached"
 
         srv_count = len([s for s in servers if s.enabled])
-        self.tray.setToolTip(f"Auto USB/IP\n{status}\n{srv_count} server(s) active")
+        self.tray.setToolTip(f"AutoUSBIP-QT\n{status}\n{srv_count} server(s) active")
 
     def show_message(self, title: str, message: str, icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information):
         self.tray.showMessage(title, message, icon, 3000)

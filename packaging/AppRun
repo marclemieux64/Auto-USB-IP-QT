@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Auto USB/IP Client - AppImage Entry Point
+# AutoUSBIP-QT Client - AppImage Entry Point
 # ==============================================================================
 
 set -e
@@ -12,7 +12,7 @@ export APPDIR
 # Self-Integration Handling
 if [ "$1" = "--install" ]; then
     APPIMAGE_PATH="${APPIMAGE:-$(readlink -f "$0")}"
-    echo "📦 Integrating Auto USB/IP Client into your desktop application menu..."
+    echo "📦 Integrating AutoUSBIP-QT Client into your desktop application menu..."
     
     DESKTOP_DIR="${HOME}/.local/share/applications"
     ICON_SVG_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
@@ -27,7 +27,7 @@ if [ "$1" = "--install" ]; then
     # Create desktop file pointing to this AppImage
     cat << DESKTOP_EOF > "${DESKTOP_DIR}/org.autousbip.client.desktop"
 [Desktop Entry]
-Name=Auto USB/IP Client
+Name=AutoUSBIP-QT
 Comment=Automatic USB-over-IP device manager and gamepad tester
 Exec="${APPIMAGE_PATH}"
 Icon=org.autousbip.client
@@ -51,7 +51,7 @@ DESKTOP_EOF
 fi
 
 if [ "$1" = "--uninstall" ]; then
-    echo "🗑️ Removing Auto USB/IP Client desktop shortcuts..."
+    echo "🗑️ Removing AutoUSBIP-QT Client desktop shortcuts..."
     rm -f "${HOME}/.local/share/applications/org.autousbip.client.desktop"
     rm -f "${HOME}/.local/share/icons/hicolor/scalable/apps/org.autousbip.client.svg"
     rm -f "${HOME}/.local/share/icons/hicolor/256x256/apps/org.autousbip.client.png"

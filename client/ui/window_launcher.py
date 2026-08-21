@@ -100,8 +100,8 @@ def run_ui_window(initial_js: str = ""):
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
-    app.setApplicationName("Auto USB/IP")
-    app.setApplicationDisplayName("Auto USB/IP")
+    app.setApplicationName("AutoUSBIP-QT")
+    app.setApplicationDisplayName("AutoUSBIP-QT")
     app.setDesktopFileName("org.autousbip.client")
 
     win = StandalonePanelWindow(initial_js)

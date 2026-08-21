@@ -149,7 +149,7 @@ class AutoUsbipApp(QObject):
         self.panel.open_options_dialog()
 
     def quit_application(self):
-        logger.info("Quitting Auto USB/IP Client...")
+        logger.info("Quitting AutoUSBIP-QT Client...")
         if hasattr(self, "panel"):
             self.panel.hide()
         if hasattr(self, "power_manager"):
