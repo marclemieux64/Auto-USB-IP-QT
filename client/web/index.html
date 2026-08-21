@@ -133,10 +133,14 @@
                         <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
                         <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port on attach error</label>
                         <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
-                        <label class="form-check" title="When enabled, allows other devices on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
-                        <div id="lan-url-info" style="display:none; font-size:0.72rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:3px 6px; margin:2px 0 4px 18px; font-family:var(--font-mono);">
-                            🌐 LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+                        <label class="form-check" title="Enable or disable the Web Dashboard browser interface"><input type="checkbox" id="opt-enable-web-ui" onchange="toggleWebUiOptions(this.checked)"> Enable Web Dashboard Interface</label>
+                        <div id="web-ui-sub-options">
+                            <label class="form-check" style="margin-left:18px;" title="When enabled, allows other devices on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
+                            <div id="lan-url-info" style="display:none; font-size:0.72rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:3px 6px; margin:2px 0 4px 18px; font-family:var(--font-mono);">
+                                🌐 LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+                            </div>
                         </div>
+
                         <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
                         <label class="form-check" title="When enabled, your PC automatically wakes from sleep on remote device activity."><input type="checkbox" id="opt-enable-wol"> Wake this PC on device activity (Wake-on-LAN)</label>
                         

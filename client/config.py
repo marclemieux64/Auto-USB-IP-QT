@@ -60,6 +60,7 @@ def get_default_config() -> dict:
         "show_server_ram": True,
         "show_server_uptime": True,
         "auto_discover": True,
+        "enable_web_ui": True,
         "allow_lan_access": True,
         "enable_web_csrf": False,
         "enable_tls_pinning": False,
@@ -172,6 +173,7 @@ class ClientConfig:
         self.show_server_ram = cfg.get("show_server_ram", True)
         self.show_server_uptime = cfg.get("show_server_uptime", True)
         self.auto_discover = cfg.get("auto_discover", True)
+        self.enable_web_ui = cfg.get("enable_web_ui", True)
         self.allow_lan_access = cfg.get("allow_lan_access", True)
         self.power_cycle_on_attach = cfg.get("power_cycle_on_attach", True)
         self.enable_web_csrf = cfg.get("enable_web_csrf", False)
@@ -203,6 +205,7 @@ class ClientConfig:
             "show_server_ram": getattr(self, "show_server_ram", True),
             "show_server_uptime": getattr(self, "show_server_uptime", True),
             "auto_discover": self.auto_discover,
+            "enable_web_ui": getattr(self, "enable_web_ui", True),
             "allow_lan_access": getattr(self, "allow_lan_access", True),
             "power_cycle_on_attach": getattr(self, "power_cycle_on_attach", True),
             "enable_web_csrf": getattr(self, "enable_web_csrf", False),

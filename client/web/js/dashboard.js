@@ -873,11 +873,17 @@ function openClientOptionsModal() {
     document.getElementById("opt-auto-discover").checked = cfg.auto_discover !== false;
     document.getElementById("opt-enable-nicknames").checked = cfg.enable_nicknames !== false;
     document.getElementById("opt-enable-wol").checked = !!cfg.enable_wol_wake;
+    const webUiEnabled = cfg.enable_web_ui !== false;
+    const webUiCheck = document.getElementById("opt-enable-web-ui");
+    if (webUiCheck) {
+        webUiCheck.checked = webUiEnabled;
+        toggleWebUiOptions(webUiEnabled);
+    }
     const lanAllowed = cfg.allow_lan_access !== false;
     const lanCheck = document.getElementById("opt-allow-lan-access");
     if (lanCheck) {
         lanCheck.checked = lanAllowed;
-        toggleLanUrlDisplay(lanAllowed);
+        toggleLanUrlDisplay(lanAllowed && webUiEnabled);
     }
     
     const poll = parseFloat(cfg.polling_interval || 1.0);
@@ -927,6 +933,7 @@ async function saveClientOptions() {
         auto_discover: document.getElementById("opt-auto-discover").checked,
         enable_nicknames: document.getElementById("opt-enable-nicknames").checked,
         enable_wol_wake: document.getElementById("opt-enable-wol").checked,
+        enable_web_ui: document.getElementById("opt-enable-web-ui") ? document.getElementById("opt-enable-web-ui").checked : true,
         allow_lan_access: document.getElementById("opt-allow-lan-access") ? document.getElementById("opt-allow-lan-access").checked : true,
         polling_interval: parseFloat(document.getElementById("opt-polling-interval")?.value || 1.0),
         show_port: document.getElementById("opt-show-port").checked,
@@ -1359,11 +1366,20 @@ async function toggleTouchpadMouse(port, enabled) {
 window.toggleTouchpadMouse = toggleTouchpadMouse;
 window.updateStatus = fetchStatus;
 
+function toggleWebUiOptions(enabled) {
+    const sub = document.getElementById("web-ui-sub-options");
+    if (sub) sub.style.display = enabled ? "block" : "none";
+    const lanCheck = document.getElementById("opt-allow-lan-access");
+    toggleLanUrlDisplay(enabled && (lanCheck ? lanCheck.checked : false));
+}
+
 function toggleLanUrlDisplay(enabled) {
     const infoEl = document.getElementById("lan-url-info");
     const urlEl = document.getElementById("opt-lan-url");
     if (!infoEl || !urlEl) return;
-    if (enabled) {
+    const webUiCheck = document.getElementById("opt-enable-web-ui");
+    const isWebEnabled = webUiCheck ? webUiCheck.checked : true;
+    if (enabled && isWebEnabled) {
         const hostIp = currentStatus.local_ip || window.location.hostname || "127.0.0.1";
         const port = currentStatus.web_port || 3242;
         urlEl.textContent = `http://${hostIp}:${port}/`;

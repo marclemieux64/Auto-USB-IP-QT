@@ -220,6 +220,7 @@ def handle_status(controller: Any) -> dict:
         "show_server_temp": getattr(controller.config, "show_server_temp", True),
         "show_server_ram": getattr(controller.config, "show_server_ram", True),
         "show_server_uptime": getattr(controller.config, "show_server_uptime", True),
+        "enable_web_ui": getattr(controller.config, "enable_web_ui", True),
         "allow_lan_access": getattr(controller.config, "allow_lan_access", True),
         "play_sound_cues": getattr(controller.config, "play_sound_cues", True),
         "power_cycle_on_attach": getattr(controller.config, "power_cycle_on_attach", True),

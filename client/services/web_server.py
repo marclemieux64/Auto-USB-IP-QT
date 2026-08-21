@@ -175,7 +175,31 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
                 return
 
             # 2. Root & Static Files
+            from config import load_config
+            cfg = load_config()
+            web_ui_enabled = cfg.get("enable_web_ui", True)
+
             if path == "/" or path == "/index.html":
+                if not web_ui_enabled:
+                    # Check if requested by external browser vs internal desktop WebEngine
+                    user_agent = self.headers.get("User-Agent", "")
+                    origin = self.headers.get("Origin") or self.headers.get("Referer") or ""
+                    client_ip = self.client_address[0]
+                    # If external access or disabled, return Web UI Disabled notice
+                    if client_ip not in ("127.0.0.1", "::1") or ("QtWebEngine" not in user_agent and "auto-usbip" not in user_agent.lower()):
+                        disabled_html = """<!DOCTYPE html><html><head><title>Auto USB/IP - Web UI Disabled</title>
+                        <style>body{background:#12141c;color:#f3f4f6;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+                        .box{background:#1a1d26;padding:30px 40px;border-radius:12px;border:1px solid #262a38;text-align:center;max-width:480px;}
+                        h2{color:#ef4444;margin-top:0;}p{color:#9ca3af;font-size:14px;line-height:1.5;}</style></head>
+                        <body><div class="box"><h2>Web UI Disabled</h2><p>The Web Dashboard interface has been disabled in the Auto USB/IP Client Options.</p>
+                        <p>You can re-enable it from the Client Preferences window or config.</p></div></body></html>"""
+                        body = disabled_html.encode("utf-8")
+                        self.send_response(403)
+                        self.send_header("Content-Type", "text/html; charset=utf-8")
+                        self.send_header("Content-Length", str(len(body)))
+                        self.end_headers()
+                        self.wfile.write(body)
+                        return
                 index_path = self.web_root / "index.html"
                 self.serve_static_file(index_path)
                 return
