@@ -62,11 +62,7 @@ function showToast(msg) {
 }
 
 function triggerSyncFlash() {
-    const dot = document.getElementById("sync-dot");
-    if (dot) {
-        dot.classList.add("flash");
-        setTimeout(() => dot.classList.remove("flash"), 220);
-    }
+    // Keep sync dot static to avoid pulsating distraction
 }
 
 async function fetchStatus() {
@@ -128,12 +124,43 @@ async function fetchStatus() {
     }
 }
 
-function updateElementHTMLIfChanged(el, newHTML) {
+function updateElementHTMLIfChanged(el, items, renderCardFn) {
     if (!el) return;
-    if (el._cachedHTML !== newHTML) {
-        el.innerHTML = newHTML;
-        el._cachedHTML = newHTML;
+    
+    // If items is empty, clear
+    if (!items || items.length === 0) {
+        el.innerHTML = "";
+        el._renderedKeys = [];
+        return;
     }
+
+    // Build map of new items
+    const newKeys = items.map((item, idx) => item.identifier_key || item.ip || item.port || item.bus_id || `item-${idx}`);
+    const existingCards = Array.from(el.children);
+    
+    // Check if simple text content updates can be done in-place
+    const renderedHTML = items.map(renderCardFn).join("");
+    if (el._cachedHTML === renderedHTML) {
+        return;
+    }
+
+    // Create a temporary parser to compare and mutate only changed nodes
+    const temp = document.createElement("div");
+    temp.innerHTML = renderedHTML;
+    const newCardNodes = Array.from(temp.children);
+
+    // Fast in-place DOM sync:
+    // If child counts match, update innerHTML per card only when changed to avoid full list reflow
+    if (existingCards.length === newCardNodes.length) {
+        for (let i = 0; i < existingCards.length; i++) {
+            if (existingCards[i].outerHTML !== newCardNodes[i].outerHTML) {
+                existingCards[i].innerHTML = newCardNodes[i].innerHTML;
+            }
+        }
+    } else {
+        el.innerHTML = renderedHTML;
+    }
+    el._cachedHTML = renderedHTML;
 }
 
 function renderAll() {
@@ -145,6 +172,87 @@ function renderAll() {
     checkGlobalEmpty();
 }
 
+function renderSingleServerCard(s) {
+    const cfg = currentStatus.config || {};
+    const now = Date.now();
+    const title = s.name ? `${s.name} (${s.ip})` : s.ip;
+    let badges = [];
+    const restartInfo = pendingRestartServers[s.ip];
+    if (restartInfo) {
+        if ((now - restartInfo.timestamp > 3500) && s.is_alive) {
+            delete pendingRestartServers[s.ip];
+            badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
+        } else if (now - restartInfo.timestamp > (restartInfo.timeout || 15000)) {
+            delete pendingRestartServers[s.ip];
+            if (s.is_alive) {
+                badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
+            } else {
+                badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
+            }
+        } else {
+            badges.push(`<span class="badge badge-restarting" title="Server daemon or system restart in progress"><span class="spinner-inline"></span> ${restartInfo.text}</span>`);
+        }
+    } else if (s.enabled) {
+        if (s.is_alive) {
+            if (s.auth_failed) {
+                badges.push('<span class="badge badge-danger" title="Authentication token is missing or invalid! Click Settings to update token."><img src="/icons/blacklist.png"> Auth Failed / Locked</span>');
+            } else {
+                badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
+            }
+            if (s.tls !== false) {
+                badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png"> TLS</span>');
+            }
+
+            if (cfg.show_latency && s.latency_ms != null) {
+                badges.push(`<span class="badge badge-latency" title="Round-trip network ping latency to server"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
+            }
+
+            // Server Health Metrics Badges (CPU Temp, RAM Usage, Uptime)
+            const srvCache = serverStatusCache[s.ip]?.metrics;
+            if (srvCache) {
+                if (cfg.show_server_temp !== false && srvCache.cpu_temp && srvCache.cpu_temp !== "N/A") {
+                    const tempNum = parseFloat(srvCache.cpu_temp);
+                    let tempClass = "badge-temp";
+                    if (!isNaN(tempNum)) {
+                        if (tempNum >= 75) tempClass = "badge-danger";
+                        else if (tempNum >= 60) tempClass = "badge-warning";
+                    }
+                    badges.push(`<span class="badge ${tempClass}" title="Server CPU core temperature"><img src="/icons/badge-temp.png"> ${srvCache.cpu_temp}</span>`);
+                }
+                if (cfg.show_server_ram !== false && srvCache.ram_usage && srvCache.ram_usage !== "N/A") {
+                    badges.push(`<span class="badge badge-ram" title="Server active RAM memory utilization percentage"><img src="/icons/badge-ram.png"> ${srvCache.ram_usage}</span>`);
+                }
+                if (cfg.show_server_uptime !== false && srvCache.uptime && srvCache.uptime !== "N/A") {
+                    badges.push(`<span class="badge badge-uptime" title="Server system running uptime since last reboot"><img src="/icons/badge-uptime.png"> ${srvCache.uptime}</span>`);
+                }
+            }
+        } else {
+            badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
+        }
+    } else {
+        badges.push('<span class="badge" title="Server is currently disabled in client settings"><img src="/icons/badge-disabled.png"> Disabled</span>');
+    }
+    return `
+        <div class="card" data-key="${s.ip}">
+            <div class="card-main">
+                <div class="card-left">
+                    <div class="card-icon"><img src="/icons/server-card.png"></div>
+                    <div class="card-info">
+                        <div class="card-title">${title}</div>
+                        <div class="card-sub">${badges.join(" ")}</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn" onclick="toggleServer('${encodeURIComponent(s.ip)}')"><img src="${s.enabled ? '/icons/network-disconnect.png' : '/icons/network-connect.png'}"> ${s.enabled ? 'Disable' : 'Enable'}</button>
+                    <button class="btn" onclick="openServerLogsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/utilities-terminal.png"> Console</button>
+                    <button class="btn" onclick="openServerSettingsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/settings.png"> Settings</button>
+                    <button class="btn btn-danger" onclick="removeServer('${encodeURIComponent(s.ip)}', ${s.port})"><img src="/icons/detach-btn.png"> Remove</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function renderServers() {
     const sec = document.getElementById("servers-section");
     const c = document.getElementById("servers-list");
@@ -154,87 +262,7 @@ function renderServers() {
         return;
     }
     if (sec) sec.style.display = "block";
-    const cfg = currentStatus.config || {};
-    const now = Date.now();
-    const html = srvs.map(s => {
-        const title = s.name ? `${s.name} (${s.ip})` : s.ip;
-        let badges = [];
-        const restartInfo = pendingRestartServers[s.ip];
-        if (restartInfo) {
-            if ((now - restartInfo.timestamp > 3500) && s.is_alive) {
-                delete pendingRestartServers[s.ip];
-                badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
-            } else if (now - restartInfo.timestamp > (restartInfo.timeout || 15000)) {
-                delete pendingRestartServers[s.ip];
-                if (s.is_alive) {
-                    badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
-                } else {
-                    badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
-                }
-            } else {
-                badges.push(`<span class="badge badge-restarting" title="Server daemon or system restart in progress"><span class="spinner-inline"></span> ${restartInfo.text}</span>`);
-            }
-        } else if (s.enabled) {
-            if (s.is_alive) {
-                if (s.auth_failed) {
-                    badges.push('<span class="badge badge-danger" title="Authentication token is missing or invalid! Click Settings to update token."><img src="/icons/blacklist.png"> Auth Failed / Locked</span>');
-                } else {
-                    badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
-                }
-                if (s.tls !== false) {
-                    badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png"> TLS</span>');
-                }
-
-                if (cfg.show_latency && s.latency_ms != null) {
-                    badges.push(`<span class="badge badge-latency" title="Round-trip network ping latency to server"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
-                }
-
-                // Server Health Metrics Badges (CPU Temp, RAM Usage, Uptime)
-                const srvCache = serverStatusCache[s.ip]?.metrics;
-                if (srvCache) {
-                    if (cfg.show_server_temp !== false && srvCache.cpu_temp && srvCache.cpu_temp !== "N/A") {
-                        const tempNum = parseFloat(srvCache.cpu_temp);
-                        let tempClass = "badge-temp";
-                        if (!isNaN(tempNum)) {
-                            if (tempNum >= 75) tempClass = "badge-danger";
-                            else if (tempNum >= 60) tempClass = "badge-warning";
-                        }
-                        badges.push(`<span class="badge ${tempClass}" title="Server CPU core temperature"><img src="/icons/badge-temp.png"> ${srvCache.cpu_temp}</span>`);
-                    }
-                    if (cfg.show_server_ram !== false && srvCache.ram_usage && srvCache.ram_usage !== "N/A") {
-                        badges.push(`<span class="badge badge-ram" title="Server active RAM memory utilization percentage"><img src="/icons/badge-ram.png"> ${srvCache.ram_usage}</span>`);
-                    }
-                    if (cfg.show_server_uptime !== false && srvCache.uptime && srvCache.uptime !== "N/A") {
-                        badges.push(`<span class="badge badge-uptime" title="Server system running uptime since last reboot"><img src="/icons/badge-uptime.png"> ${srvCache.uptime}</span>`);
-                    }
-                }
-            } else {
-                badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
-            }
-        } else {
-            badges.push('<span class="badge" title="Server is currently disabled in client settings"><img src="/icons/badge-disabled.png"> Disabled</span>');
-        }
-        return `
-            <div class="card">
-                <div class="card-main">
-                    <div class="card-left">
-                        <div class="card-icon"><img src="/icons/server-card.png"></div>
-                        <div class="card-info">
-                            <div class="card-title">${title}</div>
-                            <div class="card-sub">${badges.join(" ")}</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn" onclick="toggleServer('${encodeURIComponent(s.ip)}')"><img src="${s.enabled ? '/icons/network-disconnect.png' : '/icons/network-connect.png'}"> ${s.enabled ? 'Disable' : 'Enable'}</button>
-                        <button class="btn" onclick="openServerLogsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/utilities-terminal.png"> Console</button>
-                        <button class="btn" onclick="openServerSettingsModal('${encodeURIComponent(s.ip)}', '${encodeURIComponent(s.name || s.ip)}')"><img src="/icons/settings.png"> Settings</button>
-                        <button class="btn btn-danger" onclick="removeServer('${encodeURIComponent(s.ip)}', ${s.port})"><img src="/icons/detach-btn.png"> Remove</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join("");
-    updateElementHTMLIfChanged(c, html);
+    updateElementHTMLIfChanged(c, srvs, renderSingleServerCard);
 }
 
 function getKenneyControllerHero(family, cleanName, controllerType, desc) {
@@ -310,6 +338,53 @@ function getDeviceIllustrationUrl(d) {
     return "/icons/generic-usb.png";
 }
 
+function renderSingleAttachedDeviceCard(d) {
+    const cfg = currentStatus.config || {};
+    const iconSrc = getDeviceIllustrationUrl(d);
+    const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
+    let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
+    let badges = [];
+    if (cfg.show_port && d.port) badges.push(`<span class="badge badge-port" title="Local USB/IP virtual port mapping"><img src="/icons/badge-port.png"> Port ${d.port}</span>`);
+    if (cfg.show_speed && d.speed) badges.push(`<span class="badge badge-speed" title="USB bus operating connection speed"><img src="/icons/badge-speed.png"> ${d.speed}</span>`);
+    if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
+    if (cfg.show_battery && d.battery) badges.push(`<span class="badge badge-battery" title="Wireless controller battery level percentage"><img src="/icons/badge-battery.png"> ${d.battery}</span>`);
+    if (cfg.show_latency !== false && (d.latency_str || d.latency_ms != null)) {
+        const latText = d.latency_str || `${d.latency_ms} ms`;
+        badges.push(`<span class="badge badge-latency" title="Real-time controller polling interval and frequency"><img src="/icons/badge-latency.png"> ${latText}</span>`);
+    }
+
+    const btnTester = d.is_controller ? `<button class="btn btn-warning" onclick="openGamepadTesterModal('${d.port}', '${encodeURIComponent(title)}')"><img src="/icons/gamepad.png"> Gamepad Tester</button>` : "";
+    const btnStorage = d.is_storage ? `<button class="btn btn-primary" onclick="openStorageDevice('${d.port}')"><img src="/icons/document-open.png"> Open Files</button>` : "";
+    const isAudioActive = (d.audio_enabled !== false);
+    const btnAudio = d.has_audio ? `<button class="btn ${isAudioActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleDeviceAudio('${d.port}', ${isAudioActive})"><img src="/icons/${isAudioActive ? 'audio-card' : 'audio-volume-muted'}.png"> Audio: ${isAudioActive ? 'On' : 'Off'}</button>` : "";
+    const isMouseActive = (d.touchpad_mouse_enabled !== false);
+    const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/icons/input-mouse.png" style="width:19px;height:19px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
+
+    return `
+        <div class="card" data-key="${d.port || d.identifier_key}">
+            <div class="card-main">
+                <div class="card-left">
+                    <div class="card-icon"><img src="${iconSrc}"></div>
+                    <div class="card-info">
+                        <div class="card-title">${title}</div>
+                        <div class="card-sub">${badges.join(" ")}</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-danger" onclick="detachSingleDevice('${d.port}')"><img src="/icons/detach-btn.png"> Detach</button>
+                    ${d.server_ip && d.bus_id ? `<button class="btn" onclick="powerCycleDevice('${d.server_ip}', '${d.bus_id}')" title="Power cycle / reboot USB port on remote server"><img src="/icons/power-cycle.png"> Power Cycle</button>` : ''}
+                    <button class="btn" onclick="openNicknameModal('${d.identifier_key || d.port}', '${encodeURIComponent(title)}')"><img src="/icons/rename.png"> Rename</button>
+                    ${btnAudio}
+                    ${btnTouchpad}
+                    ${btnStorage}
+                    ${btnTester}
+                    <button class="btn btn-blacklist" onclick="blacklistDevice('${d.port}', '${d.identifier_key || d.vid_pid || d.bus_id || d.port}', '${encodeURIComponent(title)}', '${d.vid_pid || ""}', '${d.bus_id || ""}', '${iconName}', ${d.is_controller ? "true" : "false"})"><img src="/icons/blacklist.png"> Blacklist</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function renderAttachedDevices() {
     const sec = document.getElementById("attached-section");
     const c = document.getElementById("devices-list");
@@ -319,53 +394,38 @@ function renderAttachedDevices() {
         return;
     }
     if (sec) sec.style.display = "block";
+    updateElementHTMLIfChanged(c, devs, renderSingleAttachedDeviceCard);
+}
+
+function renderSingleAvailableDeviceCard(d) {
     const cfg = currentStatus.config || {};
-    const html = devs.map(d => {
-        const iconSrc = getDeviceIllustrationUrl(d);
-        const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
-        let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
-        let badges = [];
-        if (cfg.show_port && d.port) badges.push(`<span class="badge badge-port" title="Local USB/IP virtual port mapping"><img src="/icons/badge-port.png"> Port ${d.port}</span>`);
-        if (cfg.show_speed && d.speed) badges.push(`<span class="badge badge-speed" title="USB bus operating connection speed"><img src="/icons/badge-speed.png"> ${d.speed}</span>`);
-        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
-        if (cfg.show_battery && d.battery) badges.push(`<span class="badge badge-battery" title="Wireless controller battery level percentage"><img src="/icons/badge-battery.png"> ${d.battery}</span>`);
-        if (cfg.show_latency !== false && (d.latency_str || d.latency_ms != null)) {
-            const latText = d.latency_str || `${d.latency_ms} ms`;
-            badges.push(`<span class="badge badge-latency" title="Real-time controller polling interval and frequency"><img src="/icons/badge-latency.png"> ${latText}</span>`);
-        }
+    const iconSrc = getDeviceIllustrationUrl(d);
+    const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
+    let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
+    let badges = [];
+    if (cfg.show_port && d.bus_id) badges.push(`<span class="badge badge-port" title="Remote server USB physical Bus ID topology location"><img src="/icons/badge-port.png"> Bus ${d.bus_id}</span>`);
+    if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
+    if (d.server_ip) badges.push(`<span class="badge badge-server" title="Originating remote server IP address hosting this USB device"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
 
-        const btnTester = d.is_controller ? `<button class="btn btn-warning" onclick="openGamepadTesterModal('${d.port}', '${encodeURIComponent(title)}')"><img src="/icons/gamepad.png"> Gamepad Tester</button>` : "";
-        const btnStorage = d.is_storage ? `<button class="btn btn-primary" onclick="openStorageDevice('${d.port}')"><img src="/icons/document-open.png"> Open Files</button>` : "";
-        const isAudioActive = (d.audio_enabled !== false);
-        const btnAudio = d.has_audio ? `<button class="btn ${isAudioActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleDeviceAudio('${d.port}', ${isAudioActive})"><img src="/icons/${isAudioActive ? 'audio-card' : 'audio-volume-muted'}.png"> Audio: ${isAudioActive ? 'On' : 'Off'}</button>` : "";
-        const isMouseActive = (d.touchpad_mouse_enabled !== false);
-        const btnTouchpad = d.has_touchpad ? `<button class="btn ${isMouseActive ? 'btn-secondary' : 'btn-success'}" onclick="toggleTouchpadMouse('${d.port}', ${!isMouseActive})" title="Toggle whether PlayStation trackpad moves the desktop mouse cursor or stays isolated for gaming"><img src="/icons/input-mouse.png" style="width:19px;height:19px;object-fit:contain;vertical-align:middle;margin-right:3px;"> Trackpad Mouse: ${isMouseActive ? 'On' : 'Off'}</button>` : "";
-
-        return `
-            <div class="card">
-                <div class="card-main">
-                    <div class="card-left">
-                        <div class="card-icon"><img src="${iconSrc}"></div>
-                        <div class="card-info">
-                            <div class="card-title">${title}</div>
-                            <div class="card-sub">${badges.join(" ")}</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-danger" onclick="detachSingleDevice('${d.port}')"><img src="/icons/detach-btn.png"> Detach</button>
-                        ${d.server_ip && d.bus_id ? `<button class="btn" onclick="powerCycleDevice('${d.server_ip}', '${d.bus_id}')" title="Power cycle / reboot USB port on remote server"><img src="/icons/power-cycle.png"> Power Cycle</button>` : ''}
-                        <button class="btn" onclick="openNicknameModal('${d.identifier_key || d.port}', '${encodeURIComponent(title)}')"><img src="/icons/rename.png"> Rename</button>
-                        ${btnAudio}
-                        ${btnTouchpad}
-                        ${btnStorage}
-                        ${btnTester}
-                        <button class="btn btn-blacklist" onclick="blacklistDevice('${d.port}', '${d.identifier_key || d.vid_pid || d.bus_id || d.port}', '${encodeURIComponent(title)}', '${d.vid_pid || ""}', '${d.bus_id || ""}', '${iconName}', ${d.is_controller ? "true" : "false"})"><img src="/icons/blacklist.png"> Blacklist</button>
+    return `
+        <div class="card" data-key="${d.server_ip}:${d.bus_id}">
+            <div class="card-main">
+                <div class="card-left">
+                    <div class="card-icon"><img src="${iconSrc}"></div>
+                    <div class="card-info">
+                        <div class="card-title">${title}</div>
+                        <div class="card-sub">${badges.join(" ")}</div>
                     </div>
                 </div>
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="attachSingleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/network-connect.png"> Attach</button>
+                    <button class="btn" onclick="powerCycleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/power-cycle.png"> Power Cycle</button>
+                    <button class="btn" onclick="openNicknameModal('${d.identifier_key || d.bus_id}', '${encodeURIComponent(title)}')"><img src="/icons/rename.png"> Rename</button>
+                    <button class="btn btn-blacklist" onclick="blacklistDevice('', '${d.identifier_key || d.vid_pid || d.bus_id}', '${encodeURIComponent(title)}', '${d.vid_pid || ""}', '${d.bus_id || ""}', '${iconName}', ${d.is_controller ? "true" : "false"})"><img src="/icons/blacklist.png"> Blacklist</button>
+                </div>
             </div>
-        `;
-    }).join("");
-    updateElementHTMLIfChanged(c, html);
+        </div>
+    `;
 }
 
 function renderAvailableDevices() {
@@ -377,37 +437,7 @@ function renderAvailableDevices() {
         return;
     }
     if (sec) sec.style.display = "block";
-    const cfg = currentStatus.config || {};
-    const html = devs.map(d => {
-        const iconSrc = getDeviceIllustrationUrl(d);
-        const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
-        let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
-        let badges = [];
-        if (cfg.show_port && d.bus_id) badges.push(`<span class="badge badge-port" title="Remote server USB physical Bus ID topology location"><img src="/icons/badge-port.png"> Bus ${d.bus_id}</span>`);
-        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
-        if (d.server_ip) badges.push(`<span class="badge badge-server" title="Originating remote server IP address hosting this USB device"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
-
-        return `
-            <div class="card">
-                <div class="card-main">
-                    <div class="card-left">
-                        <div class="card-icon"><img src="${iconSrc}"></div>
-                        <div class="card-info">
-                            <div class="card-title">${title}</div>
-                            <div class="card-sub">${badges.join(" ")}</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-primary" onclick="attachSingleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/network-connect.png"> Attach</button>
-                        <button class="btn" onclick="powerCycleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/power-cycle.png"> Power Cycle</button>
-                        <button class="btn" onclick="openNicknameModal('${d.identifier_key || d.bus_id}', '${encodeURIComponent(title)}')"><img src="/icons/rename.png"> Rename</button>
-                        <button class="btn btn-blacklist" onclick="blacklistDevice('', '${d.identifier_key || d.vid_pid || d.bus_id}', '${encodeURIComponent(title)}', '${d.vid_pid || ""}', '${d.bus_id || ""}', '${iconName}', ${d.is_controller ? "true" : "false"})"><img src="/icons/blacklist.png"> Blacklist</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join("");
-    updateElementHTMLIfChanged(c, html);
+    updateElementHTMLIfChanged(c, devs, renderSingleAvailableDeviceCard);
 }
 
 function renderDiscoveredServers() {
