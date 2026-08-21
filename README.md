@@ -143,25 +143,31 @@ Auto USB/IP Client is distributed as **both a portable AppImage and a standalone
 # 1. Ensure kernel VHCI driver is loaded
 sudo modprobe vhci-hcd
 
-# 2. Make executable and launch
+# 2. Make executable and launch directly:
 chmod +x dist/AutoUSBIP-QT-x86_64.AppImage
 ./dist/AutoUSBIP-QT-x86_64.AppImage
 
-# 3. (Optional) Integrate into your Desktop Application Menu
+# 3. (Optional) Integrate into your Desktop Application Menu:
 ./dist/AutoUSBIP-QT-x86_64.AppImage --install
+
+# 4. (Optional) Remove from your Desktop Application Menu:
+./dist/AutoUSBIP-QT-x86_64.AppImage --uninstall
 ```
 
 ### Option 2: Standalone Portable Tarball (.tar.gz)
 ```bash
 # 1. Extract tarball
 tar -xzf dist/AutoUSBIP-QT-x86_64.tar.gz
-cd auto-usbip-client-linux-x86_64
+cd autousbip-qt-client-linux-x86_64
 
 # 2. Run directly
-./autousbip-client
+./autousbip-qt-client
 
-# 3. (Optional) Add to Desktop Application Menu
+# 3. (Optional) Add to Desktop Application Menu:
 ./install-menu.sh
+
+# 4. (Optional) Remove from Desktop Application Menu:
+./uninstall-menu.sh
 ```
 
 ---

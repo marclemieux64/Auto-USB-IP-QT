@@ -20,7 +20,58 @@ def global_exception_handler(exc_type, exc_value, exc_traceback):
     err_str = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     logger.error(f"[PREVENTED CRASH] Unhandled exception in Qt thread/slot:\n{err_str}")
 
+def handle_cli_integration():
+    import subprocess
+    home = Path.home()
+    desktop_file = home / ".local" / "share" / "applications" / "org.autousbip.client.desktop"
+    icon_svg = home / ".local" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "org.autousbip.client.svg"
+    icon_png = home / ".local" / "share" / "icons" / "hicolor" / "256x256" / "apps" / "org.autousbip.client.png"
+
+    if "--install" in sys.argv:
+        print("📦 Integrating Auto USB/IP-QT Client into desktop application menu...")
+        exec_path = os.environ.get("APPIMAGE", str(Path(sys.executable).resolve()))
+        desktop_file.parent.mkdir(parents=True, exist_ok=True)
+        icon_svg.parent.mkdir(parents=True, exist_ok=True)
+        icon_png.parent.mkdir(parents=True, exist_ok=True)
+
+        assets_dir = Path(__file__).resolve().parent / "assets" / "branding"
+        if (assets_dir / "app-icon.svg").exists():
+            import shutil
+            shutil.copyfile(assets_dir / "app-icon.svg", icon_svg)
+        if (assets_dir / "app-icon.png").exists():
+            import shutil
+            shutil.copyfile(assets_dir / "app-icon.png", icon_png)
+
+        content = f"""[Desktop Entry]
+Name=Auto USB/IP-QT
+Comment=Automatic USB-over-IP device manager and gamepad tester
+Exec="{exec_path}"
+Icon=org.autousbip.client
+Terminal=false
+Type=Application
+Categories=Utility;Network;
+Keywords=usb;usbip;remote;gamepad;controller;
+StartupNotify=true
+StartupWMClass=auto-usbip-client
+X-AppImage-Version=2.0.0
+"""
+        desktop_file.write_text(content, encoding="utf-8")
+        subprocess.run(["update-desktop-database", str(desktop_file.parent)], capture_output=True)
+        print(f"✅ Desktop menu shortcut successfully installed: {desktop_file}")
+        sys.exit(0)
+
+    elif "--uninstall" in sys.argv:
+        print("🗑️ Removing Auto USB/IP-QT Client desktop shortcuts and icons...")
+        for p in (desktop_file, icon_svg, icon_png):
+            if p.exists():
+                p.unlink()
+        subprocess.run(["update-desktop-database", str(desktop_file.parent)], capture_output=True)
+        print("✅ Auto USB/IP-QT Client shortcuts and icons removed successfully.")
+        sys.exit(0)
+
+
 def main():
+    handle_cli_integration()
     if "--ui-window" in sys.argv:
         from ui.window_launcher import run_ui_window
         sys.argv.remove("--ui-window")
