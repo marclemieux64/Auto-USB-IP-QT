@@ -51,7 +51,14 @@ class StandalonePanelWindow(QWidget):
         settings.setAttribute(QWebEngineSettings.WebAttribute.ScrollAnimatorEnabled, False)
 
         self.browser.loadFinished.connect(self.on_load_finished)
-        self.browser.setUrl(QUrl("http://127.0.0.1:3242/"))
+        
+        # Load local HTML file directly if present for instant rendering
+        dashboard_path = Path(__file__).resolve().parent.parent / "web" / "index.html"
+        if dashboard_path.exists():
+            self.browser.setHtml(dashboard_path.read_text(encoding="utf-8"), QUrl("http://127.0.0.1:3242/"))
+        else:
+            self.browser.setUrl(QUrl("http://127.0.0.1:3242/"))
+
         self.browser.page().setBackgroundColor(QColor("#12141c"))
         self.root_layout.addWidget(self.browser)
 
@@ -69,6 +76,7 @@ class StandalonePanelWindow(QWidget):
         if not ok:
             QTimer.singleShot(800, lambda: self.browser.setUrl(QUrl("http://127.0.0.1:3242/")))
         else:
+            self.browser.page().runJavaScript("if (window.fetchStatus) window.fetchStatus();")
             if self.initial_js:
                 QTimer.singleShot(200, lambda: self.browser.page().runJavaScript(self.initial_js))
 
