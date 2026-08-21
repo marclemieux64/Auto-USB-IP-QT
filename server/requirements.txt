@@ -1,2 +1,3 @@
+# Optional packages (autousbip.py works with 100% zero pip dependencies using standard library & pure kernel Netlink):
 zeroconf>=0.130.0
 pyudev>=0.24.0

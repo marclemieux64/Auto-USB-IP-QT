@@ -68,6 +68,8 @@ try:
 except ImportError:
     HAS_PYUDEV = False
 
+GLOBAL_AVAHI_PROC = None
+
 PORT = 3240
 CONTROL_PORT = 3241
 
@@ -195,44 +197,68 @@ def save_server_config(cfg: dict) -> bool:
 
 
 GLOBAL_ZEROCONF = None
+GLOBAL_AVAHI_PROC = None
 
 
 def update_zeroconf_broadcast(enable: bool):
-    global GLOBAL_ZEROCONF
-    if not HAS_ZEROCONF:
-        return
+    global GLOBAL_ZEROCONF, GLOBAL_AVAHI_PROC
     try:
         if enable:
-            if GLOBAL_ZEROCONF is not None:
-                try:
-                    zc, s_info = GLOBAL_ZEROCONF
-                    zc.unregister_service(s_info)
-                    zc.close()
-                except Exception:
-                    pass
-                GLOBAL_ZEROCONF = None
+            # 1. First try python-zeroconf if installed
+            if HAS_ZEROCONF:
+                if GLOBAL_ZEROCONF is not None:
+                    try:
+                        zc, s_info = GLOBAL_ZEROCONF
+                        zc.unregister_service(s_info)
+                        zc.close()
+                    except Exception:
+                        pass
+                    GLOBAL_ZEROCONF = None
 
-            local_ip = get_local_ip()
-            hostname = socket.gethostname()
-            cfg = load_server_config()
-            auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
-            service_info = ServiceInfo(
-                "_usbip._tcp.local.",
-                f"AutoUSBIPServer-{hostname}._usbip._tcp.local.",
-                addresses=[socket.inet_aton(local_ip)],
-                port=PORT,
-                properties={
-                    "version": "2.0",
-                    "host": hostname,
-                    "auth_required": "true" if auth_needed else "false",
-                    "tls": "true" if cfg.get("enable_tls", True) else "false"
-                },
-                server=f"{hostname}.local.",
-            )
-            zc = Zeroconf()
-            zc.register_service(service_info)
-            GLOBAL_ZEROCONF = (zc, service_info)
-            logger.info(f"[mDNS] Registered Zeroconf broadcast on {local_ip}:{PORT} (Auth Required: {auth_needed}, TLS: {cfg.get('enable_tls', True)})")
+                local_ip = get_local_ip()
+                hostname = socket.gethostname()
+                cfg = load_server_config()
+                auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
+                service_info = ServiceInfo(
+                    "_usbip._tcp.local.",
+                    f"AutoUSBIPServer-{hostname}._usbip._tcp.local.",
+                    addresses=[socket.inet_aton(local_ip)],
+                    port=PORT,
+                    properties={
+                        "version": "2.0",
+                        "host": hostname,
+                        "auth_required": "true" if auth_needed else "false",
+                        "tls": "true" if cfg.get("enable_tls", True) else "false"
+                    },
+                    server=f"{hostname}.local.",
+                )
+                zc = Zeroconf()
+                zc.register_service(service_info)
+                GLOBAL_ZEROCONF = (zc, service_info)
+                logger.info(f"[mDNS] Registered Zeroconf broadcast on {local_ip}:{PORT} (Auth Required: {auth_needed}, TLS: {cfg.get('enable_tls', True)})")
+                return
+
+            # 2. Native System Avahi Fallback (Zero Python Dependencies)
+            if shutil.which("avahi-publish-service"):
+                if GLOBAL_AVAHI_PROC is not None:
+                    try:
+                        GLOBAL_AVAHI_PROC.terminate()
+                    except Exception:
+                        pass
+                    GLOBAL_AVAHI_PROC = None
+
+                hostname = socket.gethostname()
+                cfg = load_server_config()
+                auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
+                txt_records = [
+                    "version=2.0",
+                    f"host={hostname}",
+                    f"auth_required={'true' if auth_needed else 'false'}",
+                    f"tls={'true' if cfg.get('enable_tls', True) else 'false'}"
+                ]
+                cmd = ["avahi-publish-service", f"AutoUSBIPServer-{hostname}", "_usbip._tcp", str(PORT)] + txt_records
+                GLOBAL_AVAHI_PROC = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                logger.info(f"[mDNS] Registered native Avahi service broadcast on port {PORT}")
         else:
             if GLOBAL_ZEROCONF is not None:
                 zc, s_info = GLOBAL_ZEROCONF
@@ -240,6 +266,13 @@ def update_zeroconf_broadcast(enable: bool):
                 zc.close()
                 GLOBAL_ZEROCONF = None
                 logger.info("[mDNS] Zeroconf network discovery broadcast stopped.")
+            if GLOBAL_AVAHI_PROC is not None:
+                try:
+                    GLOBAL_AVAHI_PROC.terminate()
+                except Exception:
+                    pass
+                GLOBAL_AVAHI_PROC = None
+                logger.info("[mDNS] Native Avahi service broadcast stopped.")
     except Exception as e:
         logger.warning(f"[mDNS] Error updating mDNS discovery service: {e}")
 
@@ -957,6 +990,10 @@ def main():
     sync_devices()
 
     udev_observer = None
+    netlink_sock = None
+    netlink_active = False
+
+    # 1. Try pyudev if present
     if HAS_PYUDEV:
         try:
             context = pyudev.Context()
@@ -974,11 +1011,38 @@ def main():
 
             udev_observer = pyudev.MonitorObserver(monitor, callback=_on_udev_event)
             udev_observer.start()
+            netlink_active = True
             logger.info("pyudev active: instant USB hotplug detection enabled.")
         except Exception as e:
             logger.warning(f"pyudev monitoring setup failed: {e}")
 
-    heartbeat_interval = 60 if HAS_PYUDEV else 5
+    # 2. Pure Python Linux Kernel Netlink AF_NETLINK(15) fallback (Zero external dependencies)
+    if not netlink_active:
+        try:
+            NETLINK_KOBJECT_UEVENT = 15
+            netlink_sock = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW, NETLINK_KOBJECT_UEVENT)
+            netlink_sock.bind((os.getpid(), 1)) # multicast group 1
+            netlink_sock.setblocking(False)
+
+            def _netlink_monitor_loop():
+                while not killer.kill_now:
+                    try:
+                        r, _, _ = select.select([netlink_sock], [], [], 1.0)
+                        if r:
+                            data = netlink_sock.recv(4096)
+                            if b"SUBSYSTEM=usb" in data or b"/usb" in data:
+                                _SYNC_EVENT.set()
+                    except Exception:
+                        pass
+
+            t_nl = threading.Thread(target=_netlink_monitor_loop, daemon=True)
+            t_nl.start()
+            netlink_active = True
+            logger.info("Pure kernel Netlink active: zero-dependency instant USB hotplug enabled.")
+        except Exception as e:
+            logger.debug(f"Direct kernel Netlink setup fallback error: {e}")
+
+    heartbeat_interval = 60 if netlink_active else 3
 
     try:
         while not killer.kill_now:
@@ -996,6 +1060,11 @@ def main():
         if udev_observer:
             try:
                 udev_observer.stop()
+            except Exception:
+                pass
+        if netlink_sock:
+            try:
+                netlink_sock.close()
             except Exception:
                 pass
         update_zeroconf_broadcast(False)
