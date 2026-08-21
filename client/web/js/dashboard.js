@@ -128,6 +128,14 @@ async function fetchStatus() {
     }
 }
 
+function updateElementHTMLIfChanged(el, newHTML) {
+    if (!el) return;
+    if (el._cachedHTML !== newHTML) {
+        el.innerHTML = newHTML;
+        el._cachedHTML = newHTML;
+    }
+}
+
 function renderAll() {
     renderServers();
     renderAttachedDevices();
@@ -148,7 +156,7 @@ function renderServers() {
     if (sec) sec.style.display = "block";
     const cfg = currentStatus.config || {};
     const now = Date.now();
-    c.innerHTML = srvs.map(s => {
+    const html = srvs.map(s => {
         const title = s.name ? `${s.name} (${s.ip})` : s.ip;
         let badges = [];
         const restartInfo = pendingRestartServers[s.ip];
@@ -226,6 +234,7 @@ function renderServers() {
             </div>
         `;
     }).join("");
+    updateElementHTMLIfChanged(c, html);
 }
 
 function getKenneyControllerHero(family, cleanName, controllerType, desc) {
@@ -311,7 +320,7 @@ function renderAttachedDevices() {
     }
     if (sec) sec.style.display = "block";
     const cfg = currentStatus.config || {};
-    c.innerHTML = devs.map(d => {
+    const html = devs.map(d => {
         const iconSrc = getDeviceIllustrationUrl(d);
         const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
         let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
@@ -356,6 +365,7 @@ function renderAttachedDevices() {
             </div>
         `;
     }).join("");
+    updateElementHTMLIfChanged(c, html);
 }
 
 function renderAvailableDevices() {
@@ -368,7 +378,7 @@ function renderAvailableDevices() {
     }
     if (sec) sec.style.display = "block";
     const cfg = currentStatus.config || {};
-    c.innerHTML = devs.map(d => {
+    const html = devs.map(d => {
         const iconSrc = getDeviceIllustrationUrl(d);
         const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
         let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
@@ -397,6 +407,7 @@ function renderAvailableDevices() {
             </div>
         `;
     }).join("");
+    updateElementHTMLIfChanged(c, html);
 }
 
 function renderDiscoveredServers() {
@@ -408,7 +419,7 @@ function renderDiscoveredServers() {
         return;
     }
     if (sec) sec.style.display = "block";
-    c.innerHTML = dSrvs.map(d => {
+    const html = dSrvs.map(d => {
         const title = d.name ? `${d.name} (${d.ip})` : d.ip;
         let badges = [
             '<span class="badge badge-online" title="Automatically discovered via local mDNS / Zeroconf network broadcast"><img src="/icons/badge-online.png"> mDNS Discovered</span>',
@@ -434,6 +445,7 @@ function renderDiscoveredServers() {
             </div>
         `;
     }).join("");
+    updateElementHTMLIfChanged(c, html);
 }
 
 function renderBlacklistedDevices() {
@@ -445,7 +457,7 @@ function renderBlacklistedDevices() {
         return;
     }
     if (sec) sec.style.display = "block";
-    c.innerHTML = list.map(item => {
+    const html = list.map(item => {
         const isObj = (typeof item === "object" && item !== null);
         const ident = isObj ? (item.identifier || item.vid_pid || item.name) : item;
         const name = isObj ? (item.name || item.identifier) : item;
@@ -497,6 +509,7 @@ function renderBlacklistedDevices() {
             </div>
         `;
     }).join("");
+    updateElementHTMLIfChanged(c, html);
 }
 
 function checkGlobalEmpty() {
