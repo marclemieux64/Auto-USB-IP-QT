@@ -51,8 +51,8 @@ def main():
         )
 
     app = QApplication(sys.argv)
-    app.setApplicationName("AutoUSBIP-QT")
-    app.setApplicationDisplayName("AutoUSBIP-QT")
+    app.setApplicationName("Auto USB/IP-QT")
+    app.setApplicationDisplayName("Auto USB/IP-QT")
     app.setDesktopFileName("org.autousbip.client")
     app.setQuitOnLastWindowClosed(False)
 

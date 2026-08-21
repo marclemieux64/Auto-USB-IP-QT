@@ -17,7 +17,7 @@ fi
 # Create desktop entry pointing to this folder
 cat << DESKTOP_EOF > "${DESKTOP_DIR}/org.autousbip.client.desktop"
 [Desktop Entry]
-Name=AutoUSBIP-QT
+Name=Auto USB/IP-QT
 Comment=Automatic USB-over-IP device manager and gamepad tester
 Exec="${BIN}"
 Icon=org.autousbip.client

@@ -61,7 +61,7 @@ class CustomWebEnginePage(QWebEnginePage):
     def javaScriptAlert(self, securityOrigin: QUrl, msg: str):
         box = QMessageBox(self.panel)
         box.setStyleSheet(DARK_DIALOG_STYLE)
-        box.setWindowTitle("Auto USB/IP")
+        box.setWindowTitle("Auto USB/IP-QT")
         box.setText(msg)
         box.setIcon(QMessageBox.Icon.Information)
         box.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -70,7 +70,7 @@ class CustomWebEnginePage(QWebEnginePage):
     def javaScriptConfirm(self, securityOrigin: QUrl, msg: str) -> bool:
         box = QMessageBox(self.panel)
         box.setStyleSheet(DARK_DIALOG_STYLE)
-        box.setWindowTitle("Auto USB/IP")
+        box.setWindowTitle("Auto USB/IP-QT")
         box.setText(msg)
         box.setIcon(QMessageBox.Icon.Question)
         box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -81,7 +81,7 @@ class CustomWebEnginePage(QWebEnginePage):
     def javaScriptPrompt(self, securityOrigin: QUrl, msg: str, defaultValue: str) -> tuple[bool, str]:
         dlg = QInputDialog(self.panel)
         dlg.setStyleSheet(DARK_DIALOG_STYLE)
-        dlg.setWindowTitle("Auto USB/IP")
+        dlg.setWindowTitle("Auto USB/IP-QT")
         dlg.setLabelText(msg)
         dlg.setTextValue(defaultValue)
         ok = dlg.exec() == QInputDialog.DialogCode.Accepted

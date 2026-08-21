@@ -25,7 +25,7 @@ class StandalonePanelWindow(QWidget):
     def __init__(self, initial_js: str = ""):
         super().__init__()
         self.initial_js = initial_js
-        self.setWindowTitle("Auto USB/IP")
+        self.setWindowTitle("Auto USB/IP-QT")
         self.setWindowIcon(get_app_icon())
 
         self.root_layout = QVBoxLayout(self)
@@ -100,8 +100,8 @@ def run_ui_window(initial_js: str = ""):
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
-    app.setApplicationName("AutoUSBIP-QT")
-    app.setApplicationDisplayName("AutoUSBIP-QT")
+    app.setApplicationName("Auto USB/IP-QT")
+    app.setApplicationDisplayName("Auto USB/IP-QT")
     app.setDesktopFileName("org.autousbip.client")
 
     win = StandalonePanelWindow(initial_js)
