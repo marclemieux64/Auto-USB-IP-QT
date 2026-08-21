@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import logging
+import os
+import subprocess
+import sys
+import urllib.parse
 from pathlib import Path
 from PyQt6.QtCore import Qt, QUrl, QSize
 from PyQt6.QtGui import QColor, QIcon
@@ -88,108 +92,60 @@ class CustomWebEnginePage(QWebEnginePage):
         logger.info(f"[DesktopWebEngine JS] line {lineNumber}: {message}")
 
 
-class NativePlasmaPanel(QWidget):
-    def __init__(self, controller, parent=None):
-        super().__init__(parent)
+class NativePlasmaPanel:
+    """
+    Process-isolated Dashboard Window Controller.
+    Running the Chromium UI in a dedicated process guarantees that clicking the title bar 'X'
+    closes the window cleanly without terminating the core USB/IP background daemon, tray icon,
+    or device connections.
+    """
+    def __init__(self, controller):
         self.controller = controller
-        self._active_tester = None
+        self._proc: subprocess.Popen | None = None
 
-        # Standard native window with full window decoration and title bar
-        self.setWindowTitle("Auto USB/IP")
-        self.setWindowIcon(self.controller.get_app_icon())
+    def isVisible(self) -> bool:
+        return self._proc is not None and self._proc.poll() is None
 
-        self.root_layout = QVBoxLayout(self)
-        self.root_layout.setContentsMargins(0, 0, 0, 0)
-        self.root_layout.setSpacing(0)
+    def hide(self):
+        if self._proc is not None and self._proc.poll() is None:
+            try:
+                self._proc.terminate()
+            except Exception:
+                pass
+        self._proc = None
 
-        self.browser = QWebEngineView(self)
-        self.custom_page = CustomWebEnginePage(self, self.browser)
-        self.browser.setPage(self.custom_page)
+    def show(self, initial_js: str = ""):
+        if self.isVisible():
+            return
 
-        # Hook download requests so backups/configs save cleanly to user desired path
-        self.browser.page().profile().downloadRequested.connect(self.on_download_requested)
-        try:
-            from PyQt6.QtWebEngineCore import QWebEngineProfile
-            self.browser.page().profile().setHttpCacheType(QWebEngineProfile.HttpCacheType.NoCache)
-            self.browser.page().profile().clearHttpCache()
-        except Exception:
-            pass
-
-        settings = self.custom_page.settings()
-        settings.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
-        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
-        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
-        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
-        settings.setAttribute(QWebEngineSettings.WebAttribute.ScrollAnimatorEnabled, False)
-
-        self.browser.loadFinished.connect(self.on_load_finished)
-        self.browser.setUrl(QUrl("http://127.0.0.1:3242/"))
-        self.browser.page().setBackgroundColor(QColor("#12141c"))
-        self.root_layout.addWidget(self.browser)
-
-        self.setMinimumSize(480, 420)
-        self.resize(780, 840)
-
-    def on_download_requested(self, download_item):
-        suggested = download_item.suggestedFileName() or "auto-usbip-backup.json"
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Save Backup / Configuration",
-            suggested,
-            "JSON Files (*.json);;All Files (*)",
-        )
-        if path:
-            p = Path(path)
-            download_item.setDownloadDirectory(str(p.parent))
-            download_item.setDownloadFileName(p.name)
-            download_item.accept()
+        executable = sys.executable
+        if getattr(sys, "frozen", False):
+            # In PyInstaller / AppImage standalone executable
+            args = [executable, "--ui-window"]
         else:
-            download_item.cancel()
+            args = [executable, str(Path(__file__).resolve().parent.parent / "main.py"), "--ui-window"]
+
+        if initial_js:
+            args.append(initial_js)
+
+        try:
+            self._proc = subprocess.Popen(
+                args,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        except Exception as e:
+            logger.error(f"Error launching UI window process: {e}")
+
+    def refresh(self):
+        pass
+
+    def open_options_dialog(self):
+        self.show("if (window.openClientOptionsModal) openClientOptionsModal();")
 
     def open_gamepad_tester(self, port: str):
-        import urllib.parse
         target_dev = next((d for d in self.controller.cached_devices if str(d.port) == str(port)), None)
         title = target_dev.clean_name if target_dev else f"Port {port}"
         enc = urllib.parse.quote(title)
-        if not self.isVisible():
-            self.controller.show_panel()
-        self.browser.page().runJavaScript(f"if (window.openGamepadTesterModal) openGamepadTesterModal('{port}', '{enc}');")
-
-    def closeEvent(self, event):
-        # Hide to tray instead of quitting when user clicks title bar X
-        event.ignore()
-        self.hide()
-
-    def sizeHint(self):
-        return QSize(780, 840)
-
-    def minimumSizeHint(self):
-        return QSize(600, 580)
-
-    def on_load_finished(self, ok: bool):
-        if not ok:
-            from PyQt6.QtCore import QTimer
-            QTimer.singleShot(800, lambda: self.browser.setUrl(QUrl("http://127.0.0.1:3242")))
-        else:
-            self.refresh()
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        if hasattr(self, "browser") and self.browser:
-            dashboard_path = Path(__file__).resolve().parent.parent / "web" / "index.html"
-            if dashboard_path.exists():
-                self.browser.setHtml(dashboard_path.read_text(encoding="utf-8"), QUrl("http://127.0.0.1:3242/"))
-            else:
-                self.browser.setUrl(QUrl("http://127.0.0.1:3242/"))
-            self.refresh()
-
-    def refresh(self, *args, **kwargs):
-        if hasattr(self, "browser") and self.browser:
-            self.browser.page().runJavaScript("if (window.fetchStatus) window.fetchStatus();")
-
-    def open_options(self):
-        if hasattr(self, "browser") and self.browser:
-            self.browser.page().runJavaScript("if (window.openClientOptionsModal) openClientOptionsModal();")
-
-    def open_options_dialog(self):
-        self.open_options()
+        self.show(f"if (window.openGamepadTesterModal) openGamepadTesterModal('{port}', '{enc}');")

@@ -15,19 +15,19 @@ from PyQt6.QtCore import Qt, QCoreApplication
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
-from app import AutoUsbipApp
-from config import PORT
-from services.server_connection import ServerConnection
-
-logger = logging.getLogger("auto-usbip-client")
-
-
 def global_exception_handler(exc_type, exc_value, exc_traceback):
     import traceback
     err_str = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     logger.error(f"[PREVENTED CRASH] Unhandled exception in Qt thread/slot:\n{err_str}")
 
 def main():
+    if "--ui-window" in sys.argv:
+        from ui.window_launcher import run_ui_window
+        sys.argv.remove("--ui-window")
+        initial_js = sys.argv[1] if len(sys.argv) > 1 else ""
+        run_ui_window(initial_js)
+        return
+
     sys.excepthook = global_exception_handler
     logging.basicConfig(level=logging.INFO)
     from core.console import init_client_console
@@ -35,7 +35,10 @@ def main():
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
 
-    from config import is_valid_server_address
+    from config import is_valid_server_address, PORT
+    from services.server_connection import ServerConnection
+    from app import AutoUsbipApp
+
     initial_servers = [
         ServerConnection(ip.strip(), PORT)
         for ip in sys.argv[1:]

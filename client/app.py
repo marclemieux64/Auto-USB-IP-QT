@@ -140,22 +140,13 @@ class AutoUsbipApp(QObject):
         if self.panel.isVisible():
             self.panel.hide()
         else:
-            self.show_panel()
+            self.panel.show()
 
     def show_panel(self):
-        screen = QGuiApplication.primaryScreen()
-        if screen:
-            geom = screen.availableGeometry()
-            x = geom.x() + (geom.width() - self.panel.width()) // 2
-            y = geom.y() + (geom.height() - self.panel.height()) // 2
-            self.panel.move(x, y)
         self.panel.show()
-        self.panel.raise_()
-        self.panel.activateWindow()
 
     def open_options_dialog(self):
-        self.show_panel()
-        self.panel.browser.page().runJavaScript("if (window.openClientOptionsModal) openClientOptionsModal();")
+        self.panel.open_options_dialog()
 
     def restart(self):
         time.sleep(0.3)
