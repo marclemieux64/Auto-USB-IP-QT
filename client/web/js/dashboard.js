@@ -155,30 +155,30 @@ function renderServers() {
         if (restartInfo) {
             if ((now - restartInfo.timestamp > 3500) && s.is_alive) {
                 delete pendingRestartServers[s.ip];
-                badges.push('<span class="badge badge-online">Online</span>');
+                badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
             } else if (now - restartInfo.timestamp > (restartInfo.timeout || 15000)) {
                 delete pendingRestartServers[s.ip];
                 if (s.is_alive) {
-                    badges.push('<span class="badge badge-online">Online</span>');
+                    badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
                 } else {
-                    badges.push('<span class="badge badge-offline">Offline</span>');
+                    badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
                 }
             } else {
-                badges.push(`<span class="badge badge-restarting"><span class="spinner-inline"></span> ${restartInfo.text}</span>`);
+                badges.push(`<span class="badge badge-restarting" title="Server daemon or system restart in progress"><span class="spinner-inline"></span> ${restartInfo.text}</span>`);
             }
         } else if (s.enabled) {
             if (s.is_alive) {
                 if (s.auth_failed) {
-                    badges.push('<span class="badge badge-danger" title="Authentication token is missing or invalid! Click Settings to update token.">🔒 Auth Failed / Locked</span>');
+                    badges.push('<span class="badge badge-danger" title="Authentication token is missing or invalid! Click Settings to update token."><img src="/icons/blacklist.png"> Auth Failed / Locked</span>');
                 } else {
-                    badges.push('<span class="badge badge-online">Online</span>');
+                    badges.push('<span class="badge badge-online" title="Server is online and responding"><img src="/icons/badge-online.png"> Online</span>');
                 }
                 if (s.tls !== false) {
                     badges.push('<span class="badge badge-tls" title="Control socket is encrypted with TLS 1.3 / 1.2"><img src="/icons/badge-tls.png" style="width:15px;height:15px;object-fit:contain;vertical-align:-1px;margin-right:3px;">TLS</span>');
                 }
 
                 if (cfg.show_latency && s.latency_ms != null) {
-                    badges.push(`<span class="badge badge-latency"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
+                    badges.push(`<span class="badge badge-latency" title="Round-trip network ping latency to server"><img src="/icons/badge-latency.png"> ${s.latency_ms} ms</span>`);
                 }
 
                 // Server Health Metrics Badges (CPU Temp, RAM Usage, Uptime)
@@ -191,20 +191,20 @@ function renderServers() {
                             if (tempNum >= 75) tempClass = "badge-danger";
                             else if (tempNum >= 60) tempClass = "badge-warning";
                         }
-                        badges.push(`<span class="badge ${tempClass}" title="Server CPU Temperature"><img src="/icons/badge-temp.png"> ${srvCache.cpu_temp}</span>`);
+                        badges.push(`<span class="badge ${tempClass}" title="Server CPU core temperature"><img src="/icons/badge-temp.png"> ${srvCache.cpu_temp}</span>`);
                     }
                     if (cfg.show_server_ram !== false && srvCache.ram_usage && srvCache.ram_usage !== "N/A") {
-                        badges.push(`<span class="badge badge-ram" title="Server Memory Usage"><img src="/icons/badge-ram.png"> ${srvCache.ram_usage}</span>`);
+                        badges.push(`<span class="badge badge-ram" title="Server active RAM memory utilization percentage"><img src="/icons/badge-ram.png"> ${srvCache.ram_usage}</span>`);
                     }
                     if (cfg.show_server_uptime !== false && srvCache.uptime && srvCache.uptime !== "N/A") {
-                        badges.push(`<span class="badge badge-uptime" title="Server System Uptime"><img src="/icons/badge-uptime.png"> ${srvCache.uptime}</span>`);
+                        badges.push(`<span class="badge badge-uptime" title="Server system running uptime since last reboot"><img src="/icons/badge-uptime.png"> ${srvCache.uptime}</span>`);
                     }
                 }
             } else {
-                badges.push('<span class="badge badge-offline">Offline</span>');
+                badges.push('<span class="badge badge-offline" title="Server is unreachable or offline"><img src="/icons/badge-offline.png"> Offline</span>');
             }
         } else {
-            badges.push('<span class="badge">Disabled</span>');
+            badges.push('<span class="badge" title="Server is currently disabled in client settings"><img src="/icons/badge-disabled.png"> Disabled</span>');
         }
         return `
             <div class="card">
@@ -316,10 +316,10 @@ function renderAttachedDevices() {
         const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
         let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
         let badges = [];
-        if (cfg.show_port && d.port) badges.push(`<span class="badge badge-port"><img src="/icons/badge-port.png"> Port ${d.port}</span>`);
-        if (cfg.show_speed && d.speed) badges.push(`<span class="badge badge-speed"><img src="/icons/badge-speed.png"> ${d.speed}</span>`);
-        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
-        if (cfg.show_battery && d.battery) badges.push(`<span class="badge badge-battery"><img src="/icons/badge-battery.png"> ${d.battery}</span>`);
+        if (cfg.show_port && d.port) badges.push(`<span class="badge badge-port" title="Local USB/IP virtual port mapping"><img src="/icons/badge-port.png"> Port ${d.port}</span>`);
+        if (cfg.show_speed && d.speed) badges.push(`<span class="badge badge-speed" title="USB bus operating connection speed"><img src="/icons/badge-speed.png"> ${d.speed}</span>`);
+        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
+        if (cfg.show_battery && d.battery) badges.push(`<span class="badge badge-battery" title="Wireless controller battery level percentage"><img src="/icons/badge-battery.png"> ${d.battery}</span>`);
         if (cfg.show_latency !== false && (d.latency_str || d.latency_ms != null)) {
             const latText = d.latency_str || `${d.latency_ms} ms`;
             badges.push(`<span class="badge badge-latency" title="Real-time controller polling interval and frequency"><img src="/icons/badge-latency.png"> ${latText}</span>`);
@@ -373,9 +373,9 @@ function renderAvailableDevices() {
         const iconName = d.is_controller ? "gamepad" : (d.icon_alias || "generic-usb");
         let title = (cfg.enable_nicknames && d.clean_name) ? d.clean_name : d.desc;
         let badges = [];
-        if (cfg.show_port && d.bus_id) badges.push(`<span class="badge badge-port"><img src="/icons/badge-port.png"> Bus ${d.bus_id}</span>`);
-        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
-        if (d.server_ip) badges.push(`<span class="badge badge-server"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
+        if (cfg.show_port && d.bus_id) badges.push(`<span class="badge badge-port" title="Remote server USB physical Bus ID topology location"><img src="/icons/badge-port.png"> Bus ${d.bus_id}</span>`);
+        if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
+        if (d.server_ip) badges.push(`<span class="badge badge-server" title="Originating remote server IP address hosting this USB device"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
 
         return `
             <div class="card">
@@ -411,8 +411,8 @@ function renderDiscoveredServers() {
     c.innerHTML = dSrvs.map(d => {
         const title = d.name ? `${d.name} (${d.ip})` : d.ip;
         let badges = [
-            '<span class="badge badge-online">mDNS Discovered</span>',
-            `<span class="badge"><img src="/icons/badge-server.png"> Port ${d.port}</span>`
+            '<span class="badge badge-online" title="Automatically discovered via local mDNS / Zeroconf network broadcast"><img src="/icons/badge-online.png"> mDNS Discovered</span>',
+            `<span class="badge" title="Remote server USB/IP daemon TCP listening port"><img src="/icons/badge-server.png"> Port ${d.port}</span>`
         ];
         if (d.auth_required) {
             badges.push('<span class="badge badge-warning" title="This server requires an authentication token"><img src="/icons/configure.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;">Token Required</span>');
