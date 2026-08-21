@@ -148,7 +148,36 @@ class AutoUsbipApp(QObject):
     def open_options_dialog(self):
         self.panel.open_options_dialog()
 
+    def quit_application(self):
+        logger.info("Quitting Auto USB/IP Client...")
+        if hasattr(self, "panel"):
+            self.panel.hide()
+        if hasattr(self, "power_manager"):
+            try:
+                self.power_manager.stop()
+            except Exception:
+                pass
+        if hasattr(self, "discovery"):
+            try:
+                self.discovery.stop()
+            except Exception:
+                pass
+        if hasattr(self, "scanner"):
+            try:
+                self.scanner.stop()
+            except Exception:
+                pass
+        if hasattr(self, "web_server"):
+            try:
+                self.web_server.stop()
+            except Exception:
+                pass
+        self.app.quit()
+        sys.exit(0)
+
     def restart(self):
+        if hasattr(self, "panel"):
+            self.panel.hide()
         time.sleep(0.3)
         python = sys.executable
         os.execl(python, python, *sys.argv)

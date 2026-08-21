@@ -41,7 +41,7 @@ class TrayManager(QObject):
         act_quit = self.tray_menu.addAction(
             QIcon(str(icons_dir / "detach-btn.png")), "Quit"
         )
-        act_quit.triggered.connect(self.app.quit)
+        act_quit.triggered.connect(self.controller.quit_application)
 
         self.tray.setContextMenu(self.tray_menu)
         self.tray.activated.connect(self.controller.on_tray_activated)
