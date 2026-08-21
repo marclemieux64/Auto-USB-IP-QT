@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/autousbip.py
+ExecStart=/usr/local/bin/autousbip-qt-server.py
 Restart=on-failure
 RestartSec=3s
 

@@ -49,7 +49,7 @@ echo "\n[1/4] Freezing Python application and Qt6 runtime..."
 
 # 3. Construct AppDir layout
 echo "\n[2/4] Constructing AppDir structure..."
-APPDIR="${REPO_ROOT}/build/Auto-USBIP.AppDir"
+APPDIR="${REPO_ROOT}/build/AutoUSBIP-QT.AppDir"
 rm -rf "${APPDIR}"
 mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/metainfo"
 
@@ -74,12 +74,12 @@ if [ -f "${ICON_PNG}" ]; then
 fi
 
 # Copy frozen binaries and assets
-cp -r "${REPO_ROOT}/dist/autousbip-client/"* "${APPDIR}/usr/bin/"
+cp -r "${REPO_ROOT}/dist/autousbip-qt-client/"* "${APPDIR}/usr/bin/"
 
 # 4. Generate AppImage
 echo "\n[3/4] Generating final AppImage package..."
 mkdir -p "${REPO_ROOT}/dist"
-OUTPUT_APPIMAGE="${REPO_ROOT}/dist/Auto-USBIP-x86_64.AppImage"
+OUTPUT_APPIMAGE="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.AppImage"
 rm -f "${OUTPUT_APPIMAGE}"
 
 ARCH=x86_64 "${APPIMAGETOOL}" "${APPDIR}" "${OUTPUT_APPIMAGE}"
@@ -87,12 +87,12 @@ chmod +x "${OUTPUT_APPIMAGE}"
 
 # 5. Generate Portable Tarball
 echo "\n[4/4] Generating portable standalone tarball (.tar.gz)..."
-TARBALL_STAGING="${REPO_ROOT}/build/auto-usbip-client-linux-x86_64"
+TARBALL_STAGING="${REPO_ROOT}/build/autousbip-qt-client-linux-x86_64"
 rm -rf "${TARBALL_STAGING}"
 mkdir -p "${TARBALL_STAGING}"
 
 # Copy binary payload
-cp -r "${REPO_ROOT}/dist/autousbip-client/"* "${TARBALL_STAGING}/"
+cp -r "${REPO_ROOT}/dist/autousbip-qt-client/"* "${TARBALL_STAGING}/"
 
 # Copy icons and desktop helpers
 cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${TARBALL_STAGING}/"
@@ -107,9 +107,9 @@ if [ -f "${ICON_PNG}" ]; then
     cp -f "${ICON_PNG}" "${TARBALL_STAGING}/org.autousbip.client.png"
 fi
 
-OUTPUT_TARBALL="${REPO_ROOT}/dist/Auto-USBIP-x86_64.tar.gz"
+OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.tar.gz"
 rm -f "${OUTPUT_TARBALL}"
-tar -czf "${OUTPUT_TARBALL}" -C "${REPO_ROOT}/build" auto-usbip-client-linux-x86_64
+tar -czf "${OUTPUT_TARBALL}" -C "${REPO_ROOT}/build" autousbip-qt-client-linux-x86_64
 
 echo "\n============================================================="
 echo "🎉 Build complete! Generated release artifacts:"

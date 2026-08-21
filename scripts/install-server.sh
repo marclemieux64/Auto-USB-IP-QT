@@ -44,12 +44,12 @@ EOF_MODS
 echo -e "${BLUE}[3/4] Installing autousbip daemon to /usr/local/bin/...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/autousbip.py" ]; then
-    cp "$SCRIPT_DIR/autousbip.py" /usr/local/bin/autousbip.py
+    cp "$SCRIPT_DIR/autousbip.py" /usr/local/bin/autousbip-qt-server.py
 else
     echo -e "${YELLOW}Downloading latest autousbip.py from GitHub...${NC}"
-    curl -fsSL https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/server/autousbip.py -o /usr/local/bin/autousbip.py
+    curl -fsSL https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/server/autousbip.py -o /usr/local/bin/autousbip-qt-server.py
 fi
-chmod 755 /usr/local/bin/autousbip.py
+chmod 755 /usr/local/bin/autousbip-qt-server.py
 
 echo -e "${BLUE}[4/4] Installing Polkit security policy & configuring systemd...${NC}"
 # Install Polkit policy and rules if polkit is present
@@ -64,7 +64,7 @@ if [ -d "/etc/polkit-1/rules.d" ]; then
     fi
 fi
 
-cat << 'EOF_SVC' > /etc/systemd/system/autousbip.service
+cat << 'EOF_SVC' > /etc/systemd/system/autousbip-qt-server.service
 [Unit]
 Description=AutoUSBIP-QT Server Daemon
 After=network-online.target systemd-udevd.service
@@ -72,7 +72,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/autousbip.py
+ExecStart=/usr/local/bin/autousbip-qt-server.py
 Restart=on-failure
 RestartSec=3s
 
@@ -90,8 +90,8 @@ WantedBy=multi-user.target
 EOF_SVC
 
 systemctl daemon-reload
-systemctl enable autousbip.service
-systemctl restart autousbip.service
+systemctl enable autousbip-qt-server.service
+systemctl restart autousbip-qt-server.service
 
 echo -e "${GREEN}=====================================================${NC}"
 echo -e "${GREEN}  🎉 AutoUSBIP-QT Server installed & running!${NC}"

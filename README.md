@@ -146,17 +146,17 @@ Auto USB/IP Client is distributed as **both a portable AppImage and a standalone
 sudo modprobe vhci-hcd
 
 # 2. Make executable and launch
-chmod +x dist/Auto-USBIP-x86_64.AppImage
-./dist/Auto-USBIP-x86_64.AppImage
+chmod +x dist/AutoUSBIP-QT-x86_64.AppImage
+./dist/AutoUSBIP-QT-x86_64.AppImage
 
 # 3. (Optional) Integrate into your Desktop Application Menu
-./dist/Auto-USBIP-x86_64.AppImage --install
+./dist/AutoUSBIP-QT-x86_64.AppImage --install
 ```
 
 ### Option 2: Standalone Portable Tarball (.tar.gz)
 ```bash
 # 1. Extract tarball
-tar -xzf dist/Auto-USBIP-x86_64.tar.gz
+tar -xzf dist/AutoUSBIP-QT-x86_64.tar.gz
 cd auto-usbip-client-linux-x86_64
 
 # 2. Run directly
@@ -169,7 +169,7 @@ cd auto-usbip-client-linux-x86_64
 ---
 
 ### 🔨 Building Release Artifacts from Source
-To build both `Auto-USBIP-x86_64.AppImage` and `Auto-USBIP-x86_64.tar.gz`:
+To build both `AutoUSBIP-QT-x86_64.AppImage` and `AutoUSBIP-QT-x86_64.tar.gz`:
 ```bash
 bash scripts/build-appimage.sh
 ```

@@ -87,9 +87,9 @@ else
 fi
 
 # Launch application binary
-BIN="${APPDIR}/usr/bin/autousbip-client"
+BIN="${APPDIR}/usr/bin/autousbip-qt-client"
 if [ ! -f "${BIN}" ]; then
-    BIN="${APPDIR}/usr/bin/autousbip-client/autousbip-client"
+    BIN="${APPDIR}/usr/bin/autousbip-qt-client/autousbip-qt-client"
 fi
 
 exec "${BIN}" "$@"
