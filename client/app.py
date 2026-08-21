@@ -137,25 +137,21 @@ class AutoUsbipApp(QObject):
             return
         self.last_toggle_time = now
 
-        if self.panel.is_panel_open():
-            self.panel.hide_to_tray()
+        if self.panel.isVisible():
+            self.panel.hide()
         else:
             self.show_panel()
 
     def show_panel(self):
-        self.panel._is_docked_tray = False
         screen = QGuiApplication.primaryScreen()
         if screen:
             geom = screen.availableGeometry()
             x = geom.x() + (geom.width() - self.panel.width()) // 2
             y = geom.y() + (geom.height() - self.panel.height()) // 2
             self.panel.move(x, y)
-        else:
-            self.panel.move(200, 200)
         self.panel.show()
         self.panel.raise_()
         self.panel.activateWindow()
-        self.panel.refresh()
 
     def open_options_dialog(self):
         self.show_panel()
