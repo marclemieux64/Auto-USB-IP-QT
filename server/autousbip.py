@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import collections
-import fcntl
 import json
 import logging
 import os
