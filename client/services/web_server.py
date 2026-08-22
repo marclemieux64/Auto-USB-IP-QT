@@ -91,6 +91,18 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             pass
 
     def serve_static_file(self, file_path: Path):
+        try:
+            resolved = file_path.resolve()
+            # Prevent path traversal attacks outside of web_root, assets_root, or application bundle
+            allowed_roots = [self.web_root.resolve(), self.assets_root.resolve(), self.web_root.parent.resolve()]
+            if not any(resolved == root or root in resolved.parents for root in allowed_roots):
+                logger.warning(f"[Security Alert] Blocked suspected Path Traversal request: {file_path}")
+                self.send_error(403, "Access Denied: Path Traversal Prohibited")
+                return
+        except Exception:
+            self.send_error(400, "Bad Request")
+            return
+
         if not file_path.exists() or not file_path.is_file():
             self.send_error(404, "File Not Found")
             return
