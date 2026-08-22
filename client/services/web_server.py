@@ -147,6 +147,8 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
         # 1. Custom Branding
         custom_map = {
             "systray-logo": self.assets_root / "branding" / "systray-logo.png",
+            "app-icon": self.assets_root / "branding" / "app-icon.png",
+            "app-logo": self.assets_root / "branding" / "app-logo.png",
         }
         if icon_name in custom_map and custom_map[icon_name].exists():
             return custom_map[icon_name].read_bytes()

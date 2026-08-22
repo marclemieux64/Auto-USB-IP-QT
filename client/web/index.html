@@ -119,6 +119,58 @@
         </div>
     </div>
 
+    
+    <!-- About Auto USB/IP-QT Modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content" style="max-width: 480px; text-align: center; padding: 22px 20px;">
+            <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                <div style="width: 68px; height: 68px; background: var(--icon-bg); border: 1px solid var(--icon-border); border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 8px; box-shadow: var(--shadow-card);">
+                    <img src="/icons/app-icon.png" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+            </div>
+            
+            <h2 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 800; color: var(--text-title); letter-spacing: -0.5px;">Auto USB/IP-QT</h2>
+            <div style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px;">
+                <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-color); border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;">v2.0.0 (Release)</span>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;">GPLv3</span>
+            </div>
+
+            <p style="font-size: 0.80rem; color: var(--text-muted); line-height: 1.5; margin: 0 auto 14px auto; max-width: 420px;">
+                Automatic USB-over-IP Device Client, Gamepad Diagnostic Hub & Server Manager for Linux and Windows.
+            </p>
+
+            <div style="background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; text-align: left; font-size: 0.76rem; margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Author & Maintainer:</span>
+                    <span style="font-weight: 600; color: var(--text-title);">Marc Lemieux (<a href="https://github.com/marclemieux64" target="_blank" style="color: var(--accent-color); text-decoration: none;">@marclemieux64</a>)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Upstream Project:</span>
+                    <span style="font-weight: 600; color: var(--text-title);">Florian Lecrenay (<a href="https://github.com/florianL21/auto-usbip" target="_blank" style="color: var(--accent-color); text-decoration: none;">florianL21/auto-usbip</a>)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">License:</span>
+                    <span style="font-weight: 600; color: var(--text-title);">GNU General Public License v3.0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Engine & Stack:</span>
+                    <span style="font-weight: 600; color: var(--text-title);">Python 3 • PyQt6 • QtWebEngine • USB/IP</span>
+                </div>
+            </div>
+
+            <div style="font-size: 0.70rem; color: var(--text-dimmed); margin-bottom: 14px; line-height: 1.4;">
+                🤖 <i>Engineered with AI pair programming (Google DeepMind / Antigravity).</i>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 8px;">
+                <a href="https://github.com/marclemieux64/Auto-USB-IP-QT" target="_blank" class="btn" style="text-decoration: none; padding: 6px 14px;">
+                    <img src="/icons/document-open.png" style="width: 16px; height: 16px;"> GitHub Repository
+                </a>
+                <button class="btn btn-primary" onclick="closeAboutModal()" style="padding: 6px 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Client Options Modal -->
     <div id="options-modal" class="modal">
         <div class="modal-content" style="max-width: 660px;">
@@ -196,6 +248,7 @@
             </div>
             <div class="modal-footer" style="justify-content:space-between;">
                 <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="openAboutModal()" title="About Auto USB/IP-QT"><img src="/icons/app-icon.png" style="width:16px;height:16px;object-fit:contain;"> About</button>
                     <button class="btn" onclick="exportClientBackup()" title="Export all client settings and server configs to JSON"><img src="/icons/document-save.png"> Export Backup</button>
                     <button class="btn" onclick="triggerImportClientBackup()" title="Import settings from a previously exported JSON backup"><img src="/icons/document-open.png"> Import Backup</button>
                     <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
