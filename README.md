@@ -4,7 +4,7 @@
 
 # Auto USB/IP Qt
 
-**Seamless, encrypted Network USB forwarding with ZeroConf discovery, Polkit/AppArmor security, rich web dashboard, remote server console, and full-fidelity gamepad diagnostics.**
+**Encrypted USB-over-IP management with ZeroConf discovery, Polkit security, web dashboard, remote server console, and gamepad diagnostics.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
@@ -21,30 +21,29 @@
 
 ## 🚀 Key Features
 
-* ⚡ **Zero-Configuration Server Discovery**: Uses pure-Python mDNS (Zeroconf / DNS-SD) to automatically broadcast and discover remote USB/IP servers on the local subnet without manual IP configuration.
-* 🔒 **Zero-Sudo Security Architecture**:
-  * **Polkit D-Bus Policies**: Replaces legacy `sudoers` with granular PolicyKit actions (`org.autousbip.client.*`).
-  * **AppArmor Profiles**: Sandboxes both client and server processes to enforce strict file and capability boundaries.
+* ⚡ **Zero-Configuration Server Discovery**: Uses mDNS (Zeroconf / DNS-SD) to discover remote USB/IP servers on the local network automatically.
+* 🔒 **Passwordless Polkit Security**:
+  * **Polkit D-Bus Policies**: Replaces `sudoers` with granular PolicyKit actions (`org.autousbip.client.*`).
+  * **AppArmor Profiles**: Restricts filesystem and capability boundaries for client and server binaries.
   * **udev Access Rules**: Direct non-root access to USB devices and gamepad telemetry via `uaccess`.
-  * **Systemd Ambient Capabilities**: Hardens daemons using `CAP_NET_ADMIN`, `CAP_SYS_ADMIN`, and `CAP_SYS_RAWIO` with `PrivateTmp=true`.
-* 🛡️ **Encrypted Remote Communication (TLS 1.3 / 1.2)**: All control commands, log streaming, and telemetry sockets run over encrypted TLS with auto-generated self-signed certificates or custom CA certificates.
-* 🖥️ **High-Tech Web Dashboard**:
-  * Fast, sleek, dark-mode management interface accessible locally or across the LAN (`http://<client-ip>:3242/`).
-  * Full real-time configuration modals for both Server and Client settings (TLS, discovery, subnet filters, VBUS power delay, auto-attach, audio cues).
-* 📟 **Interactive Diagnostic Consoles**:
-  * **Client Diagnostics Console**: Live in-memory log streamer, regex search, log levels, and interactive CLI shell.
-  * **Remote Server Console**: Real-time remote `journalctl` daemon log streaming, CPU temperature/uptime telemetry, and remote management commands (`status`, `metrics`, `rebind`, `restart`, `reboot`).
-* 🎮 **Full-Fidelity Gamepad Tester**:
-  * **Pure Vector SVG Kenney Assets**: Resolution-independent button prompts for Nintendo, PlayStation, Xbox, and NES/SNES layouts.
-  * **`SDL_GameControllerDB`**: Community hardware auto-mapping with physical controller profiles.
-  * Real-time analog stick, trigger, and D-pad evaluation with visual deadzone rendering.
+  * **Systemd Ambient Capabilities**: Runs daemons with `CAP_NET_ADMIN`, `CAP_SYS_ADMIN`, and `CAP_SYS_RAWIO` without root privileges.
+* 🛡️ **Encrypted Control Socket (TLS 1.3 / 1.2)**: Secures control commands, log streaming, and telemetry sockets using TLS certificates and optional pinning.
+* 🖥️ **Web Dashboard**:
+  * Dark-mode interface accessible locally or across the LAN (`http://<client-ip>:3242/`).
+  * Real-time configuration for TLS, discovery, subnet filters, VBUS power delay, auto-attach, and audio cues.
+  * **Multi-User Lockout & In-Use Badges**: Displays remote client hostnames on active devices to prevent attach conflicts.
+* 📟 **Diagnostic Consoles**:
+  * **Client Console**: In-memory log streamer, regex search, log levels, and interactive CLI shell.
+  * **Remote Server Console**: Live `journalctl` streaming, CPU temperature/uptime metrics, and remote maintenance commands (`rebind`, `restart`, `reboot`).
+* 🎮 **Gamepad Tester**:
+  * **Kenney Vector SVG Prompts**: Resolution-independent button prompts for Nintendo, PlayStation, Xbox, and NES/SNES layouts.
+  * **`SDL_GameControllerDB`**: Community hardware mapping profiles.
+  * Analog stick, trigger, and D-pad evaluation with visual deadzone rendering.
   * Multi-touch trackpad visualizer with absolute touch coordinates.
-  * Independent **Accelerometer** & **Gyroscope** 6-Axis IMU motion telemetry.
-  * **Sony DualSense** interactive hardware controls: 24-bit RGB lightbar illumination, player LEDs, microphone mute button, motorized adaptive triggers (resistance, recoil, vibration), and rumble tests.
-* 💤 **Sleep & Wake Auto-Recovery**: Automatically cleans zombie connections and re-binds remote USB ports upon system resume using `systemd-login1` D-Bus signals and a monotonic jump watchdog.
-* 📦 **Portable Release Packaging**: 1-click build script producing both self-contained **AppImage** and portable **Tarball** releases with zero host dependency requirements.
-
----
+  * 6-axis IMU accelerometer and gyroscope motion telemetry.
+  * **Sony DualSense** hardware controls: RGB lightbar, player LEDs, mic mute button, motorized adaptive triggers, and rumble tests.
+* 💤 **Sleep & Wake Auto-Recovery**: Clears zombie connections and re-binds remote USB ports upon system resume using `systemd-login1` D-Bus signals.
+* 📦 **Portable Packaging**: Self-contained **AppImage** and portable **Tarball** builds with zero host library requirements.
 
 ---
 
@@ -53,21 +52,21 @@
 <div align="center">
 
 ### 🖥️ Main Dashboard & Device Manager
-*Clean dark-mode interface with live server metrics, latency telemetry, instant attach/detach controls, and USB power cycling.*
+*Dark-mode interface with live server metrics, latency telemetry, attach/detach controls, and USB power cycling.*
 
 <img src="assets/screenshots/dashboard_overview.png" alt="Auto USB/IP Qt Dashboard Overview" width="900">
 
 <br><br>
 
-### 🎮 Interactive Gamepad Latency & Calibration Tester
+### 🎮 Gamepad Latency & Calibration Tester
 *Live input telemetry with Kenney vector prompts, deadzone mapping, multi-touch trackpad, 6-axis IMU gyro/accel, and DualSense adaptive triggers.*
 
 <img src="assets/screenshots/gamepad_tester.png" alt="Gamepad Latency and Calibration Tester" width="900">
 
 <br><br>
 
-### ⚙️ Client Options & Security Hardening
-*Extensive customization toggles, LAN dashboard sharing, visual badge overlays, and BadUSB hardware class isolation.*
+### ⚙️ Client Options & Security Settings
+*Customization toggles, LAN dashboard sharing, visual badge overlays, and BadUSB hardware class isolation.*
 
 <img src="assets/screenshots/options_settings.png" alt="Client Options & Security Settings" width="900">
 
@@ -81,7 +80,7 @@
 <br><br>
 
 ### 📟 Diagnostic Console & Live Event Stream
-*Interactive developer shell with structured real-time logging, severity level filters, search, and one-click log export.*
+*Interactive developer shell with structured real-time logging, severity level filters, search, and log export.*
 
 <img src="assets/screenshots/console_diagnostics.png" alt="Client Diagnostics Console" width="900">
 
@@ -122,41 +121,39 @@
 
 ## 🛡️ Security & Privilege Model
 
-Auto USB/IP Qt provides a multi-layered, enterprise-grade defense-in-depth security model where **all hardening features are configurable and optional**:
-
-### 1. Zero-Sudo Privilege Model
-* **Polkit (PolicyKit)**: Rules defined in [`client/security/polkit/`](client/security/polkit/) allow non-root users to attach/detach kernel USB devices via D-Bus without `sudoers` or root shells.
-* **AppArmor MAC Profiles**: Confines client and server binaries on Debian/Ubuntu/openSUSE ([`client/security/apparmor/`](client/security/apparmor/) & [`server/security/apparmor/`](server/security/apparmor/)).
+### 1. Privilege Model
+* **Polkit (PolicyKit)**: Rules in [`client/security/polkit/`](client/security/polkit/) allow non-root users to attach/detach kernel USB devices via D-Bus without `sudoers` or root shells.
+* **AppArmor MAC Profiles**: Confines client and server binaries on Debian, Ubuntu, and openSUSE ([`client/security/apparmor/`](client/security/apparmor/) & [`server/security/apparmor/`](server/security/apparmor/)).
 * **SELinux Policy Modules**: Native CIL & Type Enforcement policies for Fedora, Bazzite, RHEL, and CentOS ([`client/security/selinux/`](client/security/selinux/) & [`server/security/selinux/`](server/security/selinux/)).
 * **udev `uaccess` Rules**: Non-root desktop access to physical gamepad telemetry and sysfs nodes ([`client/security/udev/`](client/security/udev/) & [`server/security/udev/`](server/security/udev/)).
-* **Automated Security Installer**: Run `./install-security.sh` on both client and server to auto-detect and deploy all policies.
+* **Security Installer**: Run `./install-security.sh` on client or server to detect and deploy policies automatically.
 
 ### 2. Optional Hardening Controls (Configurable in Dashboard)
-* 🔒 **Web API CSRF & Cross-Origin Protection**: Restricts mutating API actions (attach, detach, restart, reboot) to requests originating from `localhost` or verified client IP addresses.
-* 🔑 **TLS Certificate Pinning (Trust-On-First-Use / TOFU)**: Automatically records and validates the SHA-256 fingerprint of the server's TLS certificate to detect Man-in-the-Middle (MitM) attacks.
-* 🦹 **BadUSB Device Class Filtering**: Restricts auto-attaching rogue USB devices by class:
+* 🔒 **Web API CSRF Protection**: Restricts mutating API actions (attach, detach, restart, reboot) to requests originating from verified local origins.
+* 🔑 **TLS Certificate Pinning (TOFU)**: Records and validates the SHA-256 fingerprint of the server's TLS certificate on first connect.
+* 🦹 **BadUSB Device Class Filtering**: Blocks auto-attaching USB devices by class:
   * Block Mass Storage / Flash Drives (Class 08h)
   * Block Virtual Network / Ethernet / Wi-Fi Adapters (Classes 02h/E0h)
-  * Block Raw USB Keyboards (Keystroke Injection / Rubber Ducky defense)
-* 🔥 **1-Click Server Firewall Script**:
+  * Block Raw USB Keyboards (Keystroke Injection defense)
+* 🔥 **Server Firewall Setup**:
   ```bash
   sudo bash scripts/setup-firewall.sh 192.168.2.0/24
   ```
-  Restricts ports `3240/tcp` (usbip), `3241/tcp` (TLS control), and `5353/udp` (mDNS) strictly to your trusted LAN subnet.
+  Restricts ports `3240/tcp` (usbip), `3241/tcp` (TLS control), and `5353/udp` (mDNS) to your trusted LAN subnet.
 
 ---
 
 ## 📦 Server Installation (Raspberry Pi / Linux)
 
-### Option A: Standalone Self-Installing Binary (Zero-Dependencies)
+### Option A: Standalone Self-Installing Binary
 ```bash
-# Run temporarily in foreground (leaves no trace when stopped):
+# Run in foreground:
 sudo ./dist/autousbip-qt-server
 
-# OR permanently self-install as a systemd background service (starts on boot):
+# Install as systemd background service (starts on boot):
 sudo ./dist/autousbip-qt-server --install
 
-# To uninstall later:
+# Uninstall:
 sudo ./dist/autousbip-qt-server --uninstall
 ```
 
@@ -179,21 +176,21 @@ sudo systemctl enable --now autousbip-qt-server.service
 
 ## 💻 Client Distribution & Installation
 
-Auto USB/IP Client is distributed as **both a portable AppImage and a standalone Tarball** with zero external dependencies. It runs out-of-the-box on **Ubuntu, Fedora, Arch Linux, Bazzite, SteamOS, Debian, and openSUSE**.
+Auto USB/IP Client is distributed as a portable **AppImage** and a standalone **Tarball**. It runs on **Ubuntu, Fedora, Arch Linux, Bazzite, SteamOS, Debian, and openSUSE**.
 
 ### Option 1: Portable AppImage (Recommended)
 ```bash
 # 1. Ensure kernel VHCI driver is loaded
 sudo modprobe vhci-hcd
 
-# 2. Make executable and launch directly:
+# 2. Make executable and launch:
 chmod +x dist/AutoUSBIP-QT-x86_64.AppImage
 ./dist/AutoUSBIP-QT-x86_64.AppImage
 
-# 3. (Optional) Integrate into your Desktop Application Menu:
+# 3. (Optional) Integrate into Desktop Application Menu:
 ./dist/AutoUSBIP-QT-x86_64.AppImage --install
 
-# 4. (Optional) Remove from your Desktop Application Menu:
+# 4. (Optional) Remove from Desktop Application Menu:
 ./dist/AutoUSBIP-QT-x86_64.AppImage --uninstall
 ```
 
@@ -203,7 +200,7 @@ chmod +x dist/AutoUSBIP-QT-x86_64.AppImage
 tar -xzf dist/AutoUSBIP-QT-x86_64.tar.gz
 cd autousbip-qt-client-linux-x86_64
 
-# 2. Run directly
+# 2. Run
 ./autousbip-qt-client
 
 # 3. (Optional) Add to Desktop Application Menu:
@@ -220,7 +217,7 @@ To build both `AutoUSBIP-QT-x86_64.AppImage` and `AutoUSBIP-QT-x86_64.tar.gz`:
 ```bash
 bash scripts/build-appimage.sh
 ```
-The output binaries will be created in [`dist/`](dist/).
+Binary artifacts are written to [`dist/`](dist/).
 
 ---
 
@@ -229,23 +226,23 @@ The output binaries will be created in [`dist/`](dist/).
 2. In the `client/` folder:
    ```cmd
    python -m venv venv
-   .env\Scripts\pip install -r requirements.txt
-   .env\Scripts\python client.py
+   . env\Scripts\pip install -r requirements.txt
+   . env\Scripts\python client.py
    ```
 
 ---
 
 ## 🎮 Integrated Gamepad Tester
 
-The client includes an advanced real-time controller testing environment accessible by clicking **Test Gamepad** on any attached controller.
+Click **Test Gamepad** on any attached controller to open diagnostics:
 
-* **Vector SVG Visuals**: Powered by Kenney vector input prompts, scaling crisply to any resolution.
-* **Controller Identification**: Matches hardware signatures against `SDL_GameControllerDB` for authentic button layouts (Nintendo A/B/X/Y, PlayStation Cross/Circle/Square/Triangle, Xbox A/B/X/Y, NES/SNES layouts).
+* **Vector SVG Visuals**: Powered by Kenney vector input prompts, scaling to any resolution.
+* **Controller Identification**: Matches hardware signatures against `SDL_GameControllerDB` for button layouts (Nintendo A/B/X/Y, PlayStation Cross/Circle/Square/Triangle, Xbox A/B/X/Y, NES/SNES).
 * **Sensors & Telemetry**:
-  * `Touchpad`: Absolute multi-touch coordinates & click state visualizer.
-  * `Accelerometer`: 3-axis gravity & tilt forces in m/s².
+  * `Touchpad`: Absolute multi-touch coordinates and click state.
+  * `Accelerometer`: 3-axis gravity and tilt forces in m/s².
   * `Gyroscope`: 3-axis rotational velocity in rad/s.
-  * `Adaptive Triggers`: Real-time position resistance, machine-gun recoil, and feedback triggers.
+  * `Adaptive Triggers`: Position resistance, machine-gun recoil, and feedback triggers.
   * `RGB Lightbar`: 24-bit customizable illumination and player LEDs.
 
 ---
@@ -258,11 +255,11 @@ This project is open-source software licensed under the **[MIT License](LICENSE)
 * **Original Project**: Derived and expanded from [`florianL21/auto-usbip`](https://github.com/florianL21/auto-usbip) (MIT License, Copyright © 2023 florianL21).
 
 ### Third-Party Assets & Libraries
-* **[Kenney Input Prompts](https://kenney.nl/assets/input-prompts)**: Gamepad button, stick, and trigger vector graphics created by **Kenney** ([CC0 1.0 Universal — Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)).
+* **[Kenney Input Prompts](https://kenney.nl/assets/input-prompts)**: Gamepad button, stick, and trigger vector graphics by **Kenney** ([CC0 1.0 Universal — Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)).
 * **[SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB)**: Community database of game controller mappings ([zlib License](https://github.com/mdqinc/SDL_GameControllerDB/blob/master/LICENSE)).
 * **[Linux USB ID Repository](http://www.linux-usb.org/usb.ids)**: USB vendor and device identity dictionary ([GPL-2.0 / 3-Clause BSD](http://www.linux-usb.org/)).
 * **[PyQt6 & Qt Framework](https://pypi.org/project/PyQt6/)**: Python GUI & WebEngine bindings by Riverbank Computing & The Qt Company ([GPL v3 / LGPL v3](https://www.riverbankcomputing.com/software/pyqt/license)).
-* **[python-zeroconf](https://github.com/python-zeroconf/python-zeroconf)**: Pure-Python Multicast DNS (mDNS / Zeroconf) Service Discovery library ([LGPL-2.1+](https://github.com/python-zeroconf/python-zeroconf/blob/master/COPYING)).
+* **[python-zeroconf](https://github.com/python-zeroconf/python-zeroconf)**: Pure-Python Multicast DNS Service Discovery library ([LGPL-2.1+](https://github.com/python-zeroconf/python-zeroconf/blob/master/COPYING)).
 * **[pyserial](https://github.com/pyserial/pyserial)**: Python Serial Port Extension library ([BSD-3-Clause](https://github.com/pyserial/pyserial/blob/master/LICENSE.txt)).
 * **[pyudev](https://github.com/pyudev/pyudev)**: Pure-Python libudev binding for hardware device management ([LGPL-2.1+](https://github.com/pyudev/pyudev/blob/master/COPYING)).
 
@@ -270,10 +267,10 @@ This project is open-source software licensed under the **[MIT License](LICENSE)
 
 ## 🤖 AI-Assisted Development Disclosure
 
-In the spirit of open-source transparency and responsible AI development:
-* This project was designed, co-authored, and refactored with the assistance of **Google DeepMind / Antigravity AI** agentic coding models.
-* AI pair programming was used for architectural modularization, diagnostic protocol design, multi-touch event decoders, SDL database integration, and UI design.
-* All third-party libraries and assets were vetted to ensure strict license compatibility and absence of copyright infringement.
+In the spirit of open-source transparency:
+* This project was designed, co-authored, and refactored with the assistance of **Google DeepMind / Antigravity AI** coding models.
+* AI pair programming was used for modularization, diagnostic protocol design, multi-touch event decoders, SDL database integration, and UI design.
+* Third-party libraries and assets were vetted for license compatibility.
 
 ---
 
