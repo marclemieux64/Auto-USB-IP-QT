@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="*" 
+           Name="Auto USB/IP-QT Client" 
+           Language="1033" 
+           Version="2.0.0.0" 
+           Manufacturer="AutoUSBIP Project" 
+           UpgradeCode="6C4C5B32-901B-4A1C-8A2F-9B679B6A9F8E">
+
+    <Package InstallerVersion="300" 
+             Compressed="yes" 
+             InstallScope="perMachine" 
+             Description="Automatic USB-over-IP Device Client and Gamepad Hub" 
+             Comments="Auto USB/IP-QT Client Windows Installer" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Standard Windows Add/Remove Programs Properties -->
+    <Icon Id="AppIcon.ico" SourceFile="$(var.SourceDir)\assets\branding\app-icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/marclemieux64/Auto-USB-IP-QT" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/marclemieux64/Auto-USB-IP-QT" />
+    <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" />
+
+    <!-- WiX UI Customization: Costing popup and InstallDir -->
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <WixVariable Id="WixUICostingPopupOptOut" Value="1" />
+
+    <!-- Directory Structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- Program Files (64-bit) -->
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="AutoUSBIP-QT">
+          <!-- Drivers Subdirectory -->
+          <Directory Id="DRIVERSFOLDER" Name="drivers" />
+        </Directory>
+      </Directory>
+
+      <!-- Start Menu Programs -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Auto USB-IP" />
+      </Directory>
+
+      <!-- Desktop Folder -->
+      <Directory Id="DesktopFolder" Name="Desktop" />
+
+      <!-- AppData Roaming (Config files) -->
+      <Directory Id="AppDataFolder">
+        <Directory Id="RoamingAutoUsbipFolder" Name="auto-usbip" />
+      </Directory>
+
+      <!-- AppData Local (Driver cache & binaries) -->
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="LocalAutoUsbipFolder" Name="auto-usbip" />
+      </Directory>
+    </Directory>
+
+    <!-- Application Core Binary Component -->
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="MainExecutable" Guid="3E4D7F8A-9A2E-47C1-B72D-5F6D9F610B21" Win64="yes">
+        <File Id="ClientExe" 
+              Source="$(var.DistDir)\autousbip-qt-client.exe" 
+              KeyPath="yes" 
+              Checksum="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Bundled USB/IP Drivers Component (Installed by default) -->
+    <DirectoryRef Id="DRIVERSFOLDER">
+      <Component Id="VhciDriverFiles" Guid="C4D5E6F7-1A2B-3C4D-5E6F-7A8B9C0D1E2F" Win64="yes">
+        <File Id="UsbipExe" Source="$(var.SourceDir)\drivers\usbip.exe" KeyPath="yes" />
+        <File Id="UsbipdExe" Source="$(var.SourceDir)\drivers\usbipd.exe" />
+        <File Id="AttacherExe" Source="$(var.SourceDir)\drivers\attacher.exe" />
+        <File Id="UsbipStubSys" Source="$(var.SourceDir)\drivers\usbip_stub.sys" />
+        <File Id="UsbipRootInf" Source="$(var.SourceDir)\drivers\usbip_root.inf" />
+        <File Id="UsbipVhciInf" Source="$(var.SourceDir)\drivers\usbip_vhci.inf" />
+        <File Id="UsbipVhciSys" Source="$(var.SourceDir)\drivers\usbip_vhci.sys" />
+        <File Id="UsbipVhciUdeInf" Source="$(var.SourceDir)\drivers\usbip_vhci_ude.inf" />
+        <File Id="UsbipVhciUdeSys" Source="$(var.SourceDir)\drivers\usbip_vhci_ude.sys" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Start Menu & Uninstall Shortcuts -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="7B9F1A2C-4E8D-4F3A-9C7B-6D5E2A1F8C90" Win64="yes">
+        <!-- Launch App Shortcut -->
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Auto USB-IP Client"
+                  Description="Automatic USB-over-IP Device Client"
+                  Target="[INSTALLFOLDER]autousbip-qt-client.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon.ico" />
+
+        <!-- Direct Dedicated Uninstall Shortcut in Start Menu -->
+        <Shortcut Id="UninstallProductShortcut"
+                  Name="Uninstall Auto USB-IP Client"
+                  Description="Uninstalls Auto USB/IP-QT Client from this computer"
+                  Target="[System64Folder]msiexec.exe"
+                  Arguments="/x [ProductCode]" />
+
+        <RemoveFolder Id="CleanUpStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\AutoUSBIP\AutoUSBIP-QT" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Desktop Shortcut Component -->
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcutComponent" Guid="A1B2C3D4-E5F6-4A1B-8C2D-3E4F5A6B7C8D" Win64="yes">
+        <Shortcut Id="ApplicationDesktopShortcut"
+                  Name="Auto USB-IP Client"
+                  Description="Automatic USB-over-IP Device Client"
+                  Target="[INSTALLFOLDER]autousbip-qt-client.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon.ico" />
+        <RemoveFile Id="PurgeDesktopShortcut" Name="Auto USB-IP Client.lnk" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\AutoUSBIP\AutoUSBIP-QT" Name="desktop_shortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Clean AppData Roaming Config on Uninstall -->
+    <DirectoryRef Id="RoamingAutoUsbipFolder">
+      <Component Id="CleanupRoamingData" Guid="8C1E4F2A-5D3B-4C9A-9E8F-1B2C3D4E5F6A" Win64="yes">
+        <util:RemoveFolderEx Property="ROAMING_DIR_PATH" On="uninstall" />
+        <RemoveFolder Id="RemoveRoamingFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\AutoUSBIP\AutoUSBIP-QT" Name="clean_roaming" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Clean AppData Local Drivers & Cache on Uninstall -->
+    <DirectoryRef Id="LocalAutoUsbipFolder">
+      <Component Id="CleanupLocalData" Guid="9F2A3B4C-6E7D-4F1A-8B2C-3D4E5F6A7B8C" Win64="yes">
+        <util:RemoveFolderEx Property="LOCAL_DIR_PATH" On="uninstall" />
+        <RemoveFolder Id="RemoveLocalFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\AutoUSBIP\AutoUSBIP-QT" Name="clean_local" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Set Properties for util:RemoveFolderEx -->
+    <SetProperty Id="ROAMING_DIR_PATH" Value="[AppDataFolder]auto-usbip" Before="CostInitialize" />
+    <SetProperty Id="LOCAL_DIR_PATH" Value="[LocalAppDataFolder]auto-usbip" Before="CostInitialize" />
+
+    <!-- Feature Hierarchy: ConfigurableDirectory allows user to view/browse installation directory -->
+    <Feature Id="MainFeature" 
+             Title="Auto USB/IP-QT Client" 
+             Level="1" 
+             Absent="disallow" 
+             AllowAdvertise="no" 
+             ConfigurableDirectory="INSTALLFOLDER"
+             Description="The core application and executable files.">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="CleanupRoamingData" />
+      <ComponentRef Id="CleanupLocalData" />
+
+      <!-- Optional Feature: Desktop Shortcut (Selected by default) -->
+      <Feature Id="DesktopShortcutFeature" Title="Desktop Shortcut" Level="1" AllowAdvertise="no" Description="Creates a shortcut icon on your Desktop.">
+        <ComponentRef Id="DesktopShortcutComponent" />
+      </Feature>
+
+      <!-- Optional Feature: USB/IP VHCI Driver (Selected by default) -->
+      <Feature Id="DriverFeature" Title="USB/IP Virtual Host Controller Driver (VHCI)" Level="1" AllowAdvertise="no" Description="Installs the USB/IP Windows kernel drivers required to attach remote USB devices.">
+        <ComponentRef Id="VhciDriverFiles" />
+      </Feature>
+    </Feature>
+
+    <!-- UI: Clean WixUI_FeatureTree with EULA skipped and Location / Browse enabled -->
+    <UI Id="WixUI_AutoUSBIP_FeatureTree">
+      <UIRef Id="WixUI_FeatureTree" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg" Order="2">1</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">1</Publish>
+    </UI>
+
+    <UIRef Id="WixUI_AutoUSBIP_FeatureTree" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+  </Product>
+</Wix>

@@ -1,0 +1,4 @@
+# Auto USB/IP Server udev rules
+# Grant access to uhubctl USB power cycling and sysfs authorization
+SUBSYSTEM=="usb", TAG+="uaccess", MODE="0664", GROUP="plugdev"
+KERNEL=="event*", SUBSYSTEM=="input", TAG+="uaccess", MODE="0660", GROUP="plugdev"

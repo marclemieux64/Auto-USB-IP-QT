@@ -1,0 +1,46 @@
+; ==============================================================================
+; Auto USB/IP Client - SELinux CIL Security Policy Module
+; Confines and grants necessary permissions for autousbip client GUI & daemon
+; ==============================================================================
+
+(type autousbip_client_exec_t)
+(typeattributeset file_type (autousbip_client_exec_t))
+(typeattributeset exec_type (autousbip_client_exec_t))
+
+(type autousbip_client_t)
+(typeattributeset domain (autousbip_client_t))
+
+; Allow unconfined/logged-in desktop users to execute client
+(allow unconfined_t autousbip_client_exec_t (file (read getattr execute open map)))
+(typetransition unconfined_t autousbip_client_exec_t process autousbip_client_t)
+
+; Capabilities
+(allow autousbip_client_t self (capability (net_admin sys_rawio)))
+(allow autousbip_client_t self (process (getsched setsched fork signal sigchld)))
+
+; Network communication (Client Dashboard, Server Connection, mDNS)
+(allow autousbip_client_t self (tcp_socket (create connect bind listen accept read write getattr setattr getopt setopt)))
+(allow autousbip_client_t self (udp_socket (create bind read write getattr setattr getopt setopt)))
+(allow autousbip_client_t node_t (tcp_socket (node_bind)))
+(allow autousbip_client_t node_t (udp_socket (node_bind)))
+(allow autousbip_client_t port_t (tcp_socket (name_bind name_connect)))
+(allow autousbip_client_t port_t (udp_socket (name_bind)))
+
+; USB sysfs & VHCI controller nodes
+(allow autousbip_client_t sysfs_t (dir (read open search getattr)))
+(allow autousbip_client_t sysfs_t (file (read write open getattr ioctl)))
+(allow autousbip_client_t usb_device_t (dir (read open search getattr)))
+(allow autousbip_client_t usb_device_t (chr_file (read write open getattr ioctl)))
+
+; D-Bus communication (Polkit, systemd-logind, desktop notifications)
+(allow autousbip_client_t system_dbusd_t (unix_stream_socket (connectto read write)))
+(allow autousbip_client_t system_dbusd_t (dbus (send_msg)))
+(allow system_dbusd_t autousbip_client_t (dbus (send_msg)))
+(allow autousbip_client_t policykit_t (dbus (send_msg)))
+(allow policykit_t autousbip_client_t (dbus (send_msg)))
+(allow autousbip_client_t systemd_logind_t (dbus (send_msg)))
+(allow systemd_logind_t autousbip_client_t (dbus (send_msg)))
+
+; User configuration (~/.config/auto-usbip/)
+(allow autousbip_client_t config_home_t (dir (read write open add_name remove_name search getattr)))
+(allow autousbip_client_t config_home_t (file (read write open create getattr setattr unlink)))

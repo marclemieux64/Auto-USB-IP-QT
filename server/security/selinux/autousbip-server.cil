@@ -1,0 +1,47 @@
+; ==============================================================================
+; Auto USB/IP Server - SELinux CIL Security Policy Module
+; Confines and grants necessary permissions for autousbip server daemon
+; ==============================================================================
+
+(type autousbip_exec_t)
+(typeattributeset file_type (autousbip_exec_t))
+(typeattributeset exec_type (autousbip_exec_t))
+
+(type autousbip_t)
+(typeattributeset domain (autousbip_t))
+
+; Allow transitioning from init_t (systemd) to autousbip_t
+(allow init_t autousbip_exec_t (file (read getattr execute open map)))
+(typetransition init_t autousbip_exec_t process autousbip_t)
+
+; Process capabilities
+(allow autousbip_t self (capability (net_admin sys_admin sys_rawio net_bind_service)))
+(allow autousbip_t self (process (getsched setsched fork signal sigchld)))
+
+; Networking: TCP 3240 (usbip), TCP 3241 (control), UDP 5353 (mDNS)
+(allow autousbip_t self (tcp_socket (create connect bind listen accept read write getattr setattr getopt setopt)))
+(allow autousbip_t self (udp_socket (create bind read write getattr setattr getopt setopt)))
+(allow autousbip_t node_t (tcp_socket (node_bind)))
+(allow autousbip_t node_t (udp_socket (node_bind)))
+(allow autousbip_t port_t (tcp_socket (name_bind)))
+(allow autousbip_t port_t (udp_socket (name_bind)))
+
+; Hardware sysfs and USB device nodes
+(allow autousbip_t sysfs_t (dir (read open search getattr)))
+(allow autousbip_t sysfs_t (file (read write open getattr ioctl)))
+(allow autousbip_t usb_device_t (dir (read open search getattr)))
+(allow autousbip_t usb_device_t (chr_file (read write open getattr ioctl)))
+
+; Module loading (usbip-core, usbip-host)
+(allow autousbip_t modules_object_t (file (read open getattr)))
+(allow autousbip_t self (system (module_request)))
+
+; Logging and systemd communication
+(allow autousbip_t devlog_t (sock_file (write open getattr)))
+(allow autousbip_t syslogd_t (unix_dgram_socket (sendto)))
+(allow autousbip_t init_t (dir (search)))
+(allow autousbip_t init_t (unix_stream_socket (connectto read write)))
+
+; Configuration & Certificates (/etc/autousbip/)
+(allow autousbip_t etc_t (dir (read write open add_name remove_name search getattr)))
+(allow autousbip_t etc_t (file (read write open create getattr setattr unlink)))

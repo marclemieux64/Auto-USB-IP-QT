@@ -1,0 +1,327 @@
+/* ==========================================================================
+   Gamepad Tester Styling System (Original Look & Feel)
+   ========================================================================== */
+
+/* Gamepad Modal Layout Grid */
+.gamepad-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   Analog Sticks
+   -------------------------------------------------------------------------- */
+.stick-container {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 4px;
+}
+
+.stick-box {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto;
+    background: #141722;
+    border: 1.5px solid var(--border-color);
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+/* Center Crosshairs */
+.stick-box::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.stick-box::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.stick-dot {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    background: var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: transform 0.04s ease-out;
+}
+
+.stick-coords {
+    font-family: monospace;
+    font-size: 0.70rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Analog Triggers
+   -------------------------------------------------------------------------- */
+.trigger-bar {
+    background: #141722;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.trigger-fill {
+    height: 100%;
+    background: var(--accent-color);
+    width: 0%;
+    transition: width 0.05s linear;
+}
+
+/* --------------------------------------------------------------------------
+   Directional Pad (D-Pad)
+   -------------------------------------------------------------------------- */
+.dpad-container {
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    grid-template-rows: repeat(3, 34px);
+    gap: 4px;
+    justify-content: center;
+    margin: 6px auto 0 auto;
+}
+
+.dpad-btn {
+    background-color: #222634;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    cursor: default;
+    transition: all 0.08s ease;
+}
+
+.dpad-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+    transition: transform 0.08s ease;
+}
+
+.dpad-btn.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+}
+
+.dpad-btn.active img {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 6px #fff);
+}
+
+/* --------------------------------------------------------------------------
+   Gamepad Buttons Grid
+   -------------------------------------------------------------------------- */
+.btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.gp-btn {
+    background-color: #1e2230;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    cursor: default;
+    transition: all 0.08s ease;
+    user-select: none;
+    position: relative;
+}
+
+.gp-btn-icon {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    transition: transform 0.08s ease, filter 0.08s ease;
+}
+
+.gp-btn.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 12px var(--accent-color);
+    transform: scale(0.97);
+}
+
+.gp-btn.active .gp-btn-icon {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 8px #ffffff);
+}
+
+/* DualSense Vector SVG Mic & LED State */
+.ds-mic-svg {
+    width: 28px;
+    height: 28px;
+    display: block;
+    transition: transform 0.08s ease, filter 0.15s ease;
+}
+
+.ds-mic-led-bar {
+    fill: #475569;
+    opacity: 0.6;
+    transition: fill 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.ds-mic-glyph {
+    fill: #cbd5e1;
+    transition: fill 0.15s ease, filter 0.15s ease;
+}
+
+/* When Mic LED is ON (Affects ONLY the top horizontal LED bar) */
+.gp-btn.mic-led-on .ds-mic-led-bar {
+    fill: #f59e0b !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 5px #f59e0b) drop-shadow(0 0 10px #fbbf24) !important;
+}
+
+.gp-btn.mic-led-on .ds-mic-glyph {
+    fill: #cbd5e1 !important;
+    filter: none !important;
+}
+
+/* When Pressed Physically or Clicked */
+.gp-btn.active .ds-mic-svg {
+    transform: scale(1.18);
+}
+
+.gp-btn.active .ds-mic-glyph,
+.gp-btn.active .ds-mic-led-bar {
+    fill: #ffffff !important;
+    filter: drop-shadow(0 0 8px #ffffff);
+}
+
+.gp-btn-text-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.3rem;
+    font-weight: 900;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    user-select: none;
+    transition: transform 0.08s ease, text-shadow 0.08s ease;
+}
+
+.gp-btn.active .gp-btn-text-badge {
+    transform: scale(1.2);
+    text-shadow: 0 0 8px #ffffff, 0 0 16px #ffffff;
+    color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   PlayStation Multi-Touch Touchpad
+   -------------------------------------------------------------------------- */
+#tp-box {
+    width: 100%;
+    height: 70px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.tp-zone-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    pointer-events: none;
+    transition: background 0.15s ease;
+}
+#tp-zone-left {
+    left: 0;
+    border-right: 1px dashed rgba(255, 255, 255, 0.08);
+}
+#tp-zone-right {
+    right: 0;
+}
+
+.tp-finger-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.06s ease-out, top 0.06s ease-out, transform 0.12s ease-out, opacity 0.12s ease-out;
+    display: none;
+    pointer-events: none;
+    font-size: 10px;
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+    line-height: 18px;
+    z-index: 5;
+    user-select: none;
+}
+
+#tp-dot-1 {
+    background: #2563eb;
+    box-shadow: 0 0 10px #3b82f6, 0 0 20px rgba(59, 130, 246, 0.6);
+    border: 1.5px solid #93c5fd;
+}
+
+#tp-dot-2 {
+    background: #db2777;
+    box-shadow: 0 0 10px #ec4899, 0 0 20px rgba(236, 72, 153, 0.6);
+    border: 1.5px solid #fbcfe8;
+}
+
+
+
+/* --------------------------------------------------------------------------
+   DualSense Force Sliders
+   -------------------------------------------------------------------------- */
+.trigger-slider-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}

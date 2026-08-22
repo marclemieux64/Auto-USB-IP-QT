@@ -1,0 +1,36 @@
+# AppArmor profile for auto-usbip client
+#include <tunables/global>
+
+profile autousbip-client /usr/local/bin/autousbip-client flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/fonts>
+  #include <abstractions/X>
+  #include <abstractions/audio>
+  #include <abstractions/nameservice>
+
+  # USB & Hardware device nodes
+  /dev/vhci_hcd rw,
+  /dev/hidraw* rw,
+  /dev/input/** rw,
+  /sys/bus/usb/** r,
+  /sys/devices/** r,
+  /sys/devices/virtual/thermal/** r,
+
+  # Network
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+
+  # Executables
+  /usr/bin/usbip rix,
+  /usr/bin/pkexec rix,
+  /usr/bin/nmcli rix,
+  /usr/bin/ethtool rix,
+
+  # Config & App dirs
+  owner @{HOME}/.config/auto-usbip/** rwk,
+  owner @{HOME}/.cache/auto-usbip/** rwk,
+  /usr/local/share/auto-usbip/** r,
+}

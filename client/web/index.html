@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto USB/IP-QT</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/branding/app-icon.svg">
+    <link rel="alternate icon" type="image/png" href="/assets/branding/app-icon.png">
+    <link rel="stylesheet" href="/css/fonts.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css?v=1787268350">
+    <link rel="stylesheet" href="/css/gamepad.css?v=1787268350">
+</head>
+<body>
+    <div class="header">
+        <div class="title">
+            <img src="/assets/branding/app-logo.svg" alt="Auto USB/IP-QT" style="height: 48px; width: auto; object-fit: contain;">
+            <span id="sync-dot" class="sync-dot" title="Live Sync Active"></span>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="promptAddServer()"><img src="/icons/add-server.png"> Add Server</button>
+            <button class="btn btn-secondary" onclick="recoverZombieConnections()" title="Clear zombie connections and re-bind remote USB ports after sleep/wake"><img src="/icons/power-cycle.png"> Recover USB</button>
+            <button class="btn btn-danger" onclick="detachAllPorts()" title="Detach all active local VHCI ports"><img src="/icons/detach-all.png"> Detach All</button>
+            <button class="btn" id="btn-console" onclick="openConsoleModal()" title="Open Live Client Diagnostics Console"><img src="/icons/utilities-terminal.png"> Console <span id="console-badge" class="badge badge-danger" style="display:none; font-size:0.65rem; padding:1px 4px; margin-left:2px; border-radius:10px;">0</span></button>
+            <button class="btn" onclick="openClientOptionsModal()" title="Client Preferences & Settings"><img src="/icons/configure.png"> Options</button>
+            <button class="btn" onclick="restartClient(event)" title="Restart Client Daemon"><img src="/icons/refresh.png"> Restart</button>
+        </div>
+    </div>
+
+    <!-- Configured Servers -->
+    <div id="servers-section" style="display:none;">
+        <div class="section-header"><img src="/icons/server-card.png"> Configured Servers</div>
+        <div id="servers-list"></div>
+    </div>
+
+    <!-- Attached Devices -->
+    <div id="attached-section" style="display:none;">
+        <div class="section-header"><img src="/icons/attached-header.png"> Attached Devices</div>
+        <div id="devices-list"></div>
+    </div>
+
+    <!-- Available Remote Devices -->
+    <div id="available-section" style="display:none;">
+        <div class="section-header"><img src="/icons/available-header.png"> Available Remote Devices</div>
+        <div id="available-list"></div>
+    </div>
+
+    <!-- Discovered Local Servers -->
+    <div id="discovered-section" style="display:none;">
+        <div class="section-header"><img src="/icons/discovered-server.png"> Discovered Local Servers</div>
+        <div id="discovered-list"></div>
+    </div>
+
+    <!-- Blacklisted Devices -->
+    <div id="blacklisted-section" style="display:none;">
+        <div class="section-header"><img src="/icons/blacklist.png"> Blacklisted Devices</div>
+        <div id="blacklisted-list"></div>
+    </div>
+
+    <!-- Global Empty State -->
+    <div id="global-empty" class="empty-state" style="display:none; margin-top: 10px;">
+        No active servers or devices. Click "+ Add Server" to connect a USB/IP server.
+    </div>
+
+    <!-- Add Server Modal -->
+    <div id="add-server-modal" class="modal">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/add-server.png" style="width:26px;height:26px;object-fit:contain;"> Add USB/IP Server</h3>
+                <button class="btn btn-danger" onclick="closeAddServerModal()">Close</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Server IP / Hostname:</label>
+                    <input type="text" id="add-srv-ip" class="form-control" placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label>Port (Default 3240):</label>
+                    <input type="number" id="add-srv-port" class="form-control" value="3240">
+                </div>
+                <div class="form-group">
+                    <label>Display Name (Optional Alias):</label>
+                    <input type="text" id="add-srv-name" class="form-control" placeholder="e.g. Raspberry Pi Living Room">
+                </div>
+                <div class="form-group">
+                    <label>Auth Token (If server requires authentication):</label>
+                    <input type="password" id="add-srv-token" class="form-control" placeholder="Optional security token">
+                    <div id="add-srv-token-hint" style="display:none; color:#f59e0b; font-size:0.75rem; margin-top:4px; font-weight:600;">🔒 This server requires an authentication token to connect.</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn btn-secondary" onclick="closeAddServerModal(); startSubnetScan();" title="Probe an entire IP Subnet CIDR (e.g. 192.168.1.0/24) on background threads across VLANs"><img src="/icons/refresh.png"> Scan Subnet IP Range</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="closeAddServerModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="submitAddServer()">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nickname Modal -->
+    <div id="nickname-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/rename.png" style="width:26px;height:26px;object-fit:contain;"> Set Custom Nickname</h3>
+                <button class="btn btn-danger" onclick="closeNicknameModal()">Close</button>
+            </div>
+            <div class="modal-body">
+                <div id="nick-device-title" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;"></div>
+                <div class="form-group">
+                    <label>Custom Name / Alias:</label>
+                    <input type="text" id="nick-input" class="form-control" placeholder="e.g. My DualSense Controller">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeNicknameModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveNickname()">Save Nickname</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Options Modal -->
+    <div id="options-modal" class="modal">
+        <div class="modal-content" style="max-width: 660px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:26px;height:26px;object-fit:contain;"> Client Options</h3>
+                <button class="btn btn-danger" onclick="closeClientOptionsModal()">Close</button>
+            </div>
+            <div class="modal-body" style="overflow-y: visible;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- Left Column: General Behavior & Security -->
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">⚙️ General Behavior</div>
+                        <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
+                        <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
+                        <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
+                        <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port on attach error</label>
+                        <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
+                        <label class="form-check" title="Enable or disable the Web Dashboard browser interface"><input type="checkbox" id="opt-enable-web-ui" onchange="toggleWebUiOptions(this.checked)"> Enable Web Dashboard Interface</label>
+                        <div id="web-ui-sub-options">
+                            <label class="form-check" style="margin-left:18px;" title="When enabled, allows other devices on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
+                            <div id="lan-url-info" style="display:none; font-size:0.72rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:3px 6px; margin:2px 0 4px 18px; font-family:var(--font-mono);">
+                                🌐 LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
+                            </div>
+                        </div>
+
+                        <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
+                        <label class="form-check" title="When enabled, your PC automatically wakes from sleep on remote device activity."><input type="checkbox" id="opt-enable-wol"> Wake this PC on device activity (Wake-on-LAN)</label>
+                        
+                        <div class="form-group" style="margin-top: 6px; margin-bottom: 6px;">
+                            <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span>Polling Interval:</span>
+                                <span id="opt-polling-val" style="color:var(--accent-color); font-weight:700;">1.0s</span>
+                            </label>
+                            <input type="range" id="opt-polling-interval" min="0.5" max="5.0" step="0.5" value="1.0" class="form-control" style="cursor:pointer; padding: 1px 0;" oninput="document.getElementById('opt-polling-val').textContent = parseFloat(this.value).toFixed(1) + 's'">
+                        </div>
+
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 8px 0 4px 0;">🔒 Security & Hardening</div>
+                        <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF Protection</label>
+                        <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning</label>
+                        <label class="form-check" title="Protect against BadUSB attacks"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filter</label>
+                        <div id="badusb-options" style="display:none; margin:2px 0 4px 18px; font-size:0.72rem; background:rgba(0,0,0,0.25); padding:4px 8px; border-radius:4px;">
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage (Class 08h)</label>
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Network Adapters (02h/E0h)</label>
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards</label>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Device & Server Badge Overlays -->
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">🏷️ Device Badge Overlays</div>
+                        <label class="form-check"><input type="checkbox" id="opt-show-port"> Show USB/IP Port / Bus ID Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-speed"> Show USB Bus Speed Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-vid-pid"> Show Hardware VID:PID Badges</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-battery"> Show Wireless Controller Battery %</label>
+
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">🖥️ Server Badge Overlays</div>
+                        <label class="form-check"><input type="checkbox" id="opt-show-latency"> Show Server Ping Latency (ms)</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-temp"> Show Server CPU Temperature</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-ram"> Show Server RAM Usage</label>
+                        <label class="form-check"><input type="checkbox" id="opt-show-server-uptime"> Show Server Uptime</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="exportClientBackup()" title="Export all client settings and server configs to JSON"><img src="/icons/document-save.png"> Export Backup</button>
+                    <button class="btn" onclick="triggerImportClientBackup()" title="Import settings from a previously exported JSON backup"><img src="/icons/document-open.png"> Import Backup</button>
+                    <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="closeClientOptionsModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveClientOptions()">Apply Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Server Remote Console Modal -->
+    <div id="server-logs-modal" class="modal">
+        <div class="console-modal-content">
+            <div class="console-header-bar">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="/icons/server-card.png" style="width:26px; height:26px; object-fit:contain;">
+                    <h3 id="modal-logs-title" style="margin:0; font-size:0.95rem; font-weight:700; color:#fff;">Server Console</h3>
+                    <span id="srv-console-status-pill" style="font-size:0.7rem; color:#38bdf8; background:#0e2238; border:1px solid #1e3a5f; padding:2px 6px; border-radius:4px;">Connecting...</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn btn-danger" onclick="closeServerLogsModal()" style="padding:4px 10px; font-size:0.75rem;">Close</button>
+                </div>
+            </div>
+
+            <!-- Server Quick Action Command Chips -->
+            <div class="console-quick-bar">
+                <span style="font-size:0.7rem; color:var(--accent-color); font-weight:700; margin-right:4px;">Server Actions:</span>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('status')">status</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('devices')">devices</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('metrics')">metrics</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('logs 50')">logs</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('rebind')">rebind-all</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('config')">config</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('restart')">restart-daemon</button>
+                <button class="console-quick-btn" onclick="runServerQuickCommand('help')">help</button>
+            </div>
+
+            <!-- Console Toolbar -->
+            <div class="console-toolbar">
+                <div class="console-filter-group">
+                    <button class="console-filter-btn active" data-srv-level="ALL" onclick="setServerConsoleLevel('ALL')">ALL</button>
+                    <button class="console-filter-btn" data-srv-level="INFO" onclick="setServerConsoleLevel('INFO')">INFO</button>
+                    <button class="console-filter-btn" data-srv-level="WARNING" onclick="setServerConsoleLevel('WARNING')">WARN</button>
+                    <button class="console-filter-btn" data-srv-level="ERROR" onclick="setServerConsoleLevel('ERROR')">ERROR</button>
+                </div>
+
+                <input type="text" id="srv-console-search-input" class="console-search-box" placeholder="Filter server logs...">
+
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn" id="srv-console-autoscroll-btn" onclick="toggleServerConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle automatic scrolling">Auto-Scroll</button>
+                    <button class="btn" onclick="copyServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy all logs to clipboard"><img src="/icons/document-save.png"> Copy</button>
+                    <button class="btn" onclick="exportServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Download log file"><img src="/icons/document-open.png"> Export</button>
+                    <button class="btn btn-danger" onclick="clearServerConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console buffer">Clear</button>
+                </div>
+            </div>
+
+            <!-- Server Console Logs Output Body -->
+            <div id="srv-console-logs-container" class="console-body">
+                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to live remote server daemon...</div>
+            </div>
+
+            <!-- Server Interactive CLI Input -->
+            <div class="console-footer-cli">
+                <span id="srv-console-prompt" class="console-cli-prompt" style="color:var(--accent-color);">&gt;</span>
+                <input type="text" id="srv-console-cmd-input" class="console-cli-input" placeholder="Type a server command (e.g. 'status', 'devices', 'metrics', 'logs', 'powercycle 1-1.2', 'rebind', 'restart', 'help')..." autocomplete="off" spellcheck="false">
+                <button class="btn btn-primary" onclick="handleServerConsoleEnterKey()" style="padding:3px 10px; font-size:0.72rem;">Run</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Server Auth Token Prompt Modal -->
+    <div id="server-auth-prompt-modal" class="modal" style="z-index: 1200;">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:24px;height:24px;object-fit:contain;"> Authorization Required</h3>
+                <button class="btn btn-danger" onclick="cancelServerAuthPrompt()">Cancel</button>
+            </div>
+            <div class="modal-body">
+                <div id="auth-prompt-msg" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                    Enter the server security token to authorize this configuration change.
+                </div>
+                <div class="form-group">
+                    <label>Server Security Token:</label>
+                    <div style="position:relative;">
+                        <input type="password" id="auth-prompt-token-input" class="form-control" placeholder="Enter authentication token" autocomplete="new-password" style="padding-right:36px;" onkeydown="if(event.key==='Enter')confirmServerAuthPrompt(); if(event.key==='Escape')cancelServerAuthPrompt();">
+                        <button type="button" onclick="toggleAuthPromptPasswordVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem;" title="Show/Hide Token">👁️</button>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Leave blank if the server does not currently require authentication.</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:flex-end; gap:6px;">
+                <button class="btn" onclick="cancelServerAuthPrompt()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmServerAuthPrompt()"><img src="/icons/document-save.png"> Authorize & Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Remote Settings Modal -->
+    <div id="server-settings-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="modal-server-title" style="display:flex;align-items:center;gap:6px;"><img src="/icons/configure.png" style="width:26px;height:26px;object-fit:contain;"> Server Settings</h3>
+                <button class="btn btn-danger" onclick="closeServerSettingsModal()">Close</button>
+            </div>
+
+            <div class="modal-body">
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">Remote Daemon Configuration</div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-tls"> Enable TLS 1.3 / 1.2 Socket Encryption</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-discovery"> Broadcast Network Discovery (mDNS / Zeroconf)</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-auth"> Enable Security Token Authentication</label>
+                <div class="form-group" style="margin-left: 20px;">
+                    <label>Required Auth Token:</label>
+                    <input type="password" id="srv-opt-token" class="form-control" placeholder="Server authentication secret">
+                </div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-subnet"> Restrict control socket to local LAN subnets</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-rebind"> Auto re-bind physical devices on boot & hotplug</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-startup-power"> Power cycle USB ports (VBUS) on daemon startup</label>
+                <div class="form-group" style="margin-left: 20px; display:flex; align-items:center; gap:8px;">
+                    <label style="margin:0; font-size:0.8rem;">VBUS Power-off Delay (seconds):</label>
+                    <input type="number" id="srv-opt-vbus-delay" class="form-control" style="width:75px; padding:2px 6px;" step="0.5" min="0.5" max="10.0" value="2.5">
+                </div>
+                <label class="form-check"><input type="checkbox" id="srv-opt-wol"> Send Wake-on-LAN to registered clients on USB input activity</label>
+
+                <!-- Blacklist Management -->
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">Server-Side Hardware Blacklist</div>
+                <div id="srv-blacklist-list" style="display:flex; flex-direction:column; gap:4px; max-height:100px; overflow-y:auto; margin-bottom:4px;"></div>
+            </div>
+
+            <!-- Remote Power & Action Controls -->
+            <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="restoreServerDefaultSettings()" title="Restore server options to default factory configuration"><img src="/icons/undo.png"> Restore Defaults</button>
+                    <button class="btn btn-warning" onclick="restartServerDaemon()"><img src="/icons/refresh.png"> Restart Daemon</button>
+                    <button class="btn btn-danger" onclick="rebootServerSystem()"><img src="/icons/power-cycle.png"> Reboot System</button>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="closeServerSettingsModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveServerSettings()"><img src="/icons/document-save.png"> Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gamepad Tester Modal -->
+    <div id="gamepad-modal" class="modal">
+        <div class="modal-content" style="max-width: 680px; max-height: 94vh;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modal-gamepad-title" style="display:flex;align-items:center;gap:6px;">Gamepad Tester</h3>
+                    <div id="modal-gamepad-sub" style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;"></div>
+                    <div id="modal-gamepad-features" style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; align-items:center;"></div>
+                </div>
+                <button class="btn btn-danger" onclick="closeGamepadModal()">Close</button>
+            </div>
+
+            <!-- Dual-Column Layout: Left (Controls), Right (Buttons, Touchpad, IMU) -->
+            <div class="gamepad-modal-grid">
+                <!-- Left Column -->
+                <div>
+                    <!-- Triggers Section -->
+                    <div id="gp-triggers-section" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom:2px;">
+                                <span id="lt-label" style="display:flex;align-items:center;gap:4px;"><img src="/assets/kenney_input/Generic/Vector/generic_button_trigger_a.svg" style="width:15px;height:15px;object-fit:contain;"> Left Trigger</span>
+                                <span id="lt-val" style="font-family:monospace; font-weight: 600;">0%</span>
+                            </div>
+                            <div class="trigger-bar" style="height: 10px;"><div id="lt-fill" class="trigger-fill"></div></div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom:2px;">
+                                <span id="rt-label" style="display:flex;align-items:center;gap:4px;"><img src="/assets/kenney_input/Generic/Vector/generic_button_trigger_b.svg" style="width:15px;height:15px;object-fit:contain;"> Right Trigger</span>
+                                <span id="rt-val" style="font-family:monospace; font-weight: 600;">0%</span>
+                            </div>
+                            <div class="trigger-bar" style="height: 10px;"><div id="rt-fill" class="trigger-fill"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Analog Sticks Section -->
+                    <div id="gp-sticks-section" class="stick-container" style="margin: 10px 0; justify-content: space-around;">
+                        <div id="gp-lstick-box" style="text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: #fff; margin-bottom: 4px; display:flex; align-items:center; justify-content:center; gap:4px;"><img src="/assets/kenney_input/Generic/Vector/generic_stick.svg" style="width:14px;height:14px;object-fit:contain;"> Left Stick</div>
+                            <div class="stick-box" style="width: 88px; height: 88px;"><div id="ls-dot" class="stick-dot" style="width: 18px; height: 18px;"></div></div>
+                            <div class="stick-coords" id="ls-coords" style="font-size: 0.72rem; margin-top: 4px;">X: +0.00  Y: +0.00</div>
+                        </div>
+                        <div id="gp-rstick-box" style="text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: #fff; margin-bottom: 4px; display:flex; align-items:center; justify-content:center; gap:4px;"><img src="/assets/kenney_input/Generic/Vector/generic_stick.svg" style="width:14px;height:14px;object-fit:contain;"> Right Stick</div>
+                            <div class="stick-box" style="width: 88px; height: 88px;"><div id="rs-dot" class="stick-dot" style="width: 18px; height: 18px;"></div></div>
+                            <div class="stick-coords" id="rs-coords" style="font-size: 0.72rem; margin-top: 4px;">X: +0.00  Y: +0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- D-Pad Section -->
+                    <div id="gp-dpad-section">
+                        <div style="text-align:center; font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-top:6px;">Directional Pad (D-Pad)</div>
+                        <div class="dpad-container">
+                            <div></div>
+                            <div class="dpad-btn" id="dpad-up"><img src="/assets/kenney_input/Generic/Vector/generic_stick_up.svg"></div>
+                            <div></div>
+                            <div class="dpad-btn" id="dpad-left"><img src="/assets/kenney_input/Generic/Vector/generic_stick_left.svg"></div>
+                            <div class="dpad-btn" style="opacity:0.3; pointer-events:none;">•</div>
+                            <div class="dpad-btn" id="dpad-right"><img src="/assets/kenney_input/Generic/Vector/generic_stick_right.svg"></div>
+                            <div></div>
+                            <div class="dpad-btn" id="dpad-down"><img src="/assets/kenney_input/Generic/Vector/generic_stick_down.svg"></div>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Adaptive Buttons Grid -->
+                    <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom: 4px;">Buttons</div>
+                    <div class="btn-grid" id="gamepad-buttons-grid" style="grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 0;"></div>
+
+                    <!-- Touchpad Section (PlayStation DualSense 2-Finger Multi-Touch) -->
+                    <div id="gp-touchpad-section" style="display:none; margin-top:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-weight:600; color:var(--accent-color); margin-bottom:4px;">
+                            <span>Multi-Touch Trackpad</span>
+                            <span id="tp-coords-label" style="color:var(--text-muted); font-size:0.72rem;">Idle</span>
+                        </div>
+                        <div id="tp-box">
+                            <div class="tp-zone-bg" id="tp-zone-left"></div>
+                            <div class="tp-zone-bg" id="tp-zone-right"></div>
+                            <div class="tp-finger-dot" id="tp-dot-1">1</div>
+                            <div class="tp-finger-dot" id="tp-dot-2">2</div>
+                            <span id="tp-idle-text" style="font-size:0.72rem; color:var(--text-muted); pointer-events:none; z-index:2;">2-Finger Multi-Touch Surface (Left / Right Zones)</span>
+                        </div>
+                    </div>
+
+                    <!-- Motion Sensors Section (PlayStation IMU Gyro/Accel) -->
+                    <div id="gp-motion-section" style="display:none; margin-top:10px;">
+                        <div style="font-size:0.75rem; font-weight:600; color:var(--accent-color); margin-bottom:4px;">Motion Sensors (IMU Gyro & Accel)</div>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 5px 10px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Pitch</span><span id="motion-val-0" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-0" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Roll</span><span id="motion-val-1" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-1" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Yaw</span><span id="motion-val-2" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-2" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Accel X</span><span id="motion-val-3" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-3" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Accel Y</span><span id="motion-val-4" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-4" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+                                    <span>Accel Z</span><span id="motion-val-5" style="font-family:monospace; font-weight:600;">+0.00</span>
+                                </div>
+                                <div class="trigger-bar" style="height:6px;"><div id="motion-fill-5" class="trigger-fill" style="width:50%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PlayStation Interactive Hardware Controls (RGB Lightbar, Player LEDs, Rumble) -->
+            <div id="gp-ps-controls" style="display:none; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.76rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px;">DualSense Hardware Controls</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button class="btn btn-primary" onclick="testDualSenseSound()" style="padding: 3px 8px; font-size: 0.72rem;" title="Play 3-note audio chime on controller speaker/headset">🔊 Sound Test</button>
+                        <button class="btn btn-primary" onclick="testDualSenseRumble()" style="padding: 3px 8px; font-size: 0.72rem;" title="Trigger 250ms motor haptic feedback">⚡ Test Rumble</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; align-items: center;">
+                    <!-- Lightbar Colors -->
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Lightbar:</span>
+                        <input type="color" id="ds-color-picker" value="#0066ff" onchange="setDualSenseColor(this.value)" style="width: 24px; height: 20px; border: none; border-radius: 4px; cursor: pointer; background: transparent;">
+                        <div style="display: flex; gap: 4px;">
+                            <span onclick="setDualSenseColor('#0066ff')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#0066ff; border:1px solid rgba(255,255,255,0.4);" title="PlayStation Blue"></span>
+                            <span onclick="setDualSenseColor('#10b981')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#10b981; border:1px solid rgba(255,255,255,0.4);" title="Emerald Green"></span>
+                            <span onclick="setDualSenseColor('#ef4444')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#ef4444; border:1px solid rgba(255,255,255,0.4);" title="Cyber Red"></span>
+                            <span onclick="setDualSenseColor('#8b5cf6')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#8b5cf6; border:1px solid rgba(255,255,255,0.4);" title="Neon Purple"></span>
+                            <span onclick="setDualSenseColor('#f59e0b')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#f59e0b; border:1px solid rgba(255,255,255,0.4);" title="Amber"></span>
+                            <span onclick="setDualSenseColor('#ec4899')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#ec4899; border:1px solid rgba(255,255,255,0.4);" title="Pink"></span>
+                            <span onclick="setDualSenseColor('#ffffff')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#ffffff; border:1px solid rgba(255,255,255,0.4);" title="White"></span>
+                            <span onclick="setDualSenseColor('#000000')" style="cursor:pointer; width:15px; height:15px; border-radius:50%; background:#000000; border:1px solid rgba(255,255,255,0.4);" title="Off"></span>
+                        </div>
+                    </div>
+
+                    <!-- Player LEDs -->
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Player:</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button class="btn btn-pill active" id="ds-p1" onclick="setDualSensePlayer(1)" style="padding: 2px 6px; font-size: 0.7rem;">1</button>
+                            <button class="btn btn-pill" id="ds-p2" onclick="setDualSensePlayer(2)" style="padding: 2px 6px; font-size: 0.7rem;">2</button>
+                            <button class="btn btn-pill" id="ds-p3" onclick="setDualSensePlayer(3)" style="padding: 2px 6px; font-size: 0.7rem;">3</button>
+                            <button class="btn btn-pill" id="ds-p4" onclick="setDualSensePlayer(4)" style="padding: 2px 6px; font-size: 0.7rem;">4</button>
+                            <button class="btn btn-pill" id="ds-p5" onclick="setDualSensePlayer(5)" style="padding: 2px 6px; font-size: 0.7rem;">All</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Motorized Adaptive Triggers Test & Controls -->
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.73rem; font-weight: 700; color: var(--accent-color); display: flex; align-items: center; gap: 4px;">
+                            ⚙️ Motorized Adaptive Triggers (L2 / R2)
+                        </span>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <span style="font-size: 0.70rem; color: var(--text-muted);">Target:</span>
+                            <button class="btn btn-pill active" id="ds-trig-target-both" onclick="setTriggerTarget('both')" style="padding: 1px 6px; font-size: 0.68rem;">Both</button>
+                            <button class="btn btn-pill" id="ds-trig-target-l2" onclick="setTriggerTarget('l2')" style="padding: 1px 6px; font-size: 0.68rem;">L2</button>
+                            <button class="btn btn-pill" id="ds-trig-target-r2" onclick="setTriggerTarget('r2')" style="padding: 1px 6px; font-size: 0.68rem;">R2</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px;">
+                        <button class="btn btn-pill active" id="ds-trig-off" onclick="setDualSenseTriggerMode('off')" style="font-size: 0.70rem; padding: 2px 7px;" title="Standard smooth trigger feel">🔘 Off / Smooth</button>
+                        <button class="btn btn-pill" id="ds-trig-gun" onclick="setDualSenseTriggerMode('gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Two-stage firearm with hard mechanical wall snap">🎯 Gun Trigger (Wall Break)</button>
+                        <button class="btn btn-pill" id="ds-trig-mg" onclick="setDualSenseTriggerMode('machine_gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Motorized automatic rifle kickback vibration">🔫 Machine Gun (Recoil)</button>
+                        <button class="btn btn-pill" id="ds-trig-bow" onclick="setDualSenseTriggerMode('bow')" style="font-size: 0.70rem; padding: 2px 7px;" title="Elastic bowstring tension increasing as you pull">🏹 Archery Bow (Draw)</button>
+                        <button class="btn btn-pill" id="ds-trig-abs" onclick="setDualSenseTriggerMode('abs')" style="font-size: 0.70rem; padding: 2px 7px;" title="High-frequency anti-lock brake stutter when braking hard">🚗 ABS Brakes (Stutter)</button>
+                        <button class="btn btn-pill" id="ds-trig-heavy" onclick="setDualSenseTriggerMode('heavy')" style="font-size: 0.70rem; padding: 2px 7px;" title="Continuous hydraulic lever resistance">🕹️ Hydraulic Lever</button>
+                    </div>
+                    <div id="ds-trig-desc" style="font-size: 0.70rem; color: var(--text-muted); margin-bottom: 4px; font-style: italic;">
+                        Default smooth trigger feel. No motorized resistance.
+                    </div>
+                    <div id="ds-trig-sliders" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; background: rgba(0,0,0,0.25); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size: 0.68rem; color:var(--text-muted);">
+                                <span>Motor Force</span>
+                                <span id="ds-trig-force-val">100%</span>
+                            </div>
+                            <input type="range" id="ds-trig-force" min="30" max="255" value="255" oninput="onTriggerParamChange()" style="width:100%; height:4px; margin-top:2px;">
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size: 0.68rem; color:var(--text-muted);">
+                                <span>Start / Wall Pos</span>
+                                <span id="ds-trig-pos-val">35%</span>
+                            </div>
+                            <input type="range" id="ds-trig-pos" min="0" max="220" value="80" oninput="onTriggerParamChange()" style="width:100%; height:4px; margin-top:2px;">
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size: 0.68rem; color:var(--text-muted);">
+                                <span>Frequency</span>
+                                <span id="ds-trig-freq-val">15 Hz</span>
+                            </div>
+                            <input type="range" id="ds-trig-freq" min="5" max="40" value="15" oninput="onTriggerParamChange()" style="width:100%; height:4px; margin-top:2px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Client Live Console Modal -->
+    <div id="console-modal" class="modal">
+        <div class="console-modal-content">
+            <div class="console-header-bar">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="/icons/utilities-terminal.png" style="width:26px; height:26px; object-fit:contain;">
+                    <h3 style="margin:0; font-size:0.95rem; font-weight:700; color:#fff;">Client Diagnostics Console</h3>
+                    <span style="font-size:0.7rem; color:var(--text-muted); background:#1a2030; padding:2px 6px; border-radius:4px;">Local Daemon Stream</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn btn-danger" onclick="closeConsoleModal()" style="padding:4px 10px; font-size:0.75rem;">Close</button>
+                </div>
+            </div>
+
+            <!-- Client Quick Action Command Chips -->
+            <div class="console-quick-bar">
+                <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; margin-right:4px;">Quick Commands:</span>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('status')">status</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('devices')">devices</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('servers')">servers</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('scan')">scan</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('recover')">recover-usb</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('detach-all')">detach-all</button>
+                <button class="console-quick-btn" onclick="runClientQuickCommand('help')">help</button>
+            </div>
+
+            <!-- Console Toolbar -->
+            <div class="console-toolbar">
+                <div class="console-filter-group">
+                    <button class="console-filter-btn active" data-level="ALL" onclick="setConsoleLevel('ALL')">ALL</button>
+                    <button class="console-filter-btn" data-level="INFO" onclick="setConsoleLevel('INFO')">INFO</button>
+                    <button class="console-filter-btn" data-level="WARNING" onclick="setConsoleLevel('WARNING')">WARN</button>
+                    <button class="console-filter-btn" data-level="ERROR" onclick="setConsoleLevel('ERROR')">ERROR</button>
+                    <button class="console-filter-btn" data-level="DEBUG" onclick="setConsoleLevel('DEBUG')">DEBUG</button>
+                </div>
+
+                <input type="text" id="console-search-input" class="console-search-box" placeholder="Filter client logs...">
+
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn" id="console-autoscroll-btn" onclick="toggleConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle automatic scrolling">Auto-Scroll</button>
+                    <button class="btn" onclick="copyConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy all logs to clipboard"><img src="/icons/document-save.png"> Copy</button>
+                    <button class="btn" onclick="exportConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Download log file"><img src="/icons/document-open.png"> Export</button>
+                    <button class="btn btn-danger" onclick="clearConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console buffer">Clear</button>
+                </div>
+            </div>
+
+            <!-- Console Logs Output Body -->
+            <div id="console-logs-container" class="console-body">
+                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to client log stream...</div>
+            </div>
+
+            <!-- Console Interactive CLI Input -->
+            <div class="console-footer-cli">
+                <span class="console-cli-prompt">&gt;</span>
+                <input type="text" id="console-cmd-input" class="console-cli-input" placeholder="Type a client command (e.g. 'help', 'scan', 'status', 'devices', 'servers', 'ping', 'detach-all')..." autocomplete="off" spellcheck="false">
+                <button class="btn btn-primary" onclick="handleConsoleEnterKey()" style="padding:3px 10px; font-size:0.72rem;">Run</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/api.js?v=1787268350.3.3"></script>
+    <script src="/js/dashboard.js?v=1787268350.3.3"></script>
+    <script src="/js/gamepad.js?v=1787268350.3.3"></script>
+    <script src="/js/console.js?v=1787268350.3.3"></script>
+</body>
+</html>
