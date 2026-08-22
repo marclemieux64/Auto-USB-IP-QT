@@ -1136,7 +1136,7 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/etc/auto-usbip /root/.config/auto-usbip /var/log /sys /dev
+ReadWritePaths=-/etc/auto-usbip -/root/.config/auto-usbip /var/log /sys /dev
 PrivateTmp=true
 NoNewPrivileges=true
 
