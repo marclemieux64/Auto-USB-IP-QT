@@ -87,7 +87,7 @@ cp -r "${REPO_ROOT}/dist/autousbip-qt-client/"* "${APPDIR}/usr/bin/"
 # 4. Generate AppImage
 echo "\n[3/4] Generating final AppImage package..."
 mkdir -p "${REPO_ROOT}/dist"
-OUTPUT_APPIMAGE="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.AppImage"
+OUTPUT_APPIMAGE="${REPO_ROOT}/dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage"
 rm -f "${OUTPUT_APPIMAGE}"
 
 ARCH=x86_64 "${APPIMAGETOOL}" --no-appstream "${APPDIR}" "${OUTPUT_APPIMAGE}"
@@ -115,7 +115,7 @@ if [ -f "${ICON_PNG}" ]; then
     cp -f "${ICON_PNG}" "${TARBALL_STAGING}/org.autousbip.client.png"
 fi
 
-OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.tar.gz"
+OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz"
 rm -f "${OUTPUT_TARBALL}"
 tar -czf "${OUTPUT_TARBALL}" -C "${REPO_ROOT}/build" autousbip-qt-client-linux-x86_64
 

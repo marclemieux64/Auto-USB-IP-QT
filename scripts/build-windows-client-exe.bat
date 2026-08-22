@@ -77,18 +77,18 @@ REM 5. Copy single standalone .exe to dist\
 set "OUT_DIR=%PROJECT_ROOT%\dist"
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%" >nul 2>&1
 
-echo [3/3] Deploying standalone binary to %OUT_DIR%\autousbip-qt-client.exe...
-copy /Y "%LOCAL_DIST%\autousbip-qt-client.exe" "%OUT_DIR%\autousbip-qt-client.exe" >nul
+echo [3/3] Deploying standalone binary to %OUT_DIR%\AutoUSBIP-QT-Client-Windows-x64.exe...
+copy /Y "%LOCAL_DIST%\autousbip-qt-client.exe" "%OUT_DIR%\AutoUSBIP-QT-Client-Windows-x64.exe" >nul
 
 REM Clean temp work files
 if exist "%LOCAL_WORK%" rmdir /s /q "%LOCAL_WORK%" >nul 2>&1
 if exist "%LOCAL_DIST%" rmdir /s /q "%LOCAL_DIST%" >nul 2>&1
 
-if exist "%OUT_DIR%\autousbip-qt-client.exe" (
+if exist "%OUT_DIR%\AutoUSBIP-QT-Client-Windows-x64.exe" (
     echo.
     echo =========================================================
     echo   SUCCESS! Single-File Windows Standalone Binary is ready:
-    echo   %OUT_DIR%\autousbip-qt-client.exe
+    echo   %OUT_DIR%\AutoUSBIP-QT-Client-Windows-x64.exe
     echo =========================================================
 ) else (
     echo.

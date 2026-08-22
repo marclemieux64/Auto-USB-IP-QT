@@ -18,7 +18,7 @@ if [ ! -x "$PYINSTALLER_BIN" ]; then
 fi
 "$PYINSTALLER_BIN" \
     --onefile \
-    --name "autousbip-qt-server" \
+    --name "AutoUSBIP-QT-Server-Linux-x86_64" \
     --clean \
     --noconfirm \
     --distpath "$REPO_ROOT/dist" \
@@ -26,8 +26,8 @@ fi
     --specpath "$REPO_ROOT/build/server" \
     "$REPO_ROOT/server/autousbip.py"
 
-chmod +x "$REPO_ROOT/dist/autousbip-qt-server"
+chmod +x "$REPO_ROOT/dist/AutoUSBIP-QT-Server-Linux-x86_64"
 echo "============================================================="
 echo "🎉 Server build complete! Single standalone binary:"
-echo "   📦 $REPO_ROOT/dist/autousbip-qt-server ($(du -h "$REPO_ROOT/dist/autousbip-qt-server" | cut -f1))"
+echo "   📦 $REPO_ROOT/dist/AutoUSBIP-QT-Server-Linux-x86_64 ($(du -h "$REPO_ROOT/dist/AutoUSBIP-QT-Server-Linux-x86_64" | cut -f1))"
 echo "============================================================="

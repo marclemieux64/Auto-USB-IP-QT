@@ -69,9 +69,9 @@ jobs:
         with:
           name: AutoUSBIP-QT-Linux-Artifacts
           path: |
-            dist/AutoUSBIP-QT-x86_64.AppImage
-            dist/AutoUSBIP-QT-x86_64.tar.gz
-            dist/autousbip-qt-server
+            dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage
+            dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz
+            dist/AutoUSBIP-QT-Server-Linux-x86_64
 
   build-windows:
     name: Build Windows Releases (Standalone EXE & MSI Installer)
@@ -112,9 +112,9 @@ jobs:
         with:
           name: AutoUSBIP-QT-Windows-Artifacts
           path: |
-            dist\autousbip-qt-client.exe
-            dist\AutoUSBIP-QT-Client-Setup.msi
-            dist\autousbip-qt-server.exe
+            dist\AutoUSBIP-QT-Client-Windows-x64.exe
+            dist\AutoUSBIP-QT-Client-Setup-x64.msi
+            dist\AutoUSBIP-QT-Server-Windows-x64.exe
 
   publish-release:
     name: Publish GitHub Release
