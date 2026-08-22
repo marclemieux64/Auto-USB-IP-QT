@@ -222,7 +222,10 @@ Binary artifacts are written to [`dist/`](dist/).
 ---
 
 ### Windows
-1. Install the [usbip-win](https://github.com/cezanne/usbip-win) signed VHCI driver.
+1. Run the automated driver setup script (downloads and configures `usbip-win` VHCI driver):
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/setup-windows-driver.ps1
+   ```
 2. In the `client/` folder:
    ```cmd
    python -m venv venv

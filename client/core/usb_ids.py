@@ -254,6 +254,22 @@ class UsbIdsDatabase:
             return False
         return any(w in d_lower for w in ("audio", "headset", "headphone", "sound", "dac", "mic", "microphone", "speaker"))
 
+    def is_isochronous_or_high_bandwidth(self, busid: str, desc: str) -> bool:
+        """Detect if device requires isochronous / high continuous bandwidth (e.g. webcams, capture cards, high-speed audio)."""
+        d_lower = (desc or "").lower()
+        if any(w in d_lower for w in ("camera", "webcam", "video", "cam", "uvc", "capture", "hdmi", "elgato", "cam link", "broadcast")):
+            return True
+        if any(w in d_lower for w in ("focusrite", "scarlett", "motu", "behringer", "rme", "soundcard", "audio interface", "multichannel", "quad-capture", "duo-capture")):
+            return True
+        return False
+
+    def is_compound_hub_child(self, busid: str) -> bool:
+        """Check if bus ID represents a device attached to an internal or multi-tier hub (e.g. 1-1.2, 1-1.3.1)."""
+        if not busid:
+            return False
+        # Bus IDs with multiple hierarchy dots like '1-1.2' or '1-1.4.1' are connected through intermediate hubs
+        return busid.count(".") >= 1
+
     def parse_vid_pid_from_string(self, desc: str) -> tuple[int, int]:
         m = re.search(r"\(([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\)", desc)
         if m:

@@ -372,6 +372,12 @@ function renderSingleAttachedDeviceCard(d) {
         const latText = d.latency_str || `${d.latency_ms} ms`;
         badges.push(`<span class="badge badge-latency" title="Real-time controller polling interval and frequency"><img src="/icons/badge-latency.png"> ${latText}</span>`);
     }
+    if (d.is_isochronous) {
+        badges.push(`<span class="badge badge-bandwidth" style="background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.4); color:#fbbf24;" title="High continuous bandwidth device (video/isochronous audio). Ethernet or 5GHz Wi-Fi recommended to prevent dropped frames."><img src="/icons/network-connect.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> High Bandwidth</span>`);
+    }
+    if (d.is_compound) {
+        badges.push(`<span class="badge badge-hub" style="background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.4); color:#a5b4fc;" title="Attached via internal / tiered USB hub topology"><img src="/icons/badge-port.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> Hub Port</span>`);
+    }
 
     const btnTester = d.is_controller ? `<button class="btn btn-warning" onclick="openGamepadTesterModal('${d.port}', '${encodeURIComponent(title)}')"><img src="/icons/gamepad.png"> Gamepad Tester</button>` : "";
     const btnStorage = d.is_storage ? `<button class="btn btn-primary" onclick="openStorageDevice('${d.port}')"><img src="/icons/document-open.png"> Open Files</button>` : "";
@@ -431,6 +437,12 @@ function renderSingleAvailableDeviceCard(d) {
     if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
     if (d.server_ip) badges.push(`<span class="badge badge-server" title="Originating remote server IP address hosting this USB device"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
     if (d.in_use_by) badges.push(`<span class="badge badge-warning" style="background:rgba(234, 179, 8, 0.2); border:1px solid rgba(234, 179, 8, 0.5); color:#facc15;" title="This physical device is currently in use by another client (${d.in_use_by})"><img src="/icons/blacklist.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> In Use by: ${d.in_use_by}</span>`);
+    if (d.is_isochronous) {
+        badges.push(`<span class="badge badge-bandwidth" style="background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.4); color:#fbbf24;" title="High continuous bandwidth device (video/isochronous audio). Ethernet or 5GHz Wi-Fi recommended to prevent dropped frames."><img src="/icons/network-connect.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> High Bandwidth</span>`);
+    }
+    if (d.is_compound) {
+        badges.push(`<span class="badge badge-hub" style="background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.4); color:#a5b4fc;" title="Attached via internal / tiered USB hub topology"><img src="/icons/badge-port.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> Hub Port</span>`);
+    }
 
     const attachBtn = d.in_use_by
         ? `<button class="btn" style="opacity:0.65; cursor:not-allowed;" title="Device is currently attached by another client (${d.in_use_by}). Please detach on that machine first." onclick="showToast('⚠️ Device is already in use by ${d.in_use_by}')"><img src="/icons/network-connect.png"> In Use</button>`

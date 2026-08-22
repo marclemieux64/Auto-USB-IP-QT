@@ -111,6 +111,8 @@ def handle_status(controller: Any) -> dict:
             "server_ip": s_ip,
             "bus_id": b_id,
             "icon_alias": icon_alias,
+            "is_isochronous": controller.usb_db.is_isochronous_or_high_bandwidth(bus_id_str, desc_str),
+            "is_compound": controller.usb_db.is_compound_hub_child(bus_id_str),
         })
 
     # Collect currently attached hardware identifiers to prevent duplicates in available list
@@ -177,6 +179,8 @@ def handle_status(controller: Any) -> dict:
             "has_audio": has_aud,
             "icon_alias": icon_alias,
             "in_use_by": in_use_client,
+            "is_isochronous": controller.usb_db.is_isochronous_or_high_bandwidth(bus_id_str, desc_str),
+            "is_compound": controller.usb_db.is_compound_hub_child(bus_id_str),
         })
 
     # Filter out servers that are ALREADY in the configured servers list

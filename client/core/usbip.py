@@ -19,7 +19,15 @@ from config import USB_ID_REGEX
 logger = logging.getLogger("auto-usbip-client")
 
 def ensure_vhci_loaded() -> bool:
-    """Ensure the Linux kernel vhci-hcd module is loaded."""
+    """Ensure the Linux kernel vhci-hcd module or Windows USB/IP driver is available."""
+    if sys.platform == "win32":
+        from core.resources import get_app_dir
+        bundled_win_usbip = get_app_dir() / "bin" / "usbip.exe"
+        if bundled_win_usbip.exists() or shutil.which("usbip.exe"):
+            return True
+        logger.warning("[Windows Driver Alert] usbip-win driver / usbip.exe was not found. Please run scripts/setup-windows-driver.ps1 or install usbip-win.")
+        return False
+
     if sys.platform != "linux":
         return True
     if Path("/sys/devices/platform/vhci_hcd.0").exists() or Path("/sys/devices/platform/vhci_hcd").exists() or Path("/sys/module/vhci_hcd").exists():
