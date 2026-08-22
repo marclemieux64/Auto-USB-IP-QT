@@ -68,17 +68,28 @@ if [ -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" ]; then
     cp -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" "${APPDIR}/usr/share/metainfo/org.autousbip.client.metainfo.xml"
 fi
 
-# Copy icons
+# Copy icons (AppImage spec mandates .DirIcon MUST be PNG)
 ICON_SVG="${REPO_ROOT}/client/assets/branding/app-icon.svg"
 ICON_PNG="${REPO_ROOT}/client/assets/branding/app-icon.png"
 
-if [ -f "${ICON_SVG}" ]; then
-    cp -f "${ICON_SVG}" "${APPDIR}/org.autousbip.client.svg"
-    cp -f "${ICON_SVG}" "${APPDIR}/.DirIcon"
-fi
+mkdir -p "${APPDIR}/usr/share/icons/hicolor/scalable/apps"
+mkdir -p "${APPDIR}/usr/share/icons/hicolor/512x512/apps"
+mkdir -p "${APPDIR}/usr/share/pixmaps"
 
 if [ -f "${ICON_PNG}" ]; then
     cp -f "${ICON_PNG}" "${APPDIR}/org.autousbip.client.png"
+    cp -f "${ICON_PNG}" "${APPDIR}/usr/share/icons/hicolor/512x512/apps/org.autousbip.client.png"
+    cp -f "${ICON_PNG}" "${APPDIR}/usr/share/pixmaps/org.autousbip.client.png"
+    cp -f "${ICON_PNG}" "${APPDIR}/.DirIcon"
+fi
+
+if [ -f "${ICON_SVG}" ]; then
+    cp -f "${ICON_SVG}" "${APPDIR}/org.autousbip.client.svg"
+    cp -f "${ICON_SVG}" "${APPDIR}/usr/share/icons/hicolor/scalable/apps/org.autousbip.client.svg"
+    cp -f "${ICON_SVG}" "${APPDIR}/usr/share/pixmaps/org.autousbip.client.svg"
+    if [ ! -f "${ICON_PNG}" ]; then
+        cp -f "${ICON_SVG}" "${APPDIR}/.DirIcon"
+    fi
 fi
 
 # Copy frozen binaries and assets

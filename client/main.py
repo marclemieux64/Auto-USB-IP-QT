@@ -88,6 +88,8 @@ def main():
     logging.basicConfig(level=logging.INFO)
     from core.console import init_client_console
     init_client_console()
+    from core.notifications import init_notification_subsystem
+    init_notification_subsystem()
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
 

@@ -5,13 +5,17 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="${DIR}/autousbip-qt-client"
 DESKTOP_DIR="${HOME}/.local/share/applications"
-ICON_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
+ICON_SVG_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
+ICON_PNG_DIR="${HOME}/.local/share/icons/hicolor/512x512/apps"
 
-mkdir -p "${DESKTOP_DIR}" "${ICON_DIR}"
+mkdir -p "${DESKTOP_DIR}" "${ICON_SVG_DIR}" "${ICON_PNG_DIR}"
 
-# Copy icon
+# Copy icons
 if [ -f "${DIR}/org.autousbip.client.svg" ]; then
-    cp -f "${DIR}/org.autousbip.client.svg" "${ICON_DIR}/org.autousbip.client.svg"
+    cp -f "${DIR}/org.autousbip.client.svg" "${ICON_SVG_DIR}/org.autousbip.client.svg"
+fi
+if [ -f "${DIR}/org.autousbip.client.png" ]; then
+    cp -f "${DIR}/org.autousbip.client.png" "${ICON_PNG_DIR}/org.autousbip.client.png"
 fi
 
 # Create desktop entry pointing to this folder

@@ -131,6 +131,17 @@
                     <!-- Left Column: General Behavior & Security -->
                     <div>
                         <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin-bottom: 6px;">⚙️ General Behavior</div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span>🎨 Theme:</span>
+                            </label>
+                            <select id="opt-theme" class="form-control" onchange="previewTheme(this.value)">
+                                <option value="system">Follow System (Default)</option>
+                                <option value="dark">Dark Theme</option>
+                                <option value="light">Light Theme</option>
+                            </select>
+                        </div>
+
                         <label class="form-check"><input type="checkbox" id="opt-auto-attach"> Automatically attach discovered devices</label>
                         <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
                         <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>

@@ -42,6 +42,7 @@ CONFIG_PATH = get_config_path()
 
 def get_default_config() -> dict:
     return {
+        "theme": "system",
         "show_notifications": True,
         "play_sound_cues": True,
         "polling_interval": POLLING_TIME,
