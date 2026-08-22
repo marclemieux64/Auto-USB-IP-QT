@@ -9,7 +9,7 @@ on:
 jobs:
   build-linux:
     name: Build Linux Releases (AppImage, Tarball, Server)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -22,8 +22,22 @@ jobs:
 
       - name: Install System Dependencies & Qt6 Libraries
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends             libgl1-mesa-dev libxkbcommon0 libegl1-mesa             libdbus-1-3 libnss3 libasound2t64 libxtst6             libxcomposite1 libxcursor1 libxi6 libxrandr2             zstd libfuse2t64 appstream ||           sudo apt-get install -y --no-install-recommends             libgl1-mesa-dev libxkbcommon0 libegl1-mesa             libdbus-1-3 libnss3 libxtst6             libxcomposite1 libxcursor1 libxi6 libxrandr2             zstd appstream
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev \
+            libxkbcommon0 \
+            libegl1 \
+            libdbus-1-3 \
+            libnss3 \
+            libxtst6 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxi6 \
+            libxrandr2 \
+            zstd \
+            appstream \
+            file
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || true
 
       - name: Install Python Dependencies
         run: |
