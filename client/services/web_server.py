@@ -218,7 +218,7 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
                     self.send_error(404, f"Asset Not Found: {rel_path}")
                     return
 
-            if path.startswith("/css/") or path.startswith("/js/"):
+            if path.startswith("/css/") or path.startswith("/js/") or path.startswith("/fonts/"):
                 rel_path = path.lstrip("/")
                 file_path = self.web_root / rel_path
                 self.serve_static_file(file_path)

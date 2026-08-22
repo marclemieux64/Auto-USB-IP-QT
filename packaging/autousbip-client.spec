@@ -17,6 +17,8 @@ hiddenimports = [
     "PyQt6.QtCore",
     "PyQt6.QtGui",
     "PyQt6.QtWidgets",
+    "PyQt6.QtSvg",
+    "PyQt6.QtSvgWidgets",
     "PyQt6.QtWebEngineWidgets",
     "PyQt6.QtWebEngineCore",
     "PyQt6.QtNetwork",
@@ -46,6 +48,22 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
+# On Linux, exclude core C/C++ runtime libraries so the target system native libraries are used
+if sys.platform.startswith("linux"):
+    a.binaries = [
+        b for b in a.binaries
+        if not (
+            b[0].startswith("libstdc++.so")
+            or b[0].startswith("libgcc_s.so")
+            or b[0].startswith("libc.so")
+            or b[0].startswith("libm.so")
+            or b[0].startswith("libpthread.so")
+            or b[0].startswith("libdl.so")
+            or b[0].startswith("librt.so")
+        )
+    ]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(

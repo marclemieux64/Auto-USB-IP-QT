@@ -17,6 +17,8 @@ from PyQt6.QtCore import Qt, QCoreApplication
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
+logger = logging.getLogger("auto-usbip-client")
+
 def global_exception_handler(exc_type, exc_value, exc_traceback):
     import traceback
     err_str = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))

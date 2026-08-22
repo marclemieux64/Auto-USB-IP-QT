@@ -19,8 +19,11 @@ if [ ! -x "${PYTHON_BIN}" ]; then
 fi
 
 PYINSTALLER_BIN="${REPO_ROOT}/client/venv/bin/pyinstaller"
-if [ ! -x "${PYINSTALLER_BIN}" ]; then
+if [ ! -x "${PYINSTALLER_BIN}" ] || ! "${PYINSTALLER_BIN}" --version >/dev/null 2>&1; then
     PYINSTALLER_BIN="$(which pyinstaller 2>/dev/null || true)"
+fi
+if [ -z "${PYINSTALLER_BIN}" ] && [ -x "${HOME}/.local/bin/pyinstaller" ]; then
+    PYINSTALLER_BIN="${HOME}/.local/bin/pyinstaller"
 fi
 
 if [ -z "${PYINSTALLER_BIN}" ]; then

@@ -338,3 +338,82 @@ def detach_device(host: str, busid: str) -> tuple[bool, str]:
         return True, "Device not attached"
         
     return detach_port(target_port)
+
+def get_locally_attached_vid_pids() -> set[str]:
+    """Inspect local Linux sysfs for currently attached USB VID:PIDs with zero sudo overhead."""
+    usb_dir = Path("/sys/bus/usb/devices")
+    vids = set()
+    if usb_dir.exists():
+        try:
+            for dev in usb_dir.iterdir():
+                v_file = dev / "idVendor"
+                p_file = dev / "idProduct"
+                if v_file.exists() and p_file.exists():
+                    try:
+                        v = v_file.read_text().strip().lower().zfill(4)
+                        p = p_file.read_text().strip().lower().zfill(4)
+                        if v != "1d6b":  # Exclude root Linux hubs
+                            vids.add(f"{v}:{p}")
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+    return vids
+
+def get_port_to_bus_map(force_refresh: bool = False) -> dict[str, tuple[str, str]]:
+    """Maps imported port numbers to (server_ip, busid)."""
+    ports = list_imported_ports()
+    port_map = {}
+    for p in ports:
+        port_map[p.port] = (p.uri, p.busid)
+        if p.port.isdigit():
+            port_map[str(int(p.port))] = (p.uri, p.busid)
+            port_map[p.port.zfill(2)] = (p.uri, p.busid)
+    return port_map
+
+def detach_all_ports():
+    """Detach all currently imported ports."""
+    for p in list_imported_ports():
+        detach_port(p.port)
+
+def get_imported_devices() -> list:
+    """Return list of imported devices as ImportedDevice objects."""
+    from services.server_connection import ImportedDevice
+    ports = list_imported_ports()
+    imported_list = []
+    for p in ports:
+        imported_list.append(
+            ImportedDevice(
+                port=p.port,
+                speed_raw=p.speed,
+                desc_raw=f"{p.device_name} ({p.devid})" if p.devid else (p.device_name or "USB Device"),
+                serial_connections=[]
+            )
+        )
+    return imported_list
+
+def get_remote_usb_devices_info(server: str, port: int = 3240, token: str = "") -> list[tuple[str, str]] | None:
+    """Query remote server for exportable USB devices."""
+    ensure_vhci_loaded()
+    args = ["list", "-r", server]
+    if port != 3240:
+        args.extend(["-p", str(port)])
+    cmd = _get_usbip_cmd(args)
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=3.5, **_SUBPROCESS_KWARGS)
+        if res.returncode != 0:
+            return []
+        
+        devices = []
+        # Parse usbip list output:
+        #  - 1-1: Logitech, Inc. (046d:c216)
+        #  - 1-1.2: SanDisk Corp. Cruzer (0781:5567)
+        dev_re = re.compile(r"^\s*([0-9]+-[0-9.]+):\s*(.*)$")
+        for line in res.stdout.splitlines():
+            m = dev_re.match(line)
+            if m:
+                devices.append((m.group(1), m.group(2).strip()))
+        return devices
+    except Exception as e:
+        logger.debug(f"Failed to query remote USB devices from {server}: {e}")
+        return []

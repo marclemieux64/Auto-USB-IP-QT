@@ -229,12 +229,12 @@ If you are running the portable version (AppImage, Tarball, or standalone Window
 
 #### **Windows (Portable Mode)**
 1. **Remove User Configuration & Cached Drivers**:
-   - Delete `%APPDATA%uto-usbip` (Configuration file `config.json`)
-   - Delete `%LOCALAPPDATA%uto-usbip` (Downloaded driver cache, if applicable)
+   - Delete `%APPDATA%\auto-usbip` (Configuration file `config.json`)
+   - Delete `%LOCALAPPDATA%\auto-usbip` (Downloaded driver cache, if applicable)
    *Or run in PowerShell:*
    ```powershell
-   Remove-Item -Recurse -Force ":APPDATAuto-usbip" -ErrorAction SilentlyContinue
-   Remove-Item -Recurse -Force ":LOCALAPPDATAuto-usbip" -ErrorAction SilentlyContinue
+   Remove-Item -Recurse -Force "$env:APPDATA\auto-usbip" -ErrorAction SilentlyContinue
+   Remove-Item -Recurse -Force "$env:LOCALAPPDATA\auto-usbip" -ErrorAction SilentlyContinue
    ```
 2. **Delete the Portable Folder**:
    - Simply delete the extracted folder containing `autousbip-qt-client.exe`.
@@ -253,20 +253,22 @@ All individual target builders are located in [`scripts/`](scripts/):
 | **Linux AppImage** | `bash scripts/build-appimage.sh` | `dist/AutoUSBIP-QT-x86_64.AppImage` |
 | **Linux Portable Tarball** | `bash scripts/build-tarball.sh` | `dist/AutoUSBIP-QT-x86_64.tar.gz` |
 | **Linux Standalone Server** | `bash scripts/build-server-binary.sh` | `dist/autousbip-qt-server` |
-| **Windows Client GUI** | `scripts\build-windows-client-exe.bat` | `dist\AutoUSBIP-QT-Windows\autousbip-qt-client.exe` |
-| **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\AutoUSBIP-QT-Server-Windows\autousbip-qt-server.exe` |
+| **Windows Client (Single EXE)** | `scripts\build-windows-client-exe.bat` | `dist\autousbip-qt-client.exe` |
+| **Windows Client (MSI Setup)** | `scripts\build-windows-msi.bat` | `dist\AutoUSBIP-QT-Client-Setup.msi` |
+| **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\autousbip-qt-server.exe` |
 
 ---
 
 ### 🪟 Windows Client & Server Releases
 
-#### 1. Windows Client (`autousbip-qt-client.exe`)
-1. Double-click `scripts\build-windows-client-exe.bat` or run the standalone release from `dist/AutoUSBIP-QT-Windows/`.
-2. On first launch, the application automatically verifies the signed `usbip-win` VHCI driver.
+#### 1. Windows Client (`autousbip-qt-client.exe` & MSI Installer)
+* **Single-file Portable EXE**: Run `scripts\build-windows-client-exe.bat` to produce `dist\autousbip-qt-client.exe`.
+* **WiX MSI Setup Package**: Run `scripts\build-windows-msi.bat` to compile `dist\AutoUSBIP-QT-Client-Setup.msi` with customized setup UI dialogs and auto-cleanup actions.
+* On first launch, the client automatically verifies and configures the signed `usbip-win` VHCI driver.
 
 #### 2. Windows Server Daemon (`autousbip-qt-server.exe`)
-1. Double-click `scripts\build-windows-server-exe.bat` to build the standalone server binary.
-2. The compiled binary is output to `dist\AutoUSBIP-QT-Server-Windows\autousbip-qt-server.exe`.
+1. Run `scripts\build-windows-server-exe.bat` to build the standalone server executable.
+2. The compiled binary is output to `dist\autousbip-qt-server.exe`.
 
 ---
 
