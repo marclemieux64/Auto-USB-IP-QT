@@ -32,8 +32,35 @@ set "CANDLE_EXE=%WIX_DIR%\candle.exe"
 set "LIGHT_EXE=%WIX_DIR%\light.exe"
 
 if not exist "%CANDLE_EXE%" (
-    echo [ERROR] WiX candle.exe not found in %WIX_DIR%
-    pause
+    if defined WIX (
+        set "WIX_DIR=%WIX%bin"
+        set "CANDLE_EXE=%WIX%bin\candle.exe"
+        set "LIGHT_EXE=%WIX%bin\light.exe"
+    ) else if exist "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe" (
+        set "WIX_DIR=C:\Program Files (x86)\WiX Toolset v3.11\bin"
+        set "CANDLE_EXE=C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe"
+        set "LIGHT_EXE=C:\Program Files (x86)\WiX Toolset v3.11\bin\light.exe"
+    ) else if exist "C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" (
+        set "WIX_DIR=C:\Program Files (x86)\WiX Toolset v3.14\bin"
+        set "CANDLE_EXE=C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe"
+        set "LIGHT_EXE=C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe"
+    )
+)
+
+if not exist "%CANDLE_EXE%" (
+    echo [*] Downloading portable WiX Toolset v3.11 binaries...
+    mkdir "%PROJECT_ROOT%\tools\wix" >nul 2>&1
+    curl -sL -o "%TEMP%\wix311-binaries.zip" "https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip"
+    powershell -NoProfile -Command "Expand-Archive -Path "$env:TEMP\wix311-binaries.zip" -DestinationPath "%PROJECT_ROOT%\tools\wix" -Force" >nul 2>&1
+    del /f /q "%TEMP%\wix311-binaries.zip" >nul 2>&1
+    set "WIX_DIR=%PROJECT_ROOT%\tools\wix"
+    set "CANDLE_EXE=%WIX_DIR%\candle.exe"
+    set "LIGHT_EXE=%WIX_DIR%\light.exe"
+)
+
+if not exist "%CANDLE_EXE%" (
+    echo [ERROR] WiX candle.exe could not be found or downloaded.
+    if "%~1" NEQ "--no-pause" pause
     popd
     exit /b 1
 )
