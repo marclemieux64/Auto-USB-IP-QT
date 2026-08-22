@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REMOTE_DEVICE_IN_USE_CACHE: dict[tuple[str, str], dict] = {}
+
 import json
 import logging
 import os
@@ -123,9 +125,15 @@ def get_remote_usb_devices_info(ip: str, token: str = "") -> list[tuple[str, str
             server_has_control_daemon = True
             if resp_data.get("status") == "ok" and "devices" in resp_data:
                 bound = set(resp_data.get("currently_bound", []))
+                in_use_map = resp_data.get("in_use", {})
                 for bus_id, dev_title in resp_data["devices"].items():
                     if bus_id not in bound:
                         continue
+                    # Store in-use info in cache
+                    if bus_id in in_use_map:
+                        REMOTE_DEVICE_IN_USE_CACHE[(ip.strip(), bus_id.strip())] = in_use_map[bus_id]
+                    else:
+                        REMOTE_DEVICE_IN_USE_CACHE.pop((ip.strip(), bus_id.strip()), None)
                     devices.append((bus_id, dev_title))
                     REMOTE_DEVICE_NAME_CACHE[(ip.strip(), bus_id.strip())] = dev_title
                 return devices

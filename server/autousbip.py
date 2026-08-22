@@ -470,12 +470,76 @@ def unbind_usbdevice(busid: str):
     subprocess.run(["usbip", "unbind", "-b", busid], capture_output=True)
 
 
+def get_in_use_devices_map() -> dict[str, dict]:
+    """Inspect active TCP sockets and kernel usbip state to map busids to holding client IPs."""
+    in_use = {}
+    active_remote_ips = []
+    
+    # 1. Parse /proc/net/tcp and /proc/net/tcp6 for established connections on port 3240 (0CA8 in hex)
+    for proc_path in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            p = Path(proc_path)
+            if not p.exists():
+                continue
+            lines = p.read_text().splitlines()
+            for line in lines[1:]:
+                parts = line.strip().split()
+                if len(parts) >= 4:
+                    local_hex = parts[1]
+                    rem_hex = parts[2]
+                    state = parts[3]
+                    if ":0CA8" in local_hex.upper() and state == "01":  # 01 = TCP_ESTABLISHED
+                        rem_ip_hex, _ = rem_hex.split(":")
+                        if len(rem_ip_hex) == 8:
+                            client_ip = socket.inet_ntoa(struct.pack("<L", int(rem_ip_hex, 16)))
+                        elif len(rem_ip_hex) == 32:
+                            client_ip = socket.inet_ntop(socket.AF_INET6, bytes.fromhex(rem_ip_hex))
+                        else:
+                            client_ip = rem_ip_hex
+                        if client_ip not in ("127.0.0.1", "::1"):
+                            active_remote_ips.append(client_ip)
+        except Exception:
+            pass
+
+    # 2. Check /sys/bus/usb/drivers/usbip-host/ for busids assigned to usbip-host
+    usbip_host_dir = Path("/sys/bus/usb/drivers/usbip-host")
+    if usbip_host_dir.exists():
+        for item in usbip_host_dir.iterdir():
+            if re.match(r"^[0-9]+-[0-9]+(\.[0-9]+)*$", item.name):
+                busid = item.name
+                assigned_ip = active_remote_ips[0] if active_remote_ips else "Remote Client"
+                in_use[busid] = {
+                    "client_ip": assigned_ip,
+                    "status": "In Use"
+                }
+
+    # 3. Fallback: Parse `usbip list -p -l` or `usbip list -l` for status
+    try:
+        res = subprocess.run(["usbip", "list", "-l"], capture_output=True, text=True, timeout=0.8)
+        current_busid = None
+        for line in res.stdout.splitlines():
+            m_bus = re.search(r"busid\s+([0-9]+-[0-9]+(\.[0-9]+)*)", line)
+            if m_bus:
+                current_busid = m_bus.group(1).strip()
+            if current_busid and "In Use" in line:
+                if current_busid not in in_use:
+                    assigned_ip = active_remote_ips[0] if active_remote_ips else "Remote Client"
+                    in_use[current_busid] = {
+                        "client_ip": assigned_ip,
+                        "status": "In Use"
+                    }
+    except Exception:
+        pass
+
+    return in_use
+
+
 def get_currently_bound_busids() -> set[str]:
     bound = set()
     try:
         res = subprocess.run(["usbip", "list", "-p", "-l"], capture_output=True, text=True, timeout=1.0)
         for line in res.stdout.splitlines():
-            if "busid=" in line and "status=Exported" in line:
+            if "busid=" in line:
                 m = re.search(r"busid=([A-Za-z0-9.\-_]+)", line)
                 if m:
                     bound.add(m.group(1).strip())
@@ -822,6 +886,7 @@ def start_control_socket_thread(killer: GracefulKiller):
                                 "metrics": get_system_metrics(),
                                 "devices": dev_map,
                                 "currently_bound": list(get_currently_bound_busids()),
+                                "in_use": get_in_use_devices_map(),
                             })
                             conn.sendall(resp.encode("utf-8"))
                         elif cmd == "GET_DEVICES" or "GET_DEVICES" in str(cmd):
@@ -831,6 +896,7 @@ def start_control_socket_thread(killer: GracefulKiller):
                                 "status": "ok",
                                 "devices": dev_map,
                                 "currently_bound": list(get_currently_bound_busids()),
+                                "in_use": get_in_use_devices_map(),
                             })
                             conn.sendall(resp.encode("utf-8"))
                         elif cmd == "GET_STATUS":
@@ -840,6 +906,7 @@ def start_control_socket_thread(killer: GracefulKiller):
                                 "blacklist": sorted(list(BLACKLIST_VID_PID)),
                                 "tls": bool(ssl_ctx is not None and load_server_config().get("enable_tls", True)),
                                 "config": load_server_config(),
+                                "in_use": get_in_use_devices_map(),
                             })
                             conn.sendall(resp.encode("utf-8"))
                         elif cmd == "GET_CONFIG":

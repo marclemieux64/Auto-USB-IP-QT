@@ -87,9 +87,12 @@
                     <div id="add-srv-token-hint" style="display:none; color:#f59e0b; font-size:0.75rem; margin-top:4px; font-weight:600;">🔒 This server requires an authentication token to connect.</div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeAddServerModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitAddServer()">Save & Connect</button>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn btn-secondary" onclick="closeAddServerModal(); startSubnetScan();" title="Probe an entire IP Subnet CIDR (e.g. 192.168.1.0/24) on background threads across VLANs"><img src="/icons/refresh.png"> Scan Subnet IP Range</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn" onclick="closeAddServerModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="submitAddServer()">Save & Connect</button>
+                </div>
             </div>
         </div>
     </div>

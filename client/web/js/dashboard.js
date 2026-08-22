@@ -430,6 +430,11 @@ function renderSingleAvailableDeviceCard(d) {
     if (cfg.show_port && d.bus_id) badges.push(`<span class="badge badge-port" title="Remote server USB physical Bus ID topology location"><img src="/icons/badge-port.png"> Bus ${d.bus_id}</span>`);
     if (cfg.show_vid_pid && d.vid_pid) badges.push(`<span class="badge badge-vidpid" title="Hardware Vendor ID and Product ID"><img src="/icons/badge-vidpid.png"> ${d.vid_pid}</span>`);
     if (d.server_ip) badges.push(`<span class="badge badge-server" title="Originating remote server IP address hosting this USB device"><img src="/icons/badge-server.png"> ${d.server_ip}</span>`);
+    if (d.in_use_by) badges.push(`<span class="badge badge-warning" style="background:rgba(234, 179, 8, 0.2); border:1px solid rgba(234, 179, 8, 0.5); color:#facc15;" title="This physical device is currently in use by another client (${d.in_use_by})"><img src="/icons/blacklist.png" style="width:13px;height:13px;object-fit:contain;vertical-align:-1px;margin-right:3px;"> In Use by: ${d.in_use_by}</span>`);
+
+    const attachBtn = d.in_use_by
+        ? `<button class="btn" style="opacity:0.65; cursor:not-allowed;" title="Device is currently attached by another client (${d.in_use_by}). Please detach on that machine first." onclick="showToast('⚠️ Device is already in use by ${d.in_use_by}')"><img src="/icons/network-connect.png"> In Use</button>`
+        : `<button class="btn btn-primary" onclick="attachSingleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/network-connect.png"> Attach</button>`;
 
     return `
         <div class="card" data-key="${d.server_ip}:${d.bus_id}">
@@ -442,7 +447,7 @@ function renderSingleAvailableDeviceCard(d) {
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-primary" onclick="attachSingleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/network-connect.png"> Attach</button>
+                    ${attachBtn}
                     <button class="btn" onclick="powerCycleDevice('${d.server_ip}', '${d.bus_id}')"><img src="/icons/power-cycle.png"> Power Cycle</button>
                     <button class="btn" onclick="openNicknameModal('${d.identifier_key || d.bus_id}', '${encodeURIComponent(title)}')"><img src="/icons/rename.png"> Rename</button>
                     <button class="btn btn-blacklist" onclick="blacklistDevice('', '${d.identifier_key || d.vid_pid || d.bus_id}', '${encodeURIComponent(title)}', '${d.vid_pid || ""}', '${d.bus_id || ""}', '${iconName}', ${d.is_controller ? "true" : "false"})"><img src="/icons/blacklist.png"> Blacklist</button>
@@ -1408,5 +1413,22 @@ function toggleLanUrlDisplay(enabled) {
         infoEl.style.display = "block";
     } else {
         infoEl.style.display = "none";
+    }
+}
+
+async function startSubnetScan() {
+    const input = prompt("Enter IP Subnet Range in CIDR format (or leave blank to auto-detect local subnet):", "");
+    if (input === null) return;
+    showToast("🔍 Starting Subnet IP Scanner on background threads...");
+    try {
+        const res = await API.scanSubnet(input.trim());
+        if (res && res.status === "ok") {
+            showToast("🔍 Subnet scan active. Discovered servers will appear in the dashboard.");
+        } else if (res && res.message) {
+            showToast(res.message);
+        }
+    } catch (e) {
+        console.error("Error starting subnet scan:", e);
+        showToast("Error starting subnet scan.");
     }
 }

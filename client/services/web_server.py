@@ -258,6 +258,9 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             elif path == "/api/reboot_server_system":
                 ip = query.get("ip", [""])[0]
                 self.send_json_response(api.handle_reboot_server_system(self.controller, ip))
+            elif path == "/api/scan_subnet":
+                cidr = query.get("cidr", [""])[0]
+                self.send_json_response(api.handle_scan_subnet(self.controller, cidr))
             elif path == "/api/attach":
                 ip = query.get("ip", [""])[0]
                 busid = query.get("busid", [""])[0]
@@ -323,7 +326,10 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
             except Exception:
                 data = {}
 
-            if path == "/api/add_server":
+            if path == "/api/scan_subnet":
+                cidr = data.get("cidr", "")
+                self.send_json_response(api.handle_scan_subnet(self.controller, cidr))
+            elif path == "/api/add_server":
                 self.send_json_response(api.handle_add_server(self.controller, data))
             elif path == "/api/save_options":
                 self.send_json_response(api.handle_save_options(self.controller, data))

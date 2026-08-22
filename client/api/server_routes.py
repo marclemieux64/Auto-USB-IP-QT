@@ -177,3 +177,23 @@ def handle_reboot_server_system(controller: Any, ip: str) -> dict:
     token = srv.token if srv else ""
     from core.server_control import reboot_server_system
     return reboot_server_system(ip, token=token)
+
+_ACTIVE_SUBNET_SCANNER = None
+
+def handle_scan_subnet(controller: Any, cidr: str = "") -> dict:
+    """Trigger background multi-threaded Subnet Range IP Scanner."""
+    global _ACTIVE_SUBNET_SCANNER
+    from services.discovery import SubnetScannerWorker
+    
+    if _ACTIVE_SUBNET_SCANNER and _ACTIVE_SUBNET_SCANNER.isRunning():
+        return {"status": "busy", "message": "Subnet scan is already in progress."}
+
+    scanner = SubnetScannerWorker(subnet_cidr=cidr)
+    _ACTIVE_SUBNET_SCANNER = scanner
+
+    def _on_server_found(ip, port, host, ver, auth_req):
+        controller.on_server_found(ip, port, host, ver, auth_req)
+
+    scanner.server_found.connect(_on_server_found)
+    scanner.start()
+    return {"status": "ok", "message": f"Subnet scan started on {cidr or 'local subnet'}."}

@@ -39,6 +39,13 @@ class AutoUsbipApp(QObject):
         self.config = ClientConfig()
         self.usb_db = UsbIdsDatabase()
 
+        # 0. Driver Pre-Flight: Ensure Linux kernel vhci-hcd module is loaded via Polkit
+        from core.usbip import ensure_vhci_loaded
+        if not ensure_vhci_loaded():
+            logger.warning("[Driver Pre-Flight] Linux kernel module 'vhci-hcd' is not active. Devices may not attach until loaded.")
+        else:
+            logger.info("[Driver Pre-Flight] Linux kernel VHCI driver active and verified.")
+
         # 1. Load Server Connections
         from config import is_valid_server_address
         cfg = load_config()

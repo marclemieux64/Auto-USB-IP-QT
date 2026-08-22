@@ -15,6 +15,7 @@ from .server_routes import (
     handle_save_server_config,
     handle_restart_server_daemon,
     handle_reboot_server_system,
+    handle_scan_subnet,
 )
 from .device_routes import (
     handle_attach,
@@ -33,6 +34,11 @@ from .gamepad_routes import (
     handle_gamepad_state,
     handle_gamepad_control,
 )
+from .console_routes import (
+    handle_get_console_logs,
+    handle_exec_console_command,
+    handle_clear_console_logs,
+)
 
 __all__ = [
     "handle_status",
@@ -48,6 +54,7 @@ __all__ = [
     "handle_save_server_config",
     "handle_restart_server_daemon",
     "handle_reboot_server_system",
+    "handle_scan_subnet",
     "handle_attach",
     "handle_detach",
     "handle_detach_all",
@@ -61,15 +68,6 @@ __all__ = [
     "handle_open_storage",
     "handle_gamepad_state",
     "handle_gamepad_control",
-]
-
-from .console_routes import (
-    handle_get_console_logs,
-    handle_exec_console_command,
-    handle_clear_console_logs,
-)
-
-__all__ += [
     "handle_get_console_logs",
     "handle_exec_console_command",
     "handle_clear_console_logs",

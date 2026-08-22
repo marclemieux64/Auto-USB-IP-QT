@@ -161,6 +161,10 @@ def handle_status(controller: Any) -> dict:
         if controller.config.enable_nicknames and id_key in controller.config.nicknames:
             clean_name = controller.config.nicknames[id_key]
 
+        from core.usbip import REMOTE_DEVICE_IN_USE_CACHE
+        in_use_info = REMOTE_DEVICE_IN_USE_CACHE.get((server_ip_str.strip(), bus_id_str.strip()))
+        in_use_client = in_use_info.get("client_ip", "") if in_use_info else ""
+
         available_data.append({
             "server_ip": server_ip_str,
             "bus_id": bus_id_str,
@@ -172,6 +176,7 @@ def handle_status(controller: Any) -> dict:
             "is_storage": is_stor,
             "has_audio": has_aud,
             "icon_alias": icon_alias,
+            "in_use_by": in_use_client,
         })
 
     # Filter out servers that are ALREADY in the configured servers list

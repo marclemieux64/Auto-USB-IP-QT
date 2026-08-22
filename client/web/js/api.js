@@ -175,5 +175,14 @@ const API = {
     async clearConsoleLogs() {
         const res = await fetch("/api/console_clear", { method: "POST" });
         return await res.json();
+    },
+
+    async scanSubnet(cidr = "") {
+        const res = await fetch("/api/scan_subnet", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cidr })
+        });
+        return await res.json();
     }
 };
