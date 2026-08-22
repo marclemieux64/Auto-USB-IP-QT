@@ -980,9 +980,27 @@ def start_control_socket_thread(killer: GracefulKiller):
                                 resp = json.dumps({"status": "error", "message": f"{vid_pid} not in blacklist"})
                             conn.sendall(resp.encode("utf-8"))
                         elif cmd == "RESTART_DAEMON":
-                            resp = json.dumps({"status": "ok", "message": "Restarting..."})
-                            conn.sendall(resp.encode("utf-8"))
+                            resp = json.dumps({"status": "ok", "message": "Restarting daemon cleanly..."})
+                            try:
+                                conn.sendall(resp.encode("utf-8"))
+                            except Exception:
+                                pass
                             def _do_restart():
+                                time.sleep(0.3)
+                                # 1. If running under systemd, restart cleanly via systemctl
+                                if Path("/run/systemd/system").exists():
+                                    try:
+                                        res = subprocess.run(["systemctl", "restart", "autousbip.service"], timeout=3)
+                                        if res.returncode == 0:
+                                            return
+                                    except Exception:
+                                        pass
+                                # 2. Fallback in-process: signal killer to stop listener threads cleanly
+                                killer.kill_now = True
+                                try:
+                                    server_sock.close()
+                                except Exception:
+                                    pass
                                 time.sleep(0.5)
                                 os.execv(sys.executable, [sys.executable] + sys.argv)
                             threading.Thread(target=_do_restart, daemon=True).start()
