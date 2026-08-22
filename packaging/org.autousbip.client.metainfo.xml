@@ -31,7 +31,9 @@
     <category>Utility</category>
     <category>Network</category>
   </categories>
-  <developer_name>Marc Lemieux</developer_name>
+  <developer id="org.autousbip">
+    <name>Marc Lemieux</name>
+  </developer>
   <screenshots>
     <screenshot type="default">
       <caption>Main Dashboard and Device Manager</caption>
