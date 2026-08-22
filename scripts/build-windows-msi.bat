@@ -22,7 +22,7 @@ if not exist "%CLIENT_EXE%" (
 
 if not exist "%CLIENT_EXE%" (
     echo [ERROR] Client executable not found at %CLIENT_EXE%
-    pause
+    if "%~1" NEQ "--no-pause" pause
     popd
     exit /b 1
 )
@@ -65,6 +65,18 @@ if not exist "%CANDLE_EXE%" (
     exit /b 1
 )
 
+REM Ensure USB/IP Windows drivers are present before building MSI
+if not exist "%PROJECT_ROOT%\client\drivers\usbip.exe" (
+    echo [*] Fetching signed USB/IP-Win driver package for MSI bundling...
+    mkdir "%PROJECT_ROOT%\client\drivers" >nul 2>&1
+    curl -sL -o "%TEMP%\usbip-win-0.3.6-dev.zip" "https://github.com/cezanne/usbip-win/releases/download/v0.3.6-dev/usbip-win-0.3.6-dev.zip"
+    powershell -NoProfile -Command "Expand-Archive -Path '$env:TEMP\usbip-win-0.3.6-dev.zip' -DestinationPath '$env:TEMP\usbip_extract' -Force" >nul 2>&1
+    xcopy /Y /E /Q "%TEMP%\usbip_extract\output\*" "%PROJECT_ROOT%\client\drivers\" >nul 2>&1
+    xcopy /Y /E /Q "%TEMP%\usbip_extract\output\x64\*" "%PROJECT_ROOT%\client\drivers\" >nul 2>&1
+    del /f /q "%TEMP%\usbip-win-0.3.6-dev.zip" >nul 2>&1
+    rmdir /s /q "%TEMP%\usbip_extract" >nul 2>&1
+)
+
 echo [*] Using WiX from: %WIX_DIR%
 
 REM Use local fast C:\ temp directory for building and linking
@@ -78,7 +90,7 @@ echo [*] Compiling WiX Source...
 "%CANDLE_EXE%" -nologo -arch x64 -ext WixUtilExtension "-dSourceDir=%PROJECT_ROOT%\client" "-dDistDir=%DIST_DIR%" -out "%MSI_WORK%\autousbip-client.wixobj" "%PROJECT_ROOT%\packaging\autousbip-client.wxs"
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] WiX candle failed with exit code %ERRORLEVEL%
-    pause
+    if "%~1" NEQ "--no-pause" pause
     popd
     exit /b %ERRORLEVEL%
 )
@@ -88,7 +100,7 @@ echo [*] Linking MSI Installer...
 "%LIGHT_EXE%" -nologo -sval -ext WixUIExtension -ext WixUtilExtension -out "%LOCAL_MSI_OUT%" "%MSI_WORK%\autousbip-client.wixobj"
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] WiX light failed with exit code %ERRORLEVEL%
-    pause
+    if "%~1" NEQ "--no-pause" pause
     popd
     exit /b %ERRORLEVEL%
 )
@@ -107,6 +119,6 @@ echo   SUCCESS! Windows MSI Installer is ready:
 echo   %OUTPUT_MSI%
 echo =========================================================
 
-pause
+if "%~1" NEQ "--no-pause" pause
 popd
 endlocal
