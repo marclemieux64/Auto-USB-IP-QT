@@ -38,7 +38,7 @@ if not defined PYTHON_EXE (
 
 if not defined PYTHON_EXE (
     echo [!] Python 3 was not found. Please install Python from https://www.python.org/downloads/
-    if "%~1"=="" pause
+    if "%~1" NEQ "--no-pause" pause
     exit /b 1
 )
 
@@ -69,7 +69,7 @@ echo [2/3] Compiling single standalone executable with PyInstaller...
 
 if not exist "%LOCAL_DIST%\autousbip-qt-client.exe" (
     echo [!] PyInstaller build failed.
-    if "%~1"=="" pause
+    if "%~1" NEQ "--no-pause" pause
     exit /b 1
 )
 
@@ -95,5 +95,5 @@ if exist "%OUT_DIR%\autousbip-qt-client.exe" (
     echo [!] Build finished, but binary was not found.
 )
 
-if "%~1"=="" pause
+if "%~1" NEQ "--no-pause" pause
 endlocal
