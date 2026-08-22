@@ -4,43 +4,41 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <name>Auto USB/IP-QT</name>
-  <summary>Automatic USB-over-IP device manager and gamepad diagnostics</summary>
+  <summary>Automatic USB-over-IP device manager, gamepad tester, and diagnostics hub</summary>
+  
   <description>
     <p>
-      Auto USB/IP-QT is an encrypted, zero-configuration USB-over-IP device management suite.
-      It enables seamless forwarding of USB devices over local networks with automated mDNS server discovery,
-      granular PolicyKit authorization, TLS 1.3 control encryption, and real-time device health telemetry.
+      Auto USB/IP-QT is an encrypted, zero-configuration USB-over-IP client and server management system for Linux and Windows. It provides passwordless Polkit privilege escalation, AppArmor confinement, automatic mDNS server discovery, sleep/wake reconnection handling, and real-time gamepad diagnostic tools.
     </p>
     <p>Features include:</p>
     <ul>
-      <li>Zero-configuration mDNS discovery for Linux and Windows USB/IP servers</li>
-      <li>Passwordless Polkit and systemd ambient capability security model</li>
-      <li>Integrated Gamepad diagnostics with Kenney vector prompts, deadzone visualizers, IMU telemetry, and DualSense trigger support</li>
-      <li>Local and LAN-accessible dark-mode Web Dashboard</li>
-      <li>Live client and remote server journal diagnostics consoles</li>
-      <li>Sleep and wake automatic connection recovery</li>
+      <li>ZeroConf/mDNS local network server discovery</li>
+      <li>Passwordless Polkit authorization for vhci-hcd and usbip binding</li>
+      <li>TLS 1.3 encrypted control channel with optional certificate pinning</li>
+      <li>Real-time Web Dashboard with server telemetry and remote journal streaming</li>
+      <li>Multi-user lockout and in-use device detection</li>
+      <li>Interactive Gamepad Evaluation Hub supporting Sony DualSense triggers/motion and Kenney SVG prompts</li>
+      <li>Adaptive system theme engine with live OS prefers-color-scheme detection</li>
+      <li>Cross-platform desktop toast notifications</li>
     </ul>
   </description>
+  
   <launchable type="desktop-id">org.autousbip.client.desktop</launchable>
+  
   <url type="homepage">https://github.com/marclemieux64/Auto-USB-IP-QT</url>
   <url type="bugtracker">https://github.com/marclemieux64/Auto-USB-IP-QT/issues</url>
+  
   <provides>
     <binary>autousbip-qt-client</binary>
   </provides>
-  <categories>
-    <category>Utility</category>
-    <category>Network</category>
-  </categories>
-  <developer id="org.autousbip">
-    <name>Marc Lemieux</name>
-  </developer>
+  
   <screenshots>
     <screenshot type="default">
-      <caption>Main Dashboard and Device Manager</caption>
+      <caption>Main Dashboard and Device Management Interface</caption>
       <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/dashboard_overview.png</image>
     </screenshot>
     <screenshot>
-      <caption>Gamepad Latency and Calibration Tester</caption>
+      <caption>Interactive Gamepad Diagnostics and Telemetry Visualizer</caption>
       <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/gamepad_tester.png</image>
     </screenshot>
     <screenshot>
@@ -50,6 +48,11 @@
   </screenshots>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="2.2.0" date="2026-08-22">
+      <description>
+        <p>Added adaptive theme engine with live OS prefers-color-scheme detection, cross-platform desktop toast notifications (Windows Action Center and Linux D-Bus), About modal dialog, and standalone release build pipeline.</p>
+      </description>
+    </release>
     <release version="2.0.0" date="2026-08-22">
       <description>
         <p>Major 2.0 release featuring multi-user lockout detection, subnet scanning, WiX MSI installer, and embedded Inter/JetBrains typography.</p>
