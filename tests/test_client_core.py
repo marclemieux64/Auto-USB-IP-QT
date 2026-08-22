@@ -56,3 +56,23 @@ def test_get_usbip_cmd_structure():
     assert isinstance(cmd, list)
     assert len(cmd) >= 2
     assert "port" in cmd
+from unittest.mock import patch
+
+
+def test_windows_get_usbip_cmd(tmp_path):
+    with patch("sys.platform", "win32"), patch("core.usbip._get_windows_driver_dir", return_value=tmp_path):
+        dummy_exe = tmp_path / "usbip.exe"
+        dummy_exe.touch()
+        cmd = _get_usbip_cmd(["port"])
+        assert cmd[0] == str(dummy_exe)
+        assert cmd[1] == "port"
+
+
+def test_windows_driver_preflight_auto_when_missing():
+    with patch("sys.platform", "win32"), patch("core.usbip._get_windows_driver_dir") as mock_dir:
+        mock_dir.return_value = Path("/nonexistent/drivers")
+        with patch("shutil.which", return_value=None), patch("core.usbip._install_windows_driver_auto", return_value=True) as mock_install:
+            from core.usbip import ensure_vhci_loaded
+            res = ensure_vhci_loaded()
+            assert res is True
+            assert mock_install.called
