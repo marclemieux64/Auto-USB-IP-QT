@@ -1,3 +1,33 @@
+
+// --- Adaptive System Theme Subsystem ---
+let systemThemeMedia = null;
+
+function applyTheme(theme) {
+    const targetTheme = theme || "system";
+    if (targetTheme === "system") {
+        if (!systemThemeMedia) {
+            systemThemeMedia = window.matchMedia("(prefers-color-scheme: dark)");
+            systemThemeMedia.addEventListener("change", (e) => {
+                if (getCurrentConfigTheme() === "system") {
+                    document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+                }
+            });
+        }
+        const isDark = systemThemeMedia.matches;
+        document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    } else {
+        document.documentElement.setAttribute("data-theme", targetTheme);
+    }
+}
+
+function previewTheme(theme) {
+    applyTheme(theme);
+}
+
+function getCurrentConfigTheme() {
+    return currentStatus?.config?.theme || "system";
+}
+
 let currentStatus = {
     servers: [],
     attached_devices: [],
@@ -114,6 +144,7 @@ async function fetchStatus() {
         }
 
         currentStatus = data;
+        if (data.config && data.config.theme !== undefined) applyTheme(data.config.theme);
         triggerSyncFlash();
         renderAll();
         if (data.servers) {
@@ -904,6 +935,7 @@ async function unblacklistDevice(itemEnc) {
 
 function openClientOptionsModal() {
     const cfg = currentStatus.config || {};
+    if (document.getElementById("opt-theme")) document.getElementById("opt-theme").value = cfg.theme || "system";
     document.getElementById("opt-auto-attach").checked = cfg.auto_attach !== false;
     document.getElementById("opt-remember-detached").checked = cfg.remember_detached_devices !== false;
     document.getElementById("opt-show-notifications").checked = cfg.show_notifications !== false;
@@ -958,12 +990,24 @@ function openClientOptionsModal() {
     document.getElementById("options-modal").style.display = "flex";
 }
 
+
+function openAboutModal() {
+    const modal = document.getElementById("about-modal");
+    if (modal) modal.style.display = "flex";
+}
+
+function closeAboutModal() {
+    const modal = document.getElementById("about-modal");
+    if (modal) modal.style.display = "none";
+}
+
 function closeClientOptionsModal() {
     document.getElementById("options-modal").style.display = "none";
 }
 
 async function saveClientOptions() {
     const payload = {
+        theme: document.getElementById("opt-theme") ? document.getElementById("opt-theme").value : "system",
         auto_attach: document.getElementById("opt-auto-attach").checked,
         remember_detached_devices: document.getElementById("opt-remember-detached").checked,
         show_notifications: document.getElementById("opt-show-notifications").checked,

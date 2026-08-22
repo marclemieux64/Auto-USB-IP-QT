@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox, QIn
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineSettings
 
-from ui.panel import CustomWebEnginePage
+from ui.panel import CustomWebEnginePage, is_dark_mode
 
 from core.resources import get_resource_path
 
@@ -61,7 +61,7 @@ class StandalonePanelWindow(QWidget):
         else:
             self.browser.setUrl(QUrl("http://127.0.0.1:3242/"))
 
-        self.browser.page().setBackgroundColor(QColor("#12141c"))
+        self.browser.page().setBackgroundColor(QColor("#12141a") if is_dark_mode() else QColor("#f8fafc"))
         self.root_layout.addWidget(self.browser)
 
         self.setMinimumSize(480, 420)

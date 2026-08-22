@@ -1,15 +1,147 @@
-:root {
+:root, [data-theme="dark"] {
     --bg-color: #12141a;
     --card-bg: #1a1d26;
     --card-border: #262a38;
+    --card-hover-border: #363c4e;
+    --icon-bg: #1d212f;
+    --icon-border: rgba(255, 255, 255, 0.08);
     --accent-color: #3b82f6;
     --accent-hover: #2563eb;
     --text-main: #f3f4f6;
+    --text-title: #ffffff;
     --text-muted: #9ca3af;
+    --text-dimmed: #6b7280;
     --success-color: #10b981;
     --danger-color: #ef4444;
     --warning-color: #f59e0b;
     --border-color: #2a2e3d;
+    --modal-backdrop: rgba(0, 0, 0, 0.7);
+    --modal-bg: #1a1d26;
+    --input-bg: #232738;
+    --input-border: #2e344a;
+    --input-text: #ffffff;
+    --btn-bg: #262b3a;
+    --btn-border: #363d52;
+    --btn-hover: #32384c;
+    --btn-text: #f3f4f6;
+    --btn-danger-bg: #7f1d1d;
+    --btn-danger-border: #991b1b;
+    --btn-danger-hover: #991b1b;
+    --btn-danger-text: #fecaca;
+    --btn-primary-bg: #2563eb;
+    --btn-primary-border: #1d4ed8;
+    --btn-primary-hover: #1d4ed8;
+    --btn-primary-text: #ffffff;
+    --badge-bg: #1e2433;
+    --badge-border: #2a3348;
+    --badge-text: #94a3b8;
+    --console-bg: #0d1017;
+    --console-header-bg: #131722;
+    --console-border: #202637;
+    --table-header-bg: #171b26;
+    --table-row-alt: #161922;
+    --scrollbar-thumb: #2a2e42;
+    --scrollbar-thumb-hover: #3b4260;
+    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] {
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --card-border: #e2e8f0;
+    --card-hover-border: #cbd5e1;
+    --icon-bg: #f1f5f9;
+    --icon-border: #e2e8f0;
+    --accent-color: #2563eb;
+    --accent-hover: #1d4ed8;
+    --text-main: #1e293b;
+    --text-title: #0f172a;
+    --text-muted: #64748b;
+    --text-dimmed: #94a3b8;
+    --success-color: #059669;
+    --danger-color: #dc2626;
+    --warning-color: #d97706;
+    --border-color: #e2e8f0;
+    --modal-backdrop: rgba(15, 23, 42, 0.5);
+    --modal-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --input-text: #0f172a;
+    --btn-bg: #f1f5f9;
+    --btn-border: #e2e8f0;
+    --btn-hover: #e2e8f0;
+    --btn-text: #1e293b;
+    --btn-danger-bg: #fee2e2;
+    --btn-danger-border: #fca5a5;
+    --btn-danger-hover: #fecaca;
+    --btn-danger-text: #991b1b;
+    --btn-primary-bg: #2563eb;
+    --btn-primary-border: #1d4ed8;
+    --btn-primary-hover: #1d4ed8;
+    --btn-primary-text: #ffffff;
+    --badge-bg: #f1f5f9;
+    --badge-border: #e2e8f0;
+    --badge-text: #475569;
+    --console-bg: #0f172a;
+    --console-header-bg: #1e293b;
+    --console-border: #334155;
+    --table-header-bg: #f8fafc;
+    --table-row-alt: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --card-hover-border: #cbd5e1;
+        --icon-bg: #f1f5f9;
+        --icon-border: #e2e8f0;
+        --accent-color: #2563eb;
+        --accent-hover: #1d4ed8;
+        --text-main: #1e293b;
+        --text-title: #0f172a;
+        --text-muted: #64748b;
+        --text-dimmed: #94a3b8;
+        --success-color: #059669;
+        --danger-color: #dc2626;
+        --warning-color: #d97706;
+        --border-color: #e2e8f0;
+        --modal-backdrop: rgba(15, 23, 42, 0.5);
+        --modal-bg: #ffffff;
+        --input-bg: #ffffff;
+        --input-border: #cbd5e1;
+        --input-text: #0f172a;
+        --btn-bg: #f1f5f9;
+        --btn-border: #e2e8f0;
+        --btn-hover: #e2e8f0;
+        --btn-text: #1e293b;
+        --btn-danger-bg: #fee2e2;
+        --btn-danger-border: #fca5a5;
+        --btn-danger-hover: #fecaca;
+        --btn-danger-text: #991b1b;
+        --btn-primary-bg: #2563eb;
+        --btn-primary-border: #1d4ed8;
+        --btn-primary-hover: #1d4ed8;
+        --btn-primary-text: #ffffff;
+        --badge-bg: #f1f5f9;
+        --badge-border: #e2e8f0;
+        --badge-text: #475569;
+        --console-bg: #0f172a;
+        --console-header-bg: #1e293b;
+        --console-border: #334155;
+        --table-header-bg: #f8fafc;
+        --table-row-alt: #f1f5f9;
+        --scrollbar-thumb: #cbd5e1;
+        --scrollbar-thumb-hover: #94a3b8;
+        --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
 }
 
 * {
@@ -30,6 +162,7 @@ body {
     overflow-x: hidden;
     max-width: 880px;
     margin: 0 auto;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Scrollbars */
@@ -41,9 +174,9 @@ body {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: #2a2e42;
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #3b4260;
+    background: var(--scrollbar-thumb-hover);
 }

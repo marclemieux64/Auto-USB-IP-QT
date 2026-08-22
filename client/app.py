@@ -210,12 +210,16 @@ class AutoUsbipApp(QObject):
                 d_desc = getattr(d, 'desc', getattr(d, 'description', 'USB Device'))
                 clean = self.usb_db.get_device_name(b_id, d_desc)
                 self.tray_manager.show_message("Device Connected", f"Attached: {clean}")
+                from core.notifications import show_toast
+                show_toast("Auto USB/IP: Device Connected", f"Attached: {clean}", icon_type="info")
                 play_sound_cue("device-added")
             for d in lost_devices:
                 b_id = getattr(d, 'bus_id', getattr(d, 'port', ''))
                 d_desc = getattr(d, 'desc', getattr(d, 'description', 'USB Device'))
                 clean = self.usb_db.get_device_name(b_id, d_desc)
                 self.tray_manager.show_message("Device Disconnected", f"Detached: {clean}")
+                from core.notifications import show_toast
+                show_toast("Auto USB/IP: Device Disconnected", f"Detached: {clean}", icon_type="info")
                 play_sound_cue("device-removed")
 
     @pyqtSlot(str, int, str, str, bool)

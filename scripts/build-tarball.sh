@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # AutoUSBIP-QT Client - Portable Linux Tarball (.tar.gz) Builder
-# Output: dist/AutoUSBIP-QT-x86_64.tar.gz
+# Output: dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz
 # ==============================================================================
 
 set -e
@@ -59,11 +59,11 @@ if [ -f "${ICON_PNG}" ]; then
 fi
 
 mkdir -p "${REPO_ROOT}/dist"
-OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.tar.gz"
+OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz"
 rm -f "${OUTPUT_TARBALL}"
 tar -czf "${OUTPUT_TARBALL}" -C "${REPO_ROOT}/build" autousbip-qt-client-linux-x86_64
 
 echo -e "\n============================================================="
 echo "🎉 Build complete! Generated release tarball:"
-echo "   📦 ${OUTPUT_TARBALL} ($(du -h "${OUTPUT_TARBALL}" | cut -f1))"
+echo "   📦 ${OUTPUT_TARBALL} ($(du -h "${OUTPUT_TARBALL}" 2>/dev/null | cut -f1 || echo ''))"
 echo "============================================================="

@@ -4,7 +4,7 @@
   <Product Id="*" 
            Name="Auto USB/IP-QT Client" 
            Language="1033" 
-           Version="2.0.0.0" 
+           Version="2.2.0.0" 
            Manufacturer="AutoUSBIP Project" 
            UpgradeCode="6C4C5B32-901B-4A1C-8A2F-9B679B6A9F8E">
 

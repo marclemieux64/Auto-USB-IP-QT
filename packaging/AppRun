@@ -16,7 +16,7 @@ if [ "$1" = "--install" ]; then
     
     DESKTOP_DIR="${HOME}/.local/share/applications"
     ICON_SVG_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
-    ICON_PNG_DIR="${HOME}/.local/share/icons/hicolor/256x256/apps"
+    ICON_PNG_DIR="${HOME}/.local/share/icons/hicolor/512x512/apps"
     
     mkdir -p "${DESKTOP_DIR}" "${ICON_SVG_DIR}" "${ICON_PNG_DIR}"
     
@@ -54,7 +54,7 @@ if [ "$1" = "--uninstall" ]; then
     echo "🗑️ Removing AutoUSBIP-QT Client desktop shortcuts..."
     rm -f "${HOME}/.local/share/applications/org.autousbip.client.desktop"
     rm -f "${HOME}/.local/share/icons/hicolor/scalable/apps/org.autousbip.client.svg"
-    rm -f "${HOME}/.local/share/icons/hicolor/256x256/apps/org.autousbip.client.png"
+    rm -f "${HOME}/.local/share/icons/hicolor/512x512/apps/org.autousbip.client.png"
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
     fi

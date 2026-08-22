@@ -6,7 +6,7 @@
 
 **Encrypted USB-over-IP management with ZeroConf discovery, Polkit security, web dashboard, remote server console, and gamepad diagnostics.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL_v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green.svg)](https://pypi.org/project/PyQt6/)
 [![Security: Polkit & AppArmor](https://img.shields.io/badge/Security-Polkit%20%7C%20AppArmor-red.svg)](client/security/)
@@ -289,7 +289,7 @@ Click **Test Gamepad** on any attached controller to open diagnostics:
 
 ## 📜 Credits & Licenses
 
-This project is open-source software licensed under the **[MIT License](LICENSE)**.
+This project is open-source software licensed under the **[GNU General Public License v3.0 (GPL-3.0-or-later)](LICENSE)** to maintain full license compatibility with PyQt6 and the Qt framework.
 
 ### Upstream Lineage & Attribution
 * **Original Project**: Derived and expanded from [`florianL21/auto-usbip`](https://github.com/florianL21/auto-usbip) (MIT License, Copyright © 2023 florianL21).
@@ -317,26 +317,20 @@ In the spirit of open-source transparency:
 ## 📄 License
 
 ```text
-MIT License
+Auto USB/IP-QT
+Copyright (C) 2026 Marc Lemieux (marclemieux64)
+Portions Copyright (C) 2023 florianL21
 
-Copyright (c) 2023 florianL21
-Copyright (c) 2026 Marc Lemieux & Contributors
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```

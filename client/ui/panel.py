@@ -14,6 +14,64 @@ from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineS
 
 logger = logging.getLogger("auto-usbip-client")
 
+
+LIGHT_DIALOG_STYLE = """
+QDialog, QMessageBox, QInputDialog {
+    background-color: #ffffff;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+}
+QLabel {
+    color: #0f172a;
+}
+QPushButton {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 600;
+    min-width: 75px;
+}
+QPushButton:hover {
+    background-color: #e2e8f0;
+    border-color: #3b82f6;
+}
+QPushButton:pressed {
+    background-color: #cbd5e1;
+}
+QLineEdit {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+QLineEdit:focus {
+    border: 1px solid #3b82f6;
+}
+"""
+
+def is_dark_mode() -> bool:
+    try:
+        from config import load_config
+        cfg = load_config()
+        t = cfg.get("theme", "system")
+        if t == "dark":
+            return True
+        if t == "light":
+            return False
+        from PyQt6.QtGui import QGuiApplication
+        from PyQt6.QtCore import Qt
+        scheme = QGuiApplication.styleHints().colorScheme()
+        return scheme != Qt.ColorScheme.Light
+    except Exception:
+        return True
+
+def get_dialog_style() -> str:
+    return DARK_DIALOG_STYLE if is_dark_mode() else LIGHT_DIALOG_STYLE
+
 DARK_DIALOG_STYLE = """
 QDialog, QMessageBox, QInputDialog {
     background-color: #1b1e2b;
@@ -60,7 +118,7 @@ class CustomWebEnginePage(QWebEnginePage):
 
     def javaScriptAlert(self, securityOrigin: QUrl, msg: str):
         box = QMessageBox(self.panel)
-        box.setStyleSheet(DARK_DIALOG_STYLE)
+        box.setStyleSheet(get_dialog_style())
         box.setWindowTitle("Auto USB/IP-QT")
         box.setText(msg)
         box.setIcon(QMessageBox.Icon.Information)
@@ -69,7 +127,7 @@ class CustomWebEnginePage(QWebEnginePage):
 
     def javaScriptConfirm(self, securityOrigin: QUrl, msg: str) -> bool:
         box = QMessageBox(self.panel)
-        box.setStyleSheet(DARK_DIALOG_STYLE)
+        box.setStyleSheet(get_dialog_style())
         box.setWindowTitle("Auto USB/IP-QT")
         box.setText(msg)
         box.setIcon(QMessageBox.Icon.Question)
@@ -80,7 +138,7 @@ class CustomWebEnginePage(QWebEnginePage):
 
     def javaScriptPrompt(self, securityOrigin: QUrl, msg: str, defaultValue: str) -> tuple[bool, str]:
         dlg = QInputDialog(self.panel)
-        dlg.setStyleSheet(DARK_DIALOG_STYLE)
+        dlg.setStyleSheet(get_dialog_style())
         dlg.setWindowTitle("Auto USB/IP-QT")
         dlg.setLabelText(msg)
         dlg.setTextValue(defaultValue)

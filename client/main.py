@@ -58,7 +58,7 @@ Categories=Utility;Network;
 Keywords=usb;usbip;remote;gamepad;controller;
 StartupNotify=true
 StartupWMClass=auto-usbip-client
-X-AppImage-Version=2.0.0
+X-AppImage-Version=2.2.0
 """
         desktop_file.write_text(content, encoding="utf-8")
         subprocess.run(["update-desktop-database", str(desktop_file.parent)], capture_output=True)
@@ -88,6 +88,8 @@ def main():
     logging.basicConfig(level=logging.INFO)
     from core.console import init_client_console
     init_client_console()
+    from core.notifications import init_notification_subsystem
+    init_notification_subsystem()
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
 
