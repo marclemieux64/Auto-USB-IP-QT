@@ -80,14 +80,10 @@ def _install_windows_driver_auto() -> bool:
                     cer_path = str(cer_files[0].resolve())
                     cer_cmds = f'certutil -addstore \"TrustedPublisher\" \"{cer_path}\" ; certutil -addstore \"Root\" \"{cer_path}\" ; '
                 
-                cmd = (
-                    f'powershell -NoProfile -ExecutionPolicy Bypass -Command '
-                    f'"Start-Process powershell -Verb RunAs -Wait -ArgumentList '
-                    f'\"-NoProfile -ExecutionPolicy Bypass -Command {cer_cmds}pnputil /add-driver `\"{inf_path}`\" /install\""'
-                )
+                cmd = f'Start-Process powershell -Verb RunAs -Wait -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command {cer_cmds}pnputil /add-driver `{inf_path}` /install"'
                 
                 logger.info("[Windows Driver Pre-Flight] Requesting UAC elevation to register VHCI driver with pnputil...")
-                res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60.0)
+                res = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], capture_output=True, text=True, timeout=60.0)
                 logger.info(f"[Windows Driver Pre-Flight] Driver installer exit code: {res.returncode}")
 
         bundled_win_usbip = app_bin / "usbip.exe"

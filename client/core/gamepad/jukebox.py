@@ -303,11 +303,14 @@ def play_konami_easter_egg(track_name: str | None = None, hidraw_path: str | Non
             sink_id = find_dualsense_pipewire_sink()
             played = False
             if sink_id:
-                for cmd_str in [f"paplay --device={sink_id} '{wav_path}'", f"pw-play --target {sink_id} '{wav_path}'"]:
+                for play_cmd in [
+                    ["paplay", f"--device={sink_id}", str(wav_path)],
+                    ["pw-play", "--target", str(sink_id), str(wav_path)],
+                ]:
                     if stop_event.is_set():
                         break
                     try:
-                        proc = subprocess.Popen(cmd_str, shell=True)
+                        proc = subprocess.Popen(play_cmd)
                         with _EASTER_EGG_LOCK:
                             _ACTIVE_AUDIO_PROC = proc
                         while proc.poll() is None:
@@ -324,7 +327,7 @@ def play_konami_easter_egg(track_name: str | None = None, hidraw_path: str | Non
 
             if not played and not stop_event.is_set():
                 try:
-                    proc = subprocess.Popen(f"aplay -D plughw:CARD=Controller,DEV=0 -q '{wav_path}'", shell=True)
+                    proc = subprocess.Popen(["aplay", "-D", "plughw:CARD=Controller,DEV=0", "-q", str(wav_path)])
                     with _EASTER_EGG_LOCK:
                         _ACTIVE_AUDIO_PROC = proc
                     while proc.poll() is None:
