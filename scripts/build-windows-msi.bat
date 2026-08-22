@@ -13,7 +13,7 @@ echo   Building AutoUSBIP-QT-Client Windows MSI Installer
 echo =========================================================
 
 set "DIST_DIR=%PROJECT_ROOT%\dist"
-set "CLIENT_EXE=%DIST_DIR%\autousbip-qt-client.exe"
+set "CLIENT_EXE=%DIST_DIR%\AutoUSBIP-QT-Client-Windows-x64.exe"
 
 if not exist "%CLIENT_EXE%" (
     echo [*] Compiling client executable first...
