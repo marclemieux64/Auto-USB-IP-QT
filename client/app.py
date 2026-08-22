@@ -88,9 +88,10 @@ class AutoUsbipApp(QObject):
             sync_client_wol_to_servers(self)
 
     def get_app_icon(self) -> QIcon:
-        svg_path = Path(__file__).resolve().parent / "assets" / "branding" / "app-icon.svg"
-        png_path = Path(__file__).resolve().parent / "assets" / "branding" / "app-icon.png"
-        fallback_png = Path(__file__).resolve().parent / "assets" / "branding" / "systray-logo.png"
+        from core.resources import get_resource_path
+        svg_path = get_resource_path("assets/branding/app-icon.svg")
+        png_path = get_resource_path("assets/branding/app-icon.png")
+        fallback_png = get_resource_path("assets/branding/systray-logo.png")
 
         from PyQt6.QtGui import QImage, QPixmap, QPainter
         from PyQt6.QtCore import Qt

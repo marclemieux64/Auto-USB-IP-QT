@@ -11,9 +11,12 @@ from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineS
 
 from ui.panel import CustomWebEnginePage
 
+from core.resources import get_resource_path
+
+
 def get_app_icon() -> QIcon:
-    svg_path = Path(__file__).resolve().parent.parent / "assets" / "branding" / "app-icon.svg"
-    png_path = Path(__file__).resolve().parent.parent / "assets" / "branding" / "app-icon.png"
+    svg_path = get_resource_path("assets/branding/app-icon.svg")
+    png_path = get_resource_path("assets/branding/app-icon.png")
     if svg_path.exists():
         return QIcon(str(svg_path))
     elif png_path.exists():
@@ -52,7 +55,7 @@ class StandalonePanelWindow(QWidget):
         self.browser.loadFinished.connect(self.on_load_finished)
         
         # Load local HTML file directly if present for instant rendering
-        dashboard_path = Path(__file__).resolve().parent.parent / "web" / "index.html"
+        dashboard_path = get_resource_path("web/index.html")
         if dashboard_path.exists():
             self.browser.setHtml(dashboard_path.read_text(encoding="utf-8"), QUrl("http://127.0.0.1:3242/"))
         else:

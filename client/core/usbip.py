@@ -1,32 +1,110 @@
-from __future__ import annotations
-
-REMOTE_DEVICE_IN_USE_CACHE: dict[tuple[str, str], dict] = {}
-
-import json
 import logging
 import os
 import shutil
-import re
-import socket
 import subprocess
 import sys
-import time
+import re
 from pathlib import Path
-from serial.tools import list_ports
+from dataclasses import dataclass
+from typing import List, Optional
 
-from config import USB_ID_REGEX
+logger = logging.getLogger(__name__)
 
-logger = logging.getLogger("auto-usbip-client")
+@dataclass
+class ImportedPort:
+    port: str
+    status: str
+    speed: str
+    devid: str
+    busid: str
+    uri: str
+    device_name: str = ""
+
+# Suppress console window popping up on Windows when executing child processes
+_SUBPROCESS_KWARGS = {}
+if sys.platform == "win32":
+    _SUBPROCESS_KWARGS["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+def _get_windows_driver_dir() -> Path:
+    """Return the primary driver directory, checking Program Files first, then LocalAppData."""
+    # 1. Check next to client executable (e.g. C:\Program Files\AutoUSBIP-QT\drivers or root)
+    exe_dir = Path(sys.executable).parent
+    if (exe_dir / "drivers" / "usbip.exe").exists():
+        return exe_dir / "drivers"
+    if (exe_dir / "usbip.exe").exists():
+        return exe_dir
+    
+    # 2. Check LocalAppData fallback
+    local_app_data = os.environ.get('LOCALAPPDATA')
+    base = Path(local_app_data) if local_app_data else (Path.home() / 'AppData' / 'Local')
+    driver_dir = base / 'auto-usbip' / 'bin'
+    driver_dir.mkdir(parents=True, exist_ok=True)
+    return driver_dir
+
+def _install_windows_driver_auto() -> bool:
+    """Automatically download, extract, and install the signed USB/IP-Win VHCI driver package."""
+    try:
+        import urllib.request
+        import zipfile
+        import tempfile
+
+        app_bin = _get_windows_driver_dir()
+
+        logger.info("[Windows Driver Pre-Flight] USB/IP driver binaries not found. Initiating automated setup...")
+        zip_url = "https://github.com/cezanne/usbip-win/releases/download/v0.3.6-dev/usbip-win-0.3.6-dev.zip"
+        
+        with tempfile.TemporaryDirectory(prefix="autousbip_driver_") as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            zip_file = tmp_path / "usbip-win.zip"
+            
+            logger.info(f"[Windows Driver Pre-Flight] Downloading signed usbip-win driver from {zip_url}...")
+            urllib.request.urlretrieve(zip_url, zip_file)
+            
+            logger.info("[Windows Driver Pre-Flight] Extracting driver package...")
+            with zipfile.ZipFile(zip_file, "r") as zf:
+                zf.extractall(tmp_path)
+
+            for ext in ("usbip.exe", "usbip_test.exe", "*.sys", "*.inf", "*.cer"):
+                for matched in tmp_path.rglob(ext):
+                    dest = app_bin / matched.name
+                    shutil.copy2(matched, dest)
+                    logger.info(f"[Windows Driver Pre-Flight] Bundled driver component: {matched.name}")
+
+            inf_files = list(app_bin.rglob("usbip_vhci.inf"))
+            cer_files = list(app_bin.rglob("*.cer"))
+
+            if inf_files:
+                inf_path = str(inf_files[0].resolve())
+                cer_cmds = ""
+                if cer_files:
+                    cer_path = str(cer_files[0].resolve())
+                    cer_cmds = f'certutil -addstore \"TrustedPublisher\" \"{cer_path}\" ; certutil -addstore \"Root\" \"{cer_path}\" ; '
+                
+                cmd = (
+                    f'powershell -NoProfile -ExecutionPolicy Bypass -Command '
+                    f'"Start-Process powershell -Verb RunAs -Wait -ArgumentList '
+                    f'\"-NoProfile -ExecutionPolicy Bypass -Command {cer_cmds}pnputil /add-driver `\"{inf_path}`\" /install\""'
+                )
+                
+                logger.info("[Windows Driver Pre-Flight] Requesting UAC elevation to register VHCI driver with pnputil...")
+                res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60.0)
+                logger.info(f"[Windows Driver Pre-Flight] Driver installer exit code: {res.returncode}")
+
+        bundled_win_usbip = app_bin / "usbip.exe"
+        return bundled_win_usbip.exists() or (shutil.which("usbip.exe") is not None)
+    except Exception as e:
+        logger.error(f"[Windows Driver Pre-Flight] Automated driver setup failed: {e}", exc_info=True)
+        return False
+
 
 def ensure_vhci_loaded() -> bool:
-    """Ensure the Linux kernel vhci-hcd module or Windows USB/IP driver is available."""
+    """Ensure the Linux kernel vhci-hcd module or Windows USB/IP driver is available, auto-installing if missing."""
     if sys.platform == "win32":
-        from core.resources import get_app_dir
-        bundled_win_usbip = get_app_dir() / "bin" / "usbip.exe"
+        bundled_win_usbip = _get_windows_driver_dir() / "usbip.exe"
         if bundled_win_usbip.exists() or shutil.which("usbip.exe"):
             return True
-        logger.warning("[Windows Driver Alert] usbip-win driver / usbip.exe was not found. Please run scripts/setup-windows-driver.ps1 or install usbip-win.")
-        return False
+        logger.info("[Windows Driver Pre-Flight] usbip.exe not present. Triggering automatic driver installation...")
+        return _install_windows_driver_auto()
 
     if sys.platform != "linux":
         return True
@@ -81,8 +159,7 @@ def _find_usbip_bin() -> str:
 def _get_usbip_cmd(args: list[str]) -> list[str]:
     global _CAN_RUN_USBIP_DIRECT, _HAS_PKEXEC
     if sys.platform == "win32":
-        from core.resources import get_app_dir
-        bundled_win_usbip = get_app_dir() / "bin" / "usbip.exe"
+        bundled_win_usbip = _get_windows_driver_dir() / "usbip.exe"
         if bundled_win_usbip.exists():
             return [str(bundled_win_usbip)] + args
         return ["usbip.exe"] + args
@@ -113,222 +190,151 @@ def _get_usbip_cmd(args: list[str]) -> list[str]:
     return ["sudo", "-n", usbip_path] + args
 
 
-REMOTE_DEV_REGEX = re.compile(r"^\s*([A-Za-z0-9.\-_]+):\s*(.+)$")
-VID_PID_REGEX = re.compile(r"\(([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\)")
-
-REMOTE_DEVICE_NAME_CACHE: dict[tuple[str, str], str] = {}
-
-
-def get_remote_usb_devices_info(ip: str, token: str = "") -> list[tuple[str, str]] | None:
-    from core.usb_ids import resolve_usb_device_name
-    devices: list[tuple[str, str]] = []
-
-    # 1. Query server control socket on port 3241 via encrypted TLS ServerControlClient
-    server_has_control_daemon = False
+def list_imported_ports() -> List[ImportedPort]:
+    """
+    Parses output of `usbip port` to find all currently attached/imported USB/IP devices.
+    Returns a list of ImportedPort dataclass instances.
+    """
+    ensure_vhci_loaded()
+    cmd = _get_usbip_cmd(["port"])
     try:
-        from core.server_control import ServerControlClient
-        client = ServerControlClient(ip, token=token, timeout=1.5, use_tls=True)
-        resp_data = client.get_devices()
-        if resp_data is not None:
-            server_has_control_daemon = True
-            if resp_data.get("status") == "ok" and "devices" in resp_data:
-                bound = set(resp_data.get("currently_bound", []))
-                in_use_map = resp_data.get("in_use", {})
-                for bus_id, dev_title in resp_data["devices"].items():
-                    if bus_id not in bound:
-                        continue
-                    # Store in-use info in cache
-                    if bus_id in in_use_map:
-                        REMOTE_DEVICE_IN_USE_CACHE[(ip.strip(), bus_id.strip())] = in_use_map[bus_id]
-                    else:
-                        REMOTE_DEVICE_IN_USE_CACHE.pop((ip.strip(), bus_id.strip()), None)
-                    devices.append((bus_id, dev_title))
-                    REMOTE_DEVICE_NAME_CACHE[(ip.strip(), bus_id.strip())] = dev_title
-                return devices
-            elif resp_data.get("status") == "error" and "Unauthorized" in resp_data.get("message", ""):
-                # Authentication token is missing or invalid! Strictly return None so no devices are attached or exposed.
-                logger.warning(f"[Security] Server {ip} authentication failed: Valid token required.")
-                return None
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=3.0, **_SUBPROCESS_KWARGS)
     except Exception as e:
-        logger.debug(f"Server control client check error for {ip}: {e}")
-
-    # If the server has an Auto-USBIP daemon with auth or was reached, do not bypass auth.
-    if server_has_control_daemon:
-        return None
-
-    # 2. Fallback to standard raw usbip list -p -r only for legacy/unmanaged USB/IP servers without Auto-USBIP daemon
-    try:
-        p = subprocess.run(_get_usbip_cmd(["list", "-p", "-r", ip]), capture_output=True, text=True, timeout=1.5)
-        if p.returncode != 0:
-            return devices
-        for line in p.stdout.splitlines():
-            match = REMOTE_DEV_REGEX.match(line)
-            if match:
-                bus_id = match.group(1)
-                raw_desc = match.group(2).strip()
-                desc = raw_desc
-
-                vid_pid_match = VID_PID_REGEX.search(raw_desc)
-                if vid_pid_match:
-                    vid_str, pid_str = vid_pid_match.groups()
-                    desc = resolve_usb_device_name(vid_str, pid_str, raw_desc, bus_id=bus_id)
-
-                devices.append((bus_id, desc))
-                REMOTE_DEVICE_NAME_CACHE[(ip.strip(), bus_id.strip())] = desc
-        return devices
-    except Exception:
+        logger.debug(f"Failed to query imported usbip ports: {e}")
         return []
 
+    lines = res.stdout.splitlines()
+    ports: List[ImportedPort] = []
+    
+    current_port: Optional[ImportedPort] = None
+    
+    # Regex patterns
+    # Port 00: <Port in Use> at Full Speed(12Mbps) OR Port 0: <Port in Use>
+    port_header_re = re.compile(r"^Port\s+(\d+):\s+<([^>]+)>\s*(?:at\s+([^(]+)\s*(?:\(([^)]+)\))?)?")
+    # -> usbip://192.168.1.100:3240/1-1
+    uri_re = re.compile(r"^\s*->\s+usbip://([^/:]+(?::\d+)?)/(\S+)")
+    # (Port in Use) or device details
+    #   Vendor 046d : Logitech, Inc. (046d:c216)
+    devid_re = re.compile(r"\(([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\)")
 
-def get_remote_usb_devices(ip: str, token: str = "") -> list[str]:
-    info = get_remote_usb_devices_info(ip, token=token)
-    if info is None:
-        return []
-    return [bus_id for bus_id, _ in info]
+    for line in lines:
+        p_match = port_header_re.search(line)
+        if p_match:
+            if current_port and current_port.busid:
+                ports.append(current_port)
+            p_num = p_match.group(1)
+            p_status = p_match.group(2).strip()
+            p_speed = p_match.group(3).strip() if p_match.group(3) else ""
+            current_port = ImportedPort(
+                port=p_num,
+                status=p_status,
+                speed=p_speed,
+                devid="",
+                busid="",
+                uri="",
+                device_name=""
+            )
+            continue
+            
+        if current_port:
+            u_match = uri_re.search(line)
+            if u_match:
+                current_port.uri = u_match.group(1)
+                current_port.busid = u_match.group(2)
+                continue
+                
+            d_match = devid_re.search(line)
+            if d_match and not current_port.devid:
+                current_port.devid = d_match.group(1).lower()
+                # Clean up rest of line for description if available
+                dev_desc = line.split("->")[0].strip()
+                if dev_desc:
+                    current_port.device_name = dev_desc
+                continue
+
+    if current_port and current_port.busid:
+        ports.append(current_port)
+
+    return ports
 
 
-def get_imported_devices():
-    from services.server_connection import ImportedDevice
+def attach_device(host: str, busid: str, port: int = 3240) -> tuple[bool, str]:
+    """
+    Attaches a remote USB device using `usbip attach -r <host> -b <busid>` (and `-p <port>` if non-default).
+    Returns (success: bool, message: str).
+    """
+    ensure_vhci_loaded()
+    
+    # Check if already imported
+    imported = list_imported_ports()
+    for imp in imported:
+        if imp.busid == busid and (host in imp.uri):
+            logger.info(f"Device {busid} from {host} is already attached to Port {imp.port}.")
+            return True, f"Device already attached on Port {imp.port}"
+
+    args = ["attach", "-r", host, "-b", busid]
+    if port != 3240:
+        args.extend(["-p", str(port)])
+        
+    cmd = _get_usbip_cmd(args)
     try:
-        p = subprocess.run(_get_usbip_cmd(["port"]), capture_output=True, text=True, timeout=1.5)
-        ports: list[ImportedDevice] = []
-        if p.returncode != 0:
-            return ports
-        serial_connections = list_ports.comports()
-
-        matches = ImportedDevice.BLOCK_REGEX.findall(p.stdout)
-        for port, speed, desc in matches:
-            ports.append(ImportedDevice(port, speed, desc, serial_connections))
-        return ports
-    except Exception:
-        return []
-
-
-_PORT_MAP_CACHE: tuple[float, dict[str, tuple[str, str]]] = (0.0, {})
-
-
-def get_port_to_bus_map(force_refresh: bool = False) -> dict[str, tuple[str, str]]:
-    global _PORT_MAP_CACHE
-    now = time.time()
-    if not force_refresh and (now - _PORT_MAP_CACHE[0]) < 1.0:
-        return _PORT_MAP_CACHE[1]
-
-    try:
-        p = subprocess.run(_get_usbip_cmd(["port"]), capture_output=True, text=True, timeout=1.5)
-        port_map: dict[str, tuple[str, str]] = {}
-        if p.returncode != 0:
-            _PORT_MAP_CACHE = (now, port_map)
-            return port_map
-
-        current_port = None
-        for line in p.stdout.splitlines():
-            port_match = re.match(r"^Port\s+([0-9a-zA-Z.\-_]+):", line)
-            if port_match:
-                current_port = port_match.group(1)
-            elif current_port and "usbip://" in line:
-                uri_match = re.search(r"usbip://([^:/]+):[0-9]+/([A-Za-z0-9.\-_]+)", line)
-                if uri_match:
-                    s_ip = uri_match.group(1)
-                    b_id = uri_match.group(2)
-                    port_map[current_port] = (s_ip, b_id)
-                    try:
-                        p_int = str(int(current_port))
-                        port_map[p_int] = (s_ip, b_id)
-                        port_map[p_int.zfill(2)] = (s_ip, b_id)
-                    except Exception:
-                        pass
-                    current_port = None
-        _PORT_MAP_CACHE = (now, port_map)
-        return port_map
-    except Exception:
-        return _PORT_MAP_CACHE[1]
-
-
-def get_locally_attached_vid_pids() -> set[str]:
-    """Instantly inspect local Linux sysfs for currently attached USB VID:PIDs with zero sudo overhead."""
-    usb_dir = Path("/sys/bus/usb/devices")
-    vids = set()
-    if usb_dir.exists():
-        try:
-            for dev in usb_dir.iterdir():
-                v_file = dev / "idVendor"
-                p_file = dev / "idProduct"
-                if v_file.exists() and p_file.exists():
-                    try:
-                        v = v_file.read_text().strip().lower().zfill(4)
-                        p = p_file.read_text().strip().lower().zfill(4)
-                        if v != "1d6b":  # Exclude root Linux hubs
-                            vids.add(f"{v}:{p}")
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-    return vids
-
-
-def set_vhci_polling_rate(port: str, interval_ms: int = 1) -> bool:
-    """Set the interrupt endpoint bInterval for a specific imported VHCI port."""
-    try:
-        port_num = int(port)
-        vhci_base = Path("/sys/devices/platform/vhci_hcd.0")
-        if not vhci_base.exists():
-            vhci_base = Path("/sys/devices/platform/vhci_hcd")
-
-        for ep_path in vhci_base.glob(f"**/*-{port_num + 1}/**/ep_*"):
-            interval_file = ep_path / "interval"
-            if interval_file.exists():
-                try:
-                    interval_file.write_text(str(interval_ms))
-                    logger.info(f"Set polling interval to {interval_ms}ms on {ep_path.name}")
-                except PermissionError:
-                    subprocess.run(
-                        ["sudo", "-n", "sh", "-c", f"echo {interval_ms} > {interval_file}"],
-                        capture_output=True,
-                    )
-        return True
+        logger.info(f"Executing USB/IP attach: {' '.join(cmd)}")
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=8.0, **_SUBPROCESS_KWARGS)
+        if res.returncode == 0:
+            logger.info(f"Successfully attached device {busid} from {host}")
+            return True, "Successfully attached device"
+        else:
+            err = res.stderr.strip() or res.stdout.strip()
+            logger.warning(f"Failed to attach device {busid}: {err}")
+            return False, f"Attach failed: {err}"
+    except subprocess.TimeoutExpired:
+        logger.error(f"Attach command timed out for {busid}@{host}")
+        return False, "Attach command timed out"
     except Exception as e:
-        logger.debug(f"Failed to adjust VHCI polling rate: {e}")
-        return False
+        logger.error(f"Exception while attaching device {busid}: {e}")
+        return False, str(e)
 
 
-def attach_device(server: str, usbid: str) -> bool:
-    """Attach remote USB device to local VHCI port and apply low-latency polling."""
+def detach_port(port: str) -> tuple[bool, str]:
+    """
+    Detaches a port using `usbip detach -p <port>`.
+    Returns (success: bool, message: str).
+    """
+    ensure_vhci_loaded()
+    # Normalize port string (e.g. '00' -> '0' if needed depending on tool, but standard accepts integer string)
+    cmd = _get_usbip_cmd(["detach", "-p", str(int(port))])
     try:
-        cmd = _get_usbip_cmd(["attach", "-r", server, "-b", usbid])
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=4.0)
-        if result.returncode == 0:
-            time.sleep(0.15)
-            port_map = get_port_to_bus_map(force_refresh=True)
-            for port, (s_ip, b_id) in port_map.items():
-                if s_ip == server and b_id == usbid:
-                    set_vhci_polling_rate(port, interval_ms=1)
-                    break
-            return True
-        return False
-    except Exception:
-        return False
+        logger.info(f"Executing USB/IP detach for port {port}: {' '.join(cmd)}")
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5.0, **_SUBPROCESS_KWARGS)
+        if res.returncode == 0:
+            logger.info(f"Successfully detached port {port}")
+            return True, f"Port {port} detached"
+        else:
+            err = res.stderr.strip() or res.stdout.strip()
+            logger.warning(f"Failed to detach port {port}: {err}")
+            return False, f"Detach failed: {err}"
+    except subprocess.TimeoutExpired:
+        logger.error(f"Detach command timed out for port {port}")
+        return False, "Detach timed out"
+    except Exception as e:
+        logger.error(f"Exception while detaching port {port}: {e}")
+        return False, str(e)
 
 
-def detach_device(port: str) -> bool:
-    """Detach a device cleanly by port index."""
-    global _PORT_MAP_CACHE
-    _PORT_MAP_CACHE = (0.0, {})
-    try:
-        p_str = str(port).strip()
-        p_int = str(int(p_str)) if p_str.isdigit() else p_str
-        p_pad = p_int.zfill(2) if p_int.isdigit() else p_str
-
-        p = subprocess.run(_get_usbip_cmd(["detach", "-p", p_int]), capture_output=True, text=True, timeout=2.0)
-        if p.returncode != 0 and p_pad != p_int:
-            p = subprocess.run(_get_usbip_cmd(["detach", "-p", p_pad]), capture_output=True, text=True, timeout=2.0)
-        return p.returncode == 0
-    except Exception:
-        return False
-
-
-def detach_all_ports():
-    for device in get_imported_devices():
-        device.detach()
-
-
-detach_port = detach_device
+def detach_device(host: str, busid: str) -> tuple[bool, str]:
+    """
+    Finds the imported port corresponding to host and busid, and detaches it.
+    Returns (success: bool, message: str).
+    """
+    imported = list_imported_ports()
+    target_port: Optional[str] = None
+    for imp in imported:
+        if imp.busid == busid and (host in imp.uri or not host):
+            target_port = imp.port
+            break
+            
+    if target_port is None:
+        logger.info(f"Device {busid} (host {host}) is not currently attached.")
+        return True, "Device not attached"
+        
+    return detach_port(target_port)

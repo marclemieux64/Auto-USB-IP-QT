@@ -30,10 +30,13 @@ class FastThreadingHTTPServer(ThreadingHTTPServer):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
+from core.resources import get_resource_path
+
+
 class WebDashboardHandler(BaseHTTPRequestHandler):
     controller: Any = None
-    web_root: Path = Path(__file__).resolve().parent.parent / "web"
-    assets_root: Path = Path(__file__).resolve().parent.parent / "assets"
+    web_root: Path = get_resource_path("web")
+    assets_root: Path = get_resource_path("assets")
 
 
     def is_csrf_valid(self) -> bool:

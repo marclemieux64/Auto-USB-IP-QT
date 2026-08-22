@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from pathlib import Path
 
 # Configure High-DPI, Wayland, and software GPU rasterizer for WebEngine
-os.environ["QT_QPA_PLATFORM"] = "wayland;xcb"
+if sys.platform.startswith("linux"):
+    os.environ["QT_QPA_PLATFORM"] = "wayland;xcb"
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox --disable-gpu --disable-dev-shm-usage"
@@ -21,6 +23,7 @@ def global_exception_handler(exc_type, exc_value, exc_traceback):
     logger.error(f"[PREVENTED CRASH] Unhandled exception in Qt thread/slot:\n{err_str}")
 
 def handle_cli_integration():
+    from pathlib import Path
     import subprocess
     home = Path.home()
     desktop_file = home / ".local" / "share" / "applications" / "org.autousbip.client.desktop"

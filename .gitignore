@@ -171,3 +171,10 @@ tools/
 *.AppDir/
 AppDir/
 
+
+# Agent folders and temporary driver caches
+.agents/
+client/.agents/
+client/drivers/
+drivers_win/
+*.msi

@@ -121,25 +121,20 @@
 
 ## 🛡️ Security & Privilege Model
 
-### 1. Privilege Model
-* **Polkit (PolicyKit)**: Rules in [`client/security/polkit/`](client/security/polkit/) allow non-root users to attach/detach kernel USB devices via D-Bus without `sudoers` or root shells.
-* **AppArmor MAC Profiles**: Confines client and server binaries on Debian, Ubuntu, and openSUSE ([`client/security/apparmor/`](client/security/apparmor/) & [`server/security/apparmor/`](server/security/apparmor/)).
-* **SELinux Policy Modules**: Native CIL & Type Enforcement policies for Fedora, Bazzite, RHEL, and CentOS ([`client/security/selinux/`](client/security/selinux/) & [`server/security/selinux/`](server/security/selinux/)).
-* **udev `uaccess` Rules**: Non-root desktop access to physical gamepad telemetry and sysfs nodes ([`client/security/udev/`](client/security/udev/) & [`server/security/udev/`](server/security/udev/)).
-* **Security Installer**: Run `./install-security.sh` on client or server to detect and deploy policies automatically.
+### 1. Automated Zero-Root Security & Driver Pre-Flight
+* **Polkit & udev**: Rules in [`client/security/polkit/`](client/security/polkit/) & [`client/security/udev/`](client/security/udev/) grant active desktop users zero-sudo authorization to manage USB/IP without terminal commands or passwords.
+* **Kernel Driver Pre-Flight**: On launch, the client automatically loads and validates kernel drivers (`vhci-hcd` on Linux via Polkit, and `usbip-win` VHCI on Windows).
+* **AppArmor & SELinux**: Native MAC sandboxing profiles for Debian, Ubuntu, openSUSE, Fedora, Bazzite, RHEL, and CentOS are automatically applied during server service installation ([`server/install-server.sh`](server/install-server.sh) or `./autousbip-qt-server --install`).
 
-### 2. Optional Hardening Controls (Configurable in Dashboard)
+### 2. On-Demand Security & Network Controls (Web UI Dashboard)
+All security controls can be toggled on demand directly from the client options modal or server settings modal:
 * 🔒 **Web API CSRF Protection**: Restricts mutating API actions (attach, detach, restart, reboot) to requests originating from verified local origins.
 * 🔑 **TLS Certificate Pinning (TOFU)**: Records and validates the SHA-256 fingerprint of the server's TLS certificate on first connect.
-* 🦹 **BadUSB Device Class Filtering**: Blocks auto-attaching USB devices by class:
+* 🛡️ **Subnet & Firewall Filtering**: Restricts server control sockets (`3241/tcp`) and device streaming (`3240/tcp`) exclusively to trusted local subnets (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`).
+* 🦹 **BadUSB Device Class Filtering**:
   * Block Mass Storage / Flash Drives (Class 08h)
   * Block Virtual Network / Ethernet / Wi-Fi Adapters (Classes 02h/E0h)
   * Block Raw USB Keyboards (Keystroke Injection defense)
-* 🔥 **Server Firewall Setup**:
-  ```bash
-  sudo bash scripts/setup-firewall.sh 192.168.2.0/24
-  ```
-  Restricts ports `3240/tcp` (usbip), `3241/tcp` (TLS control), and `5353/udp` (mDNS) to your trusted LAN subnet.
 
 ---
 
@@ -212,26 +207,66 @@ cd autousbip-qt-client-linux-x86_64
 
 ---
 
-### 🔨 Building Release Artifacts from Source
-To build both `AutoUSBIP-QT-x86_64.AppImage` and `AutoUSBIP-QT-x86_64.tar.gz`:
-```bash
-bash scripts/build-appimage.sh
-```
-Binary artifacts are written to [`dist/`](dist/).
+### 🧹 How to Fully Remove / Clean Up (Portable Mode)
+
+If you are running the portable version (AppImage, Tarball, or standalone Windows folder) and want to completely delete all traces of the application, follow these steps:
+
+#### **Linux (AppImage / Tarball)**
+1. **Remove Desktop Menu Shortcuts** (if you ran `--install` or `install-menu.sh`):
+   ```bash
+   ./AutoUSBIP-QT-x86_64.AppImage --uninstall
+   # OR for tarball:
+   ./uninstall-menu.sh
+   ```
+2. **Remove User Configuration & Cached Data**:
+   ```bash
+   rm -rf ~/.config/auto-usbip
+   ```
+3. **Delete Application Binary / Folder**:
+   ```bash
+   rm -rf AutoUSBIP-QT-x86_64.AppImage autousbip-qt-client-linux-x86_64/
+   ```
+
+#### **Windows (Portable Mode)**
+1. **Remove User Configuration & Cached Drivers**:
+   - Delete `%APPDATA%uto-usbip` (Configuration file `config.json`)
+   - Delete `%LOCALAPPDATA%uto-usbip` (Downloaded driver cache, if applicable)
+   *Or run in PowerShell:*
+   ```powershell
+   Remove-Item -Recurse -Force ":APPDATAuto-usbip" -ErrorAction SilentlyContinue
+   Remove-Item -Recurse -Force ":LOCALAPPDATAuto-usbip" -ErrorAction SilentlyContinue
+   ```
+2. **Delete the Portable Folder**:
+   - Simply delete the extracted folder containing `autousbip-qt-client.exe`.
+
+> [!NOTE]
+> If you used the **Windows MSI Installer** (`AutoUSBIP-QT-Client.msi`), standard uninstallation via **Windows Settings > Installed Apps** or the Start Menu shortcut automatically removes the executable, drivers, and both `%APPDATA%` and `%LOCALAPPDATA%` directories cleanly.
 
 ---
 
-### Windows
-1. Run the automated driver setup script (downloads and configures `usbip-win` VHCI driver):
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/setup-windows-driver.ps1
-   ```
-2. In the `client/` folder:
-   ```cmd
-   python -m venv venv
-   . env\Scripts\pip install -r requirements.txt
-   . env\Scripts\python client.py
-   ```
+### 🔨 Building Release Packages from Source
+
+All individual target builders are located in [`scripts/`](scripts/):
+
+| Target Package | Builder Script | Output Artifact |
+| :--- | :--- | :--- |
+| **Linux AppImage** | `bash scripts/build-appimage.sh` | `dist/AutoUSBIP-QT-x86_64.AppImage` |
+| **Linux Portable Tarball** | `bash scripts/build-tarball.sh` | `dist/AutoUSBIP-QT-x86_64.tar.gz` |
+| **Linux Standalone Server** | `bash scripts/build-server-binary.sh` | `dist/autousbip-qt-server` |
+| **Windows Client GUI** | `scripts\build-windows-client-exe.bat` | `dist\AutoUSBIP-QT-Windows\autousbip-qt-client.exe` |
+| **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\AutoUSBIP-QT-Server-Windows\autousbip-qt-server.exe` |
+
+---
+
+### 🪟 Windows Client & Server Releases
+
+#### 1. Windows Client (`autousbip-qt-client.exe`)
+1. Double-click `scripts\build-windows-client-exe.bat` or run the standalone release from `dist/AutoUSBIP-QT-Windows/`.
+2. On first launch, the application automatically verifies the signed `usbip-win` VHCI driver.
+
+#### 2. Windows Server Daemon (`autousbip-qt-server.exe`)
+1. Double-click `scripts\build-windows-server-exe.bat` to build the standalone server binary.
+2. The compiled binary is output to `dist\AutoUSBIP-QT-Server-Windows\autousbip-qt-server.exe`.
 
 ---
 
