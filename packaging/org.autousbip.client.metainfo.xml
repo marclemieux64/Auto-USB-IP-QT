@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.autousbip.client</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Auto USB/IP-QT</name>
+  <summary>Automatic USB-over-IP device manager and gamepad diagnostics</summary>
+  <description>
+    <p>
+      Auto USB/IP-QT is an encrypted, zero-configuration USB-over-IP device management suite.
+      It enables seamless forwarding of USB devices over local networks with automated mDNS server discovery,
+      granular PolicyKit authorization, TLS 1.3 control encryption, and real-time device health telemetry.
+    </p>
+    <p>Features include:</p>
+    <ul>
+      <li>Zero-configuration mDNS discovery for Linux and Windows USB/IP servers</li>
+      <li>Passwordless Polkit and systemd ambient capability security model</li>
+      <li>Integrated Gamepad diagnostics with Kenney vector prompts, deadzone visualizers, IMU telemetry, and DualSense trigger support</li>
+      <li>Local and LAN-accessible dark-mode Web Dashboard</li>
+      <li>Live client and remote server journal diagnostics consoles</li>
+      <li>Sleep and wake automatic connection recovery</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">org.autousbip.client.desktop</launchable>
+  <url type="homepage">https://github.com/marclemieux64/Auto-USB-IP-QT</url>
+  <url type="bugtracker">https://github.com/marclemieux64/Auto-USB-IP-QT/issues</url>
+  <provides>
+    <binary>autousbip-qt-client</binary>
+  </provides>
+  <categories>
+    <category>Utility</category>
+    <category>Network</category>
+  </categories>
+  <developer_name>Marc Lemieux</developer_name>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main Dashboard and Device Manager</caption>
+      <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/dashboard_overview.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Gamepad Latency and Calibration Tester</caption>
+      <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/gamepad_tester.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Diagnostics Console and Live Event Stream</caption>
+      <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/console_diagnostics.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="2.0.0" date="2026-08-22">
+      <description>
+        <p>Major 2.0 release featuring multi-user lockout detection, subnet scanning, WiX MSI installer, and embedded Inter/JetBrains typography.</p>
+      </description>
+    </release>
+  </releases>
+</component>

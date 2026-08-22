@@ -56,12 +56,17 @@ APPDIR="${REPO_ROOT}/build/AutoUSBIP-QT.AppDir"
 rm -rf "${APPDIR}"
 mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/metainfo"
 
-# Copy AppRun and Desktop entries
+# Copy AppRun, Desktop entries, and AppStream metadata
 cp -f "${REPO_ROOT}/packaging/AppRun" "${APPDIR}/AppRun"
 chmod +x "${APPDIR}/AppRun"
 
 cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${APPDIR}/org.autousbip.client.desktop"
 cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${APPDIR}/default.desktop" 2>/dev/null || true
+
+if [ -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" ]; then
+    cp -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" "${APPDIR}/usr/share/metainfo/org.autousbip.client.metainfo.xml"
+    cp -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" "${APPDIR}/usr/share/metainfo/default.appdata.xml" 2>/dev/null || true
+fi
 
 # Copy icons
 ICON_SVG="${REPO_ROOT}/client/assets/branding/app-icon.svg"
