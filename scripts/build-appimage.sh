@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# AutoUSBIP-QT Client - Release Builder (AppImage + Portable Tarball)
+# AutoUSBIP-QT Client - AppImage Release Builder
+# Output: dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage
 # ==============================================================================
 
 set -e
@@ -9,7 +10,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
 echo "🔨 ============================================================="
-echo "   AutoUSBIP-QT Client — Release Builder (AppImage & Tarball)    "
+echo "   AutoUSBIP-QT Client — AppImage Release Builder                "
 echo "============================================================="
 
 # 1. Determine Python and AppImageTool
@@ -47,11 +48,11 @@ if [ ! -x "${APPIMAGETOOL}" ]; then
 fi
 
 # 2. Build Python standalone bundle with PyInstaller
-echo "\n[1/4] Freezing Python application and Qt6 runtime..."
+echo -e "\n[1/3] Freezing Python application and Qt6 runtime..."
 "${PYINSTALLER_BIN}" --clean --noconfirm "${REPO_ROOT}/packaging/autousbip-client.spec"
 
 # 3. Construct AppDir layout
-echo "\n[2/4] Constructing AppDir structure..."
+echo -e "\n[2/3] Constructing AppDir structure..."
 APPDIR="${REPO_ROOT}/build/AutoUSBIP-QT.AppDir"
 rm -rf "${APPDIR}"
 mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/metainfo"
@@ -96,7 +97,7 @@ fi
 cp -r "${REPO_ROOT}/dist/autousbip-qt-client/"* "${APPDIR}/usr/bin/"
 
 # 4. Generate AppImage
-echo "\n[3/4] Generating final AppImage package..."
+echo -e "\n[3/3] Generating final AppImage package..."
 mkdir -p "${REPO_ROOT}/dist"
 OUTPUT_APPIMAGE="${REPO_ROOT}/dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage"
 rm -f "${OUTPUT_APPIMAGE}"
@@ -104,34 +105,7 @@ rm -f "${OUTPUT_APPIMAGE}"
 ARCH=x86_64 "${APPIMAGETOOL}" --no-appstream "${APPDIR}" "${OUTPUT_APPIMAGE}"
 chmod +x "${OUTPUT_APPIMAGE}"
 
-# 5. Generate Portable Tarball
-echo "\n[4/4] Generating portable standalone tarball (.tar.gz)..."
-TARBALL_STAGING="${REPO_ROOT}/build/autousbip-qt-client-linux-x86_64"
-rm -rf "${TARBALL_STAGING}"
-mkdir -p "${TARBALL_STAGING}"
-
-# Copy binary payload
-cp -r "${REPO_ROOT}/dist/autousbip-qt-client/"* "${TARBALL_STAGING}/"
-
-# Copy icons and desktop helpers
-cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${TARBALL_STAGING}/"
-cp -f "${REPO_ROOT}/packaging/install-menu.sh" "${TARBALL_STAGING}/"
-cp -f "${REPO_ROOT}/packaging/uninstall-menu.sh" "${TARBALL_STAGING}/"
-chmod +x "${TARBALL_STAGING}/install-menu.sh" "${TARBALL_STAGING}/uninstall-menu.sh"
-
-if [ -f "${ICON_SVG}" ]; then
-    cp -f "${ICON_SVG}" "${TARBALL_STAGING}/org.autousbip.client.svg"
-fi
-if [ -f "${ICON_PNG}" ]; then
-    cp -f "${ICON_PNG}" "${TARBALL_STAGING}/org.autousbip.client.png"
-fi
-
-OUTPUT_TARBALL="${REPO_ROOT}/dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz"
-rm -f "${OUTPUT_TARBALL}"
-tar -czf "${OUTPUT_TARBALL}" -C "${REPO_ROOT}/build" autousbip-qt-client-linux-x86_64
-
-echo "\n============================================================="
-echo "🎉 Build complete! Generated release artifacts:"
-echo "   📦 AppImage: ${OUTPUT_APPIMAGE} ($(du -h "${OUTPUT_APPIMAGE}" | cut -f1))"
-echo "   📦 Tarball:  ${OUTPUT_TARBALL} ($(du -h "${OUTPUT_TARBALL}" | cut -f1))"
+echo -e "\n============================================================="
+echo "🎉 AppImage build complete!"
+echo "   📦 AppImage: ${OUTPUT_APPIMAGE} ($(du -h "${OUTPUT_APPIMAGE}" 2>/dev/null | cut -f1 || echo ''))"
 echo "============================================================="
