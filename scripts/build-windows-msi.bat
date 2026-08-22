@@ -69,12 +69,7 @@ REM Ensure USB/IP Windows drivers are present before building MSI
 if not exist "%PROJECT_ROOT%\client\drivers\usbip.exe" (
     echo [*] Fetching signed USB/IP-Win driver package for MSI bundling...
     mkdir "%PROJECT_ROOT%\client\drivers" >nul 2>&1
-    curl -sL -o "%TEMP%\usbip-win-0.3.6-dev.zip" "https://github.com/cezanne/usbip-win/releases/download/v0.3.6-dev/usbip-win-0.3.6-dev.zip"
-    powershell -NoProfile -Command "Expand-Archive -Path '$env:TEMP\usbip-win-0.3.6-dev.zip' -DestinationPath '$env:TEMP\usbip_extract' -Force" >nul 2>&1
-    xcopy /Y /E /Q "%TEMP%\usbip_extract\output\*" "%PROJECT_ROOT%\client\drivers\" >nul 2>&1
-    xcopy /Y /E /Q "%TEMP%\usbip_extract\output\x64\*" "%PROJECT_ROOT%\client\drivers\" >nul 2>&1
-    del /f /q "%TEMP%\usbip-win-0.3.6-dev.zip" >nul 2>&1
-    rmdir /s /q "%TEMP%\usbip_extract" >nul 2>&1
+    powershell -NoProfile -Command "Invoke-WebRequest -Uri 'https://github.com/cezanne/usbip-win/releases/download/v0.3.6-dev/usbip-win-0.3.6-dev.zip' -OutFile '$env:TEMP\usbip-win.zip'; Expand-Archive -Path '$env:TEMP\usbip-win.zip' -DestinationPath '%PROJECT_ROOT%\client\drivers' -Force; Remove-Item '$env:TEMP\usbip-win.zip' -Force"
 )
 
 echo [*] Using WiX from: %WIX_DIR%
