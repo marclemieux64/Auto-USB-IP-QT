@@ -64,7 +64,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=str(client_dir / "assets" / "branding" / "app-icon.png"),
+    icon=str(client_dir / "assets" / "branding" / "app-icon.ico"),
 )
 
 coll = COLLECT(
