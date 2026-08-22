@@ -65,10 +65,12 @@ echo [2/3] Compiling standalone server binary with PyInstaller...
 REM 4. Copy to dist\AutoUSBIP-QT-Server-Windows
 set "OUT_DIR=%PROJECT_ROOT%\dist\AutoUSBIP-QT-Server-Windows"
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%" >nul 2>&1
+if not exist "%PROJECT_ROOT%\dist" mkdir "%PROJECT_ROOT%\dist" >nul 2>&1
 
 if exist "%LOCAL_DIST%\autousbip-qt-server.exe" (
-    echo [3/3] Finalizing build artifacts in %OUT_DIR%...
+    echo [3/3] Finalizing build artifacts in %OUT_DIR% and dist\...
     copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%OUT_DIR%\autousbip-qt-server.exe" >nul
+    copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%PROJECT_ROOT%\dist\autousbip-qt-server.exe" >nul
 )
 
 REM Clean temp directories
@@ -86,5 +88,5 @@ if exist "%OUT_DIR%\autousbip-qt-server.exe" (
     echo [!] Build finished, but output file was not found in destination.
 )
 
-pause
+if "%~1"=="" pause
 endlocal
