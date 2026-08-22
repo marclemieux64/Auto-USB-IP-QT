@@ -61,7 +61,7 @@
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="MainExecutable" Guid="3E4D7F8A-9A2E-47C1-B72D-5F6D9F610B21" Win64="yes">
         <File Id="ClientExe" 
-              Source="$(var.DistDir)\autousbip-qt-client.exe" 
+              Source="$(var.DistDir)\AutoUSBIP-QT-Client-Windows-x64.exe" 
               KeyPath="yes" 
               Checksum="yes" />
       </Component>
@@ -89,7 +89,7 @@
         <Shortcut Id="ApplicationStartMenuShortcut"
                   Name="Auto USB-IP Client"
                   Description="Automatic USB-over-IP Device Client"
-                  Target="[INSTALLFOLDER]autousbip-qt-client.exe"
+                  Target="[INSTALLFOLDER]AutoUSBIP-QT-Client-Windows-x64.exe"
                   WorkingDirectory="INSTALLFOLDER"
                   Icon="AppIcon.ico" />
 
@@ -111,7 +111,7 @@
         <Shortcut Id="ApplicationDesktopShortcut"
                   Name="Auto USB-IP Client"
                   Description="Automatic USB-over-IP Device Client"
-                  Target="[INSTALLFOLDER]autousbip-qt-client.exe"
+                  Target="[INSTALLFOLDER]AutoUSBIP-QT-Client-Windows-x64.exe"
                   WorkingDirectory="INSTALLFOLDER"
                   Icon="AppIcon.ico" />
         <RemoveFile Id="PurgeDesktopShortcut" Name="Auto USB-IP Client.lnk" On="uninstall" />
