@@ -54,10 +54,15 @@ jobs:
           pip install -r client/requirements.txt
           pip install pyinstaller
 
-      - name: Build Linux Client (AppImage & Tarball)
+      - name: Build Linux Client AppImage
         run: |
           chmod +x scripts/build-appimage.sh
           ./scripts/build-appimage.sh
+
+      - name: Build Linux Client Portable Tarball
+        run: |
+          chmod +x scripts/build-tarball.sh
+          ./scripts/build-tarball.sh
 
       - name: Build Standalone Linux Server Binary
         run: |
