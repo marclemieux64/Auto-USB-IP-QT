@@ -57,15 +57,15 @@ rm -rf "${APPDIR}"
 mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/metainfo"
 
 # Copy AppRun, Desktop entries, and AppStream metadata
+mkdir -p "${APPDIR}/usr/share/applications" "${APPDIR}/usr/share/metainfo"
 cp -f "${REPO_ROOT}/packaging/AppRun" "${APPDIR}/AppRun"
 chmod +x "${APPDIR}/AppRun"
 
 cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${APPDIR}/org.autousbip.client.desktop"
-cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${APPDIR}/default.desktop" 2>/dev/null || true
+cp -f "${REPO_ROOT}/packaging/org.autousbip.client.desktop" "${APPDIR}/usr/share/applications/org.autousbip.client.desktop"
 
 if [ -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" ]; then
     cp -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" "${APPDIR}/usr/share/metainfo/org.autousbip.client.metainfo.xml"
-    cp -f "${REPO_ROOT}/packaging/org.autousbip.client.metainfo.xml" "${APPDIR}/usr/share/metainfo/default.appdata.xml" 2>/dev/null || true
 fi
 
 # Copy icons
@@ -90,7 +90,7 @@ mkdir -p "${REPO_ROOT}/dist"
 OUTPUT_APPIMAGE="${REPO_ROOT}/dist/AutoUSBIP-QT-x86_64.AppImage"
 rm -f "${OUTPUT_APPIMAGE}"
 
-ARCH=x86_64 "${APPIMAGETOOL}" "${APPDIR}" "${OUTPUT_APPIMAGE}"
+ARCH=x86_64 "${APPIMAGETOOL}" --no-appstream "${APPDIR}" "${OUTPUT_APPIMAGE}"
 chmod +x "${OUTPUT_APPIMAGE}"
 
 # 5. Generate Portable Tarball
