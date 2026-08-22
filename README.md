@@ -179,20 +179,20 @@ Auto USB/IP Client is distributed as a portable **AppImage** and a standalone **
 sudo modprobe vhci-hcd
 
 # 2. Make executable and launch:
-chmod +x dist/AutoUSBIP-QT-x86_64.AppImage
-./dist/AutoUSBIP-QT-x86_64.AppImage
+chmod +x dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage
+./dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage
 
 # 3. (Optional) Integrate into Desktop Application Menu:
-./dist/AutoUSBIP-QT-x86_64.AppImage --install
+./dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage --install
 
 # 4. (Optional) Remove from Desktop Application Menu:
-./dist/AutoUSBIP-QT-x86_64.AppImage --uninstall
+./dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage --uninstall
 ```
 
 ### Option 2: Standalone Portable Tarball (.tar.gz)
 ```bash
 # 1. Extract tarball
-tar -xzf dist/AutoUSBIP-QT-x86_64.tar.gz
+tar -xzf dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz
 cd autousbip-qt-client-linux-x86_64
 
 # 2. Run
@@ -214,7 +214,7 @@ If you are running the portable version (AppImage, Tarball, or standalone Window
 #### **Linux (AppImage / Tarball)**
 1. **Remove Desktop Menu Shortcuts** (if you ran `--install` or `install-menu.sh`):
    ```bash
-   ./AutoUSBIP-QT-x86_64.AppImage --uninstall
+   ./AutoUSBIP-QT-Client-Linux-x86_64.AppImage --uninstall
    # OR for tarball:
    ./uninstall-menu.sh
    ```
@@ -224,7 +224,7 @@ If you are running the portable version (AppImage, Tarball, or standalone Window
    ```
 3. **Delete Application Binary / Folder**:
    ```bash
-   rm -rf AutoUSBIP-QT-x86_64.AppImage autousbip-qt-client-linux-x86_64/
+   rm -rf AutoUSBIP-QT-Client-Linux-x86_64.AppImage autousbip-qt-client-linux-x86_64/
    ```
 
 #### **Windows (Portable Mode)**
@@ -237,7 +237,7 @@ If you are running the portable version (AppImage, Tarball, or standalone Window
    Remove-Item -Recurse -Force "$env:LOCALAPPDATA\auto-usbip" -ErrorAction SilentlyContinue
    ```
 2. **Delete the Portable Folder**:
-   - Simply delete the extracted folder containing `autousbip-qt-client.exe`.
+   - Simply delete the extracted folder containing `AutoUSBIP-QT-Client-Windows-x64.exe`.
 
 > [!NOTE]
 > If you used the **Windows MSI Installer** (`AutoUSBIP-QT-Client.msi`), standard uninstallation via **Windows Settings > Installed Apps** or the Start Menu shortcut automatically removes the executable, drivers, and both `%APPDATA%` and `%LOCALAPPDATA%` directories cleanly.
@@ -250,20 +250,20 @@ All individual target builders are located in [`scripts/`](scripts/):
 
 | Target Package | Builder Script | Output Artifact |
 | :--- | :--- | :--- |
-| **Linux AppImage** | `bash scripts/build-appimage.sh` | `dist/AutoUSBIP-QT-x86_64.AppImage` |
-| **Linux Portable Tarball** | `bash scripts/build-tarball.sh` | `dist/AutoUSBIP-QT-x86_64.tar.gz` |
+| **Linux AppImage** | `bash scripts/build-appimage.sh` | `dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage` |
+| **Linux Portable Tarball** | `bash scripts/build-tarball.sh` | `dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz` |
 | **Linux Standalone Server** | `bash scripts/build-server-binary.sh` | `dist/autousbip-qt-server` |
-| **Windows Client (Single EXE)** | `scripts\build-windows-client-exe.bat` | `dist\autousbip-qt-client.exe` |
-| **Windows Client (MSI Setup)** | `scripts\build-windows-msi.bat` | `dist\AutoUSBIP-QT-Client-Setup.msi` |
+| **Windows Client (Single EXE)** | `scripts\build-windows-client-exe.bat` | `dist\AutoUSBIP-QT-Client-Windows-x64.exe` |
+| **Windows Client (MSI Setup)** | `scripts\build-windows-msi.bat` | `dist\AutoUSBIP-QT-Client-Setup-x64.msi` |
 | **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\autousbip-qt-server.exe` |
 
 ---
 
 ### 🪟 Windows Client & Server Releases
 
-#### 1. Windows Client (`autousbip-qt-client.exe` & MSI Installer)
-* **Single-file Portable EXE**: Run `scripts\build-windows-client-exe.bat` to produce `dist\autousbip-qt-client.exe`.
-* **WiX MSI Setup Package**: Run `scripts\build-windows-msi.bat` to compile `dist\AutoUSBIP-QT-Client-Setup.msi` with customized setup UI dialogs and auto-cleanup actions.
+#### 1. Windows Client (`AutoUSBIP-QT-Client-Windows-x64.exe` & MSI Installer)
+* **Single-file Portable EXE**: Run `scripts\build-windows-client-exe.bat` to produce `dist\AutoUSBIP-QT-Client-Windows-x64.exe`.
+* **WiX MSI Setup Package**: Run `scripts\build-windows-msi.bat` to compile `dist\AutoUSBIP-QT-Client-Setup-x64.msi` with customized setup UI dialogs and auto-cleanup actions.
 * On first launch, the client automatically verifies and configures the signed `usbip-win` VHCI driver.
 
 #### 2. Windows Server Daemon (`autousbip-qt-server.exe`)

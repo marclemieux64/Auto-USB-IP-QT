@@ -69,19 +69,19 @@ if not exist "%PROJECT_ROOT%\dist" mkdir "%PROJECT_ROOT%\dist" >nul 2>&1
 
 if exist "%LOCAL_DIST%\autousbip-qt-server.exe" (
     echo [3/3] Finalizing build artifacts in %OUT_DIR% and dist\...
-    copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%OUT_DIR%\autousbip-qt-server.exe" >nul
-    copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%PROJECT_ROOT%\dist\autousbip-qt-server.exe" >nul
+    copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%OUT_DIR%\AutoUSBIP-QT-Server-Windows-x64.exe" >nul
+    copy /y "%LOCAL_DIST%\autousbip-qt-server.exe" "%PROJECT_ROOT%\dist\AutoUSBIP-QT-Server-Windows-x64.exe" >nul
 )
 
 REM Clean temp directories
 if exist "%LOCAL_WORK%" rmdir /s /q "%LOCAL_WORK%" >nul 2>&1
 if exist "%LOCAL_DIST%" rmdir /s /q "%LOCAL_DIST%" >nul 2>&1
 
-if exist "%OUT_DIR%\autousbip-qt-server.exe" (
+if exist "%OUT_DIR%\AutoUSBIP-QT-Server-Windows-x64.exe" (
     echo.
     echo =========================================================
     echo   SUCCESS! Windows Server binary is ready:
-    echo   %OUT_DIR%\autousbip-qt-server.exe
+    echo   %OUT_DIR%\AutoUSBIP-QT-Server-Windows-x64.exe
     echo =========================================================
 ) else (
     echo.

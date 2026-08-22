@@ -78,7 +78,7 @@ echo [*] Using WiX from: %WIX_DIR%
 
 REM Use local fast C:\ temp directory for building and linking
 set "MSI_WORK=%TEMP%\autousbip_msi_build"
-set "LOCAL_MSI_OUT=%TEMP%\autousbip_msi_build\AutoUSBIP-QT-Client-Setup.msi"
+set "LOCAL_MSI_OUT=%TEMP%\autousbip_msi_build\AutoUSBIP-QT-Client-Setup-x64.msi"
 if exist "%MSI_WORK%" rmdir /s /q "%MSI_WORK%" >nul 2>&1
 mkdir "%MSI_WORK%" >nul 2>&1
 
@@ -103,7 +103,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 if not exist "%DIST_DIR%" mkdir "%DIST_DIR%" >nul 2>&1
-set "OUTPUT_MSI=%DIST_DIR%\AutoUSBIP-QT-Client-Setup.msi"
+set "OUTPUT_MSI=%DIST_DIR%\AutoUSBIP-QT-Client-Setup-x64.msi"
 
 echo [*] Copying MSI installer to %OUTPUT_MSI%...
 copy /Y "%LOCAL_MSI_OUT%" "%OUTPUT_MSI%" >nul
