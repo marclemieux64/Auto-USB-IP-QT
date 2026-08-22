@@ -5,6 +5,15 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish to GitHub Releases'
+        type: boolean
+        default: true
+      release_tag:
+        description: 'Release Tag Name'
+        type: string
+        default: 'v2.0.0'
 
 jobs:
   build-linux:
@@ -110,7 +119,7 @@ jobs:
   publish-release:
     name: Publish GitHub Release
     needs: [build-linux, build-windows]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_release != 'false')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -128,6 +137,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || (github.event.inputs.release_tag != '' && github.event.inputs.release_tag || 'v2.0.0') }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || (github.event.inputs.release_tag != '' && github.event.inputs.release_tag || 'Release v2.0.0') }}
           files: release_assets/*
           draft: false
           prerelease: false
