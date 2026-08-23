@@ -354,6 +354,10 @@ def handle_import_client_config(controller: Any, data: dict) -> dict:
                 enabled=s.get("enabled", True)
             ))
         controller.servers = new_srvs
+        controller.save_servers_to_config()
+        if hasattr(controller, "scanner"):
+            controller.scanner.set_servers(controller.servers)
+            controller.scanner.trigger_scan()
 
     controller.config.save()
     return {"status": "ok", "message": "Client configuration imported successfully"}

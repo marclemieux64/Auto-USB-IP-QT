@@ -258,6 +258,11 @@ class AutoUsbipApp(QObject):
                     logger.warning(f"[Security] Rejecting attach: Server {dev.server_ip} requires a valid authentication token.")
                     return
             self.scanner.ignored_devices.pop((dev.server_ip, dev.busid), None)
+            if getattr(self.config, "remember_detached", True):
+                key = f"{dev.server_ip}@@{dev.busid}"
+                if key in self.config.ignored_devices:
+                    self.config.ignored_devices.pop(key, None)
+                    self.config.save()
         attach_device(dev.server_ip, dev.busid)
         if hasattr(self, "scanner"):
             self.scanner.trigger_scan()
@@ -282,6 +287,9 @@ class AutoUsbipApp(QObject):
             s_ip, bus_id = pair
             if s_ip and bus_id:
                 self.scanner.ignored_devices[(s_ip, bus_id)] = f"Detached ({bus_id})"
+                if getattr(self.config, "remember_detached", True):
+                    self.config.ignored_devices[f"{s_ip}@@{bus_id}"] = f"Detached ({bus_id})"
+                    self.config.save()
 
         detach_port(str(port))
         if hasattr(self, "scanner"):
@@ -294,6 +302,10 @@ class AutoUsbipApp(QObject):
             for p, (s_ip, bus_id) in port_map.items():
                 if s_ip and bus_id:
                     self.scanner.ignored_devices[(s_ip, bus_id)] = f"Detached ({bus_id})"
+                    if getattr(self.config, "remember_detached", True):
+                        self.config.ignored_devices[f"{s_ip}@@{bus_id}"] = f"Detached ({bus_id})"
+            if getattr(self.config, "remember_detached", True):
+                self.config.save()
         detach_all_ports()
         if hasattr(self, "scanner"):
             self.scanner.trigger_scan()

@@ -77,3 +77,33 @@ def test_usb_ids_database():
     assert db.get_device_icon_name("1-1", "Sony Interactive Entertainment DualSense Wireless Controller (054c:0ce6)") == "gamepad"
     assert db.is_gamepad_device("1-1", "DualSense Controller") is True
     assert db.is_storage_device("1-1", "SanDisk Ultra Flash Drive") is True
+
+
+def test_handle_import_client_config():
+    from api.status_routes import handle_import_client_config
+    mock_controller = MagicMock()
+    mock_controller.servers = []
+    mock_controller.config = MagicMock()
+    
+    payload = {
+        "config": {
+            "auto_attach": False,
+            "servers": [{"ip": "192.168.2.200", "port": 3240, "name": "Backup Server", "token": "sec123", "enabled": True}]
+        }
+    }
+    
+    res = handle_import_client_config(mock_controller, payload)
+    assert res["status"] == "ok"
+    assert len(mock_controller.servers) == 1
+    assert mock_controller.servers[0].ip == "192.168.2.200"
+    mock_controller.save_servers_to_config.assert_called_once()
+    mock_controller.scanner.set_servers.assert_called_once()
+    mock_controller.scanner.trigger_scan.assert_called_once()
+
+
+def test_wol_enable_windows_safe():
+    from core.wol import enable_client_wake_on_lan
+    with patch("sys.platform", "win32"), patch("core.wol.get_primary_mac_address", return_value="aa:bb:cc:dd:ee:ff"):
+        ok, msg = enable_client_wake_on_lan()
+        assert ok is True
+        assert "aa:bb:cc:dd:ee:ff" in msg

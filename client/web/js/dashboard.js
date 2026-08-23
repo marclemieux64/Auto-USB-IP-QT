@@ -1051,18 +1051,24 @@ async function handleClientBackupFile(event) {
     const file = event.target.files[0];
     if (!file) return;
     const text = await file.text();
+    event.target.value = "";
     try {
         const data = JSON.parse(text);
-        await fetch("/api/import_client_config", {
+        const res = await fetch("/api/import_client_config", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         });
-        alert("Client configuration imported successfully.");
-        closeClientOptionsModal();
-        fetchStatus();
+        const resJson = await res.json().catch(() => ({}));
+        if (resJson && resJson.status === "ok") {
+            showToast("Client configuration imported successfully.");
+            closeClientOptionsModal();
+            fetchStatus();
+        } else {
+            alert(resJson.message || "Failed to import configuration.");
+        }
     } catch (e) {
-        alert("Invalid configuration file JSON.");
+        alert("Invalid configuration file JSON: " + e.message);
     }
 }
 

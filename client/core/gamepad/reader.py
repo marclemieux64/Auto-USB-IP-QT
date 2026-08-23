@@ -100,7 +100,7 @@ def _fast_joystick_button_count(js_path: str) -> int:
         fd = os.open(js_path, os.O_RDONLY | os.O_NONBLOCK)
         try:
             buf_btns = bytearray(2)
-            if fcntl.ioctl(fd, JSIOCGBUTTONS, buf_btns) >= 0:
+            if fcntl is not None and fcntl.ioctl(fd, JSIOCGBUTTONS, buf_btns) >= 0:
                 return struct.unpack("H", buf_btns)[0]
         finally:
             os.close(fd)
@@ -281,7 +281,7 @@ def read_motion_state(event_node: str) -> list[float]:
     try:
         # Read ABS_X..ABS_RZ (0x00..0x05) using pre-allocated buffer
         for i in range(6):
-            if fcntl.ioctl(fd, EVIOCGABS + i, _MOTION_BUF) >= 0:
+            if fcntl is not None and fcntl.ioctl(fd, EVIOCGABS + i, _MOTION_BUF) >= 0:
                 val, minimum, maximum, fuzz, flat, res = struct.unpack("iiiiii", _MOTION_BUF)
                 if maximum > minimum:
                     normalized = (val - minimum) / float(maximum - minimum) * 2.0 - 1.0
