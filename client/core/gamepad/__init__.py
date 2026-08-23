@@ -32,11 +32,6 @@ from .latency import (
     get_controller_latency_tracker,
     ControllerLatencyTracker,
 )
-from .jukebox import (
-    play_konami_easter_egg,
-    play_bad_apple_easter_egg,
-    stop_active_easter_egg,
-)
 
 __all__ = [
     "get_gamepad_battery_info",
@@ -52,9 +47,6 @@ __all__ = [
     "unmute_playstation_speaker",
     "find_dualsense_pipewire_sink",
     "play_sound_test_chime",
-    "play_konami_easter_egg",
-    "play_bad_apple_easter_egg",
-    "stop_active_easter_egg",
     "get_controller_latency",
     "get_controller_latency_tracker",
     "ControllerLatencyTracker",

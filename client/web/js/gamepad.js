@@ -202,12 +202,6 @@ let activeDsPlayer = 1;
 let activeDsMute = false;
 let activeTriggerMode = "off";
 let activeTriggerTarget = "both";
-let lastEasterEggTriggerTime = 0;
-
-// Konami Code Sequence: Up, Up, Down, Down, Left, Right, Left, Right, B, A
-const KONAMI_TARGET = ["up", "up", "down", "down", "left", "right", "left", "right", "b", "a"];
-let konamiHistory = [];
-let lastInputState = { up: false, down: false, left: false, right: false, b: false, a: false };
 
 const TRIGGER_DESCRIPTIONS = {
     "off": "Standard trigger without resistance.",
@@ -533,22 +527,6 @@ async function pollGamepadState() {
         // Real-time Mic Mute Button LED Amber illumination
         updateMicMuteVisuals();
 
-        // Konami Code gamepad input edge detection
-        const isUp = dy < -0.5;
-        const isDown = dy > 0.5;
-        const isLeft = dx < -0.5;
-        const isRight = dx > 0.5;
-        const isB = !!(btns["1"] || btns["2"]);
-        const isA = !!btns["0"];
-
-        if (isUp && !lastInputState.up) checkKonamiInput("up");
-        if (isDown && !lastInputState.down) checkKonamiInput("down");
-        if (isLeft && !lastInputState.left) checkKonamiInput("left");
-        if (isRight && !lastInputState.right) checkKonamiInput("right");
-        if (isB && !lastInputState.b) checkKonamiInput("b");
-        if (isA && !lastInputState.a) checkKonamiInput("a");
-
-        lastInputState = { up: isUp, down: isDown, left: isLeft, right: isRight, b: isB, a: isA };
 
         // Motion Sensors updates
         if (data.has_motion && state.motion) {
@@ -862,82 +840,6 @@ async function testDualSenseRumble() {
     } catch (e) {}
 }
 
-/* Konami Code Secret Egg */
-function checkKonamiInput(key) {
-    const nextExpected = KONAMI_TARGET[konamiHistory.length];
-    let isMatch = false;
-
-    if (key === nextExpected) {
-        isMatch = true;
-    } else if (activeGamepadConfig) {
-        if (nextExpected === "b" && (key === "square" || key === "circle" || key === "b")) isMatch = true;
-        if (nextExpected === "a" && (key === "cross" || key === "a")) isMatch = true;
-    }
-
-    if (isMatch) {
-        konamiHistory.push(nextExpected);
-    } else if (key === "up" && konamiHistory.length !== 1) {
-        konamiHistory = ["up"];
-    } else {
-        konamiHistory = [];
-    }
-
-    if (konamiHistory.length >= KONAMI_TARGET.length) {
-        konamiHistory = [];
-        triggerEasterEgg();
-    }
-}
-
-async function triggerEasterEgg() {
-    const now = Date.now();
-    if (now - lastEasterEggTriggerTime < 2500) return;
-    lastEasterEggTriggerTime = now;
-
-    const port = activeGamepadPort || "";
-    const modal = document.querySelector("#gamepad-modal .modal-content");
-    if (modal) {
-        modal.style.transition = "all 0.3s ease";
-        modal.style.boxShadow = "0 0 35px #a855f7, 0 0 70px #ec4899";
-        setTimeout(() => { modal.style.boxShadow = ""; }, 12000);
-    }
-    
-    try {
-        const data = await API.sendGamepadControl({ port, action: "konami_egg" });
-        if (data && data.title) {
-            showToast(`🍎 ${data.title} 🎶`);
-        } else {
-            showToast("🍎 Easter Egg Activated! 🎶");
-        }
-    } catch (e) {
-        showToast("🍎 Easter Egg Activated! 🎶");
-    }
-}
-
-const handleKeyInput = (e) => {
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === "input" || tag === "textarea") return;
-
-    const keyMap = {
-        "ArrowUp": "up",
-        "ArrowDown": "down",
-        "ArrowLeft": "left",
-        "ArrowRight": "right",
-        "b": "b",
-        "B": "b",
-        "a": "a",
-        "A": "a"
-    };
-
-    const matched = keyMap[e.key];
-    if (matched) {
-        e.preventDefault();
-        e.stopPropagation();
-        checkKonamiInput(matched);
-    }
-};
-
-window.addEventListener("keydown", handleKeyInput);
-document.addEventListener("keydown", handleKeyInput);
 
 async function toggleModalTouchpadMouse() {
     if (!activeGamepadPort) return;
