@@ -353,7 +353,7 @@ def power_cycle_vbus_ports(ports: str = "2,3,4,5"):
         return
 
     cfg = load_server_config()
-    delay = cfg.get("vbus_off_delay", 2.5)
+    delay = float(cfg.get("vbus_off_delay", 2.5))
 
     logger.info(f"[VBUS POWER CYCLE] Cycling USB ports {ports} (Power OFF for {delay}s)...")
     try:
@@ -379,7 +379,7 @@ def power_cycle_vbus_port_for_busid(busid: str):
         logger.info(f"[VBUS POWER CYCLE] Power cycling port {port_num} for device {busid}...")
         try:
             cfg = load_server_config()
-            delay = cfg.get("vbus_off_delay", 2.5)
+            delay = float(cfg.get("vbus_off_delay", 2.5))
             subprocess.run([uhub, "-a", "off", "-p", port_num], capture_output=True, timeout=4)
             time.sleep(delay)
             subprocess.run([uhub, "-a", "on", "-p", port_num], capture_output=True, timeout=4)
@@ -506,7 +506,7 @@ def get_in_use_devices_map() -> dict[str, dict]:
         for item in usbip_host_dir.iterdir():
             if re.match(r"^[0-9]+-[0-9]+(\.[0-9]+)*$", item.name):
                 busid = item.name
-                assigned_ip = active_remote_ips[0] if active_remote_ips else "Remote Client"
+                assigned_ip = ", ".join(sorted(set(active_remote_ips))) if active_remote_ips else "Remote Client"
                 in_use[busid] = {
                     "client_ip": assigned_ip,
                     "status": "In Use"
@@ -522,7 +522,7 @@ def get_in_use_devices_map() -> dict[str, dict]:
                 current_busid = m_bus.group(1).strip()
             if current_busid and "In Use" in line:
                 if current_busid not in in_use:
-                    assigned_ip = active_remote_ips[0] if active_remote_ips else "Remote Client"
+                    assigned_ip = ", ".join(sorted(set(active_remote_ips))) if active_remote_ips else "Remote Client"
                     in_use[current_busid] = {
                         "client_ip": assigned_ip,
                         "status": "In Use"
@@ -964,6 +964,9 @@ def start_control_socket_thread(killer: GracefulKiller):
                             vid_pid = req.get("vid_pid", "").strip().lower()
                             if vid_pid:
                                 BLACKLIST_VID_PID.add(vid_pid)
+                                cfg_save = load_server_config()
+                                cfg_save["blacklist"] = sorted(list(BLACKLIST_VID_PID))
+                                save_server_config(cfg_save)
                                 cleanup_blacklisted_bindings()
                                 resp = json.dumps({"status": "ok", "message": f"Added {vid_pid}", "blacklist": sorted(list(BLACKLIST_VID_PID))})
                             else:
@@ -973,6 +976,9 @@ def start_control_socket_thread(killer: GracefulKiller):
                             vid_pid = req.get("vid_pid", "").strip().lower()
                             if vid_pid in BLACKLIST_VID_PID:
                                 BLACKLIST_VID_PID.remove(vid_pid)
+                                cfg_save = load_server_config()
+                                cfg_save["blacklist"] = sorted(list(BLACKLIST_VID_PID))
+                                save_server_config(cfg_save)
                                 sync_devices()
                                 resp = json.dumps({"status": "ok", "message": f"Removed {vid_pid}", "blacklist": sorted(list(BLACKLIST_VID_PID))})
                             else:
@@ -989,7 +995,7 @@ def start_control_socket_thread(killer: GracefulKiller):
                                 # 1. If running under systemd, restart cleanly via systemctl
                                 if Path("/run/systemd/system").exists():
                                     try:
-                                        res = subprocess.run(["systemctl", "restart", "autousbip.service"], timeout=3)
+                                        res = subprocess.run(["systemctl", "restart", "autousbip-qt-server.service", "autousbip.service"], timeout=3)
                                         if res.returncode == 0:
                                             return
                                     except Exception:
@@ -1281,7 +1287,7 @@ def main():
             if event_triggered:
                 _SYNC_EVENT.clear()
                 time.sleep(0.1)
-                sync_devices()
+            sync_devices()
     except Exception as e:
         logger.error(f"Server exception: {e}")
     finally:
