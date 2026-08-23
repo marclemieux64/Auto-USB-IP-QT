@@ -184,7 +184,9 @@ def save_server_config(cfg: dict) -> bool:
     with _CONFIG_LOCK:
         try:
             SERVER_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            SERVER_CONFIG_PATH.write_text(json.dumps(cfg, indent=4))
+            tmp_path = SERVER_CONFIG_PATH.with_suffix(".json.tmp")
+            tmp_path.write_text(json.dumps(cfg, indent=4), encoding="utf-8")
+            tmp_path.replace(SERVER_CONFIG_PATH)
             _CACHED_CONFIG = cfg.copy()
             _CACHED_CONFIG_MTIME = SERVER_CONFIG_PATH.stat().st_mtime
             return True

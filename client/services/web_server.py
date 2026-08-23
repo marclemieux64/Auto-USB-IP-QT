@@ -56,8 +56,14 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
                 return True
             
             if cfg.get("allow_lan_access", True):
-                if origin_host.startswith("192.168.") or origin_host.startswith("10.") or origin_host.startswith("172."):
-                    return True
+                try:
+                    import ipaddress
+                    ip_obj = ipaddress.ip_address(origin_host)
+                    if ip_obj.is_private or ip_obj.is_loopback:
+                        return True
+                except ValueError:
+                    if origin_host.endswith(".local") or "." not in origin_host:
+                        return True
         except Exception:
             pass
 

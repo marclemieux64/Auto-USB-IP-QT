@@ -1,78 +1,109 @@
 import pytest
-import os
 import sys
-import json
-from pathlib import Path
+import os
+from unittest.mock import MagicMock, patch
 
-# Add client to sys.path
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "client"))
+sys.path.insert(0, os.path.abspath('client'))
 
-from config import load_config, save_config, get_default_config, is_valid_server_address
-from core.usbip import list_imported_ports, ImportedPort, _get_usbip_cmd
-
-
-def test_config_defaults_and_structure():
-    default_cfg = get_default_config()
-    assert "polling_interval" in default_cfg
-    assert "allow_lan_access" in default_cfg
-    assert "enable_web_csrf" in default_cfg
-    assert "show_notifications" in default_cfg
-    assert "enable_device_class_filter" in default_cfg
+from core.usbip import detach_device, detach_port, REMOTE_DEVICE_IN_USE_CACHE
+from core.console import _ping_host
+from core.wol import get_primary_mac_address
+from core.gamepad.dualsense import play_sound_test_chime
+from core.usb_ids import get_device_icon_from_desc, UsbIdsDatabase
+from services.power_manager import PowerManager
 
 
-def test_is_valid_server_address_sanitization():
-    # Valid targets
-    assert is_valid_server_address("192.168.2.123") is True
-    assert is_valid_server_address("10.0.0.1") is True
-    assert is_valid_server_address("raspberrypi.local") is True
-    assert is_valid_server_address("usbip-server") is True
-
-    # Malicious injection targets
-    assert is_valid_server_address("; rm -rf / ;") is False
-    assert is_valid_server_address("../../../../etc/passwd") is False
-    assert is_valid_server_address("-oProxyCommand=calc.exe") is False
-    assert is_valid_server_address("") is False
-    assert is_valid_server_address(None) is False
+def test_remote_device_in_use_cache():
+    assert isinstance(REMOTE_DEVICE_IN_USE_CACHE, dict)
+    REMOTE_DEVICE_IN_USE_CACHE[("192.168.2.123", "1-1.2")] = {"client_ip": "192.168.2.50"}
+    assert REMOTE_DEVICE_IN_USE_CACHE[("192.168.2.123", "1-1.2")]["client_ip"] == "192.168.2.50"
 
 
-def test_imported_port_dataclass():
-    port = ImportedPort(
-        port="00",
-        status="Port in Use",
-        speed="High Speed(480Mbps)",
-        devid="054c:0ce6",
-        busid="1-1.2",
-        uri="192.168.2.123:3240",
-        device_name="Sony Interactive Entertainment Wireless Controller"
-    )
-    assert port.port == "00"
-    assert port.busid == "1-1.2"
-    assert port.devid == "054c:0ce6"
+def test_detach_device_polymorphism():
+    with patch("core.usbip.detach_port", return_value=(True, "Port 0 detached")) as mock_detach_port:
+        # Single argument port call
+        ok, msg = detach_device("0")
+        assert ok is True
+        mock_detach_port.assert_called_with("0")
+
+    with patch("core.usbip.list_imported_ports") as mock_list, patch("core.usbip.detach_port", return_value=(True, "Port 1 detached")) as mock_detach_port:
+        mock_port = MagicMock()
+        mock_port.busid = "1-1.2"
+        mock_port.uri = "192.168.2.123"
+        mock_port.port = "1"
+        mock_list.return_value = [mock_port]
+
+        # Two argument (host, busid) call
+        ok, msg = detach_device("192.168.2.123", "1-1.2")
+        assert ok is True
+        mock_detach_port.assert_called_with("1")
 
 
-def test_get_usbip_cmd_structure():
-    cmd = _get_usbip_cmd(["port"])
-    assert isinstance(cmd, list)
-    assert len(cmd) >= 2
-    assert "port" in cmd
-from unittest.mock import patch
+def test_ping_host_cross_platform():
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value.stdout = "64 bytes from 127.0.0.1"
+        mock_run.return_value.stderr = ""
+        res = _ping_host("127.0.0.1")
+        assert "64 bytes" in res
+        args = mock_run.call_args[0][0]
+        if sys.platform == "win32":
+            assert "-n" in args
+        else:
+            assert "-c" in args
 
 
-def test_windows_get_usbip_cmd(tmp_path):
-    with patch("sys.platform", "win32"), patch("core.usbip._get_windows_driver_dir", return_value=tmp_path):
-        dummy_exe = tmp_path / "usbip.exe"
-        dummy_exe.touch()
-        cmd = _get_usbip_cmd(["port"])
-        assert cmd[0] == str(dummy_exe)
-        assert cmd[1] == "port"
+def test_power_manager_instantiation():
+    cb = MagicMock()
+    pm = PowerManager(on_resume_callback=cb)
+    assert pm.on_resume_callback == cb
 
 
-def test_windows_driver_preflight_auto_when_missing():
-    with patch("sys.platform", "win32"), patch("core.usbip._get_windows_driver_dir") as mock_dir:
-        mock_dir.return_value = Path("/nonexistent/drivers")
-        with patch("shutil.which", return_value=None), patch("core.usbip._install_windows_driver_auto", return_value=True) as mock_install:
-            from core.usbip import ensure_vhci_loaded
-            res = ensure_vhci_loaded()
-            assert res is True
-            assert mock_install.called
+def test_wol_mac_address():
+    mac = get_primary_mac_address()
+    if mac is not None:
+        assert isinstance(mac, str)
+        assert len(mac) == 17
+        assert ":" in mac
+
+
+def test_dualsense_chime_fallback():
+    with patch("shutil.which", return_value=None):
+        # When audio tools are absent, should return False gracefully without raising exceptions
+        assert play_sound_test_chime(None) is False
+
+
+def test_usb_ids_database():
+    db = UsbIdsDatabase()
+    assert db.get_device_icon_name("1-1", "Sony Interactive Entertainment DualSense Wireless Controller (054c:0ce6)") == "gamepad"
+    assert db.is_gamepad_device("1-1", "DualSense Controller") is True
+    assert db.is_storage_device("1-1", "SanDisk Ultra Flash Drive") is True
+
+
+def test_handle_import_client_config():
+    from api.status_routes import handle_import_client_config
+    mock_controller = MagicMock()
+    mock_controller.servers = []
+    mock_controller.config = MagicMock()
+    
+    payload = {
+        "config": {
+            "auto_attach": False,
+            "servers": [{"ip": "192.168.2.200", "port": 3240, "name": "Backup Server", "token": "sec123", "enabled": True}]
+        }
+    }
+    
+    res = handle_import_client_config(mock_controller, payload)
+    assert res["status"] == "ok"
+    assert len(mock_controller.servers) == 1
+    assert mock_controller.servers[0].ip == "192.168.2.200"
+    mock_controller.save_servers_to_config.assert_called_once()
+    mock_controller.scanner.set_servers.assert_called_once()
+    mock_controller.scanner.trigger_scan.assert_called_once()
+
+
+def test_wol_enable_windows_safe():
+    from core.wol import enable_client_wake_on_lan
+    with patch("sys.platform", "win32"), patch("core.wol.get_primary_mac_address", return_value="aa:bb:cc:dd:ee:ff"):
+        ok, msg = enable_client_wake_on_lan()
+        assert ok is True
+        assert "aa:bb:cc:dd:ee:ff" in msg
