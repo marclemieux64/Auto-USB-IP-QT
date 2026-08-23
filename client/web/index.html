@@ -19,9 +19,9 @@
         </div>
         <div class="actions">
             <button class="btn btn-primary" onclick="promptAddServer()"><img src="/icons/add-server.png"> Add Server</button>
-            <button class="btn btn-secondary" onclick="recoverZombieConnections()" title="Clear zombie connections and re-bind remote USB ports after sleep/wake"><img src="/icons/power-cycle.png"> Recover USB</button>
+            <button class="btn btn-secondary" onclick="recoverZombieConnections()" title="Clear stale connections and rebind USB ports"><img src="/icons/power-cycle.png"> Recover USB</button>
             <button class="btn btn-danger" onclick="detachAllPorts()" title="Detach all active local VHCI ports"><img src="/icons/detach-all.png"> Detach All</button>
-            <button class="btn" id="btn-console" onclick="openConsoleModal()" title="Open Live Client Diagnostics Console"><img src="/icons/utilities-terminal.png"> Console <span id="console-badge" class="badge badge-danger" style="display:none; font-size:0.65rem; padding:1px 4px; margin-left:2px; border-radius:10px;">0</span></button>
+            <button class="btn" id="btn-console" onclick="openConsoleModal()" title="Open Client Console"><img src="/icons/utilities-terminal.png"> Console <span id="console-badge" class="badge badge-danger" style="display:none; font-size:0.65rem; padding:1px 4px; margin-left:2px; border-radius:10px;">0</span></button>
             <button class="btn" onclick="openClientOptionsModal()" title="Client Preferences & Settings"><img src="/icons/configure.png"> Options</button>
             <button class="btn" onclick="restartClient(event)" title="Restart Client Daemon"><img src="/icons/refresh.png"> Restart</button>
         </div>
@@ -59,7 +59,7 @@
 
     <!-- Global Empty State -->
     <div id="global-empty" class="empty-state" style="display:none; margin-top: 10px;">
-        No active servers or devices. Click "+ Add Server" to connect a USB/IP server.
+        No active servers or devices. Click "Add Server" to connect.
     </div>
 
     <!-- Add Server Modal -->
@@ -84,12 +84,12 @@
                 </div>
                 <div class="form-group">
                     <label>Auth Token (If server requires authentication):</label>
-                    <input type="password" id="add-srv-token" class="form-control" placeholder="Optional security token">
-                    <div id="add-srv-token-hint" style="display:none; color:#f59e0b; font-size:0.75rem; margin-top:4px; font-weight:600;">🔒 This server requires an authentication token to connect.</div>
+                    <input type="password" id="add-srv-token" class="form-control" placeholder="Optional auth token">
+                    <div id="add-srv-token-hint" style="display:none; color:#f59e0b; font-size:0.75rem; margin-top:4px; font-weight:600;">This server requires an authentication token.</div>
                 </div>
             </div>
             <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
-                <button class="btn btn-secondary" onclick="closeAddServerModal(); startSubnetScan();" title="Probe an entire IP Subnet CIDR (e.g. 192.168.1.0/24) on background threads across VLANs"><img src="/icons/refresh.png"> Scan Subnet IP Range</button>
+                <button class="btn btn-secondary" onclick="closeAddServerModal(); startSubnetScan();" title="Scan a subnet range (e.g. 192.168.1.0/24)"><img src="/icons/refresh.png"> Scan Subnet Range</button>
                 <div style="display:flex; gap:6px;">
                     <button class="btn" onclick="closeAddServerModal()">Cancel</button>
                     <button class="btn btn-primary" onclick="submitAddServer()">Save & Connect</button>
@@ -136,7 +136,7 @@
             </div>
 
             <p style="font-size: 0.80rem; color: var(--text-muted); line-height: 1.5; margin: 0 auto 14px auto; max-width: 420px;">
-                Automatic USB-over-IP Device Client, Gamepad Diagnostic Hub & Server Manager for Linux and Windows.
+                USB-over-IP client, gamepad diagnostics, and server manager for Linux and Windows.
             </p>
 
             <div style="background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; text-align: left; font-size: 0.76rem; margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px;">
@@ -155,9 +155,6 @@
                 </div>
             </div>
 
-            <div style="font-size: 0.70rem; color: var(--text-dimmed); margin-bottom: 14px; line-height: 1.4;">
-                🤖 <i>Engineered with AI pair programming (Google DeepMind / Antigravity).</i>
-            </div>
 
             <div style="display: flex; justify-content: center; gap: 8px;">
                 <a href="https://github.com/marclemieux64/Auto-USB-IP-QT" target="_blank" class="btn" style="text-decoration: none; padding: 6px 14px;">
@@ -195,18 +192,18 @@
                         <label class="form-check"><input type="checkbox" id="opt-remember-detached"> Remember detached devices across restarts</label>
                         <label class="form-check"><input type="checkbox" id="opt-show-notifications"> Show desktop notifications</label>
                         <label class="form-check"><input type="checkbox" id="opt-play-sound"> Play audio sound cues on device attach / detach</label>
-                        <label class="form-check" title="Automatically power-cycles USB port on the server if device fails to bind/attach"><input type="checkbox" id="opt-power-cycle-attach"> Auto power-cycle port on attach error</label>
+                        <label class="form-check" title="Power cycle port on server if attach fails"><input type="checkbox" id="opt-power-cycle-attach"> Power cycle port on attach failure</label>
                         <label class="form-check"><input type="checkbox" id="opt-auto-discover"> Enable mDNS Zeroconf server auto-discovery</label>
                         <label class="form-check" title="Enable or disable the Web Dashboard browser interface"><input type="checkbox" id="opt-enable-web-ui" onchange="toggleWebUiOptions(this.checked)"> Enable Web Dashboard Interface</label>
                         <div id="web-ui-sub-options">
-                            <label class="form-check" style="margin-left:18px;" title="When enabled, allows other devices on your local network to access this Web Dashboard."><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
+                            <label class="form-check" style="margin-left:18px;" title="Allow devices on your local network to access the web dashboard"><input type="checkbox" id="opt-allow-lan-access" onchange="toggleLanUrlDisplay(this.checked)"> Allow LAN Network Access to Web Dashboard</label>
                             <div id="lan-url-info" style="display:none; font-size:0.72rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-radius:4px; padding:3px 6px; margin:2px 0 4px 18px; font-family:var(--font-mono);">
                                 🌐 LAN URL: <span id="opt-lan-url" style="color:var(--accent-color); font-weight:700; user-select:all;">http://127.0.0.1:3242/</span>
                             </div>
                         </div>
 
                         <label class="form-check"><input type="checkbox" id="opt-enable-nicknames"> Enable custom device nicknames</label>
-                        <label class="form-check" title="When enabled, your PC automatically wakes from sleep on remote device activity."><input type="checkbox" id="opt-enable-wol"> Wake this PC on device activity (Wake-on-LAN)</label>
+                        <label class="form-check" title="Wake this PC when remote USB input is detected"><input type="checkbox" id="opt-enable-wol"> Wake this PC on remote input (Wake-on-LAN)</label>
                         
                         <div class="form-group" style="margin-top: 6px; margin-bottom: 6px;">
                             <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
@@ -219,11 +216,11 @@
                         <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 8px 0 4px 0;">🔒 Security & Hardening</div>
                         <label class="form-check" title="Validate Origin/Referer headers on Web API mutating requests"><input type="checkbox" id="opt-enable-csrf"> Enable Web API CSRF Protection</label>
                         <label class="form-check" title="Pin remote server TLS certificate SHA-256 fingerprints"><input type="checkbox" id="opt-enable-tls-pinning"> Enable TLS Certificate Pinning</label>
-                        <label class="form-check" title="Protect against BadUSB attacks"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Enable BadUSB Device Class Filter</label>
+                        <label class="form-check" title="Filter devices by USB class"><input type="checkbox" id="opt-enable-class-filter" onchange="document.getElementById('badusb-options').style.display = this.checked ? 'block' : 'none'"> Filter devices by USB class</label>
                         <div id="badusb-options" style="display:none; margin:2px 0 4px 18px; font-size:0.72rem; background:rgba(0,0,0,0.25); padding:4px 8px; border-radius:4px;">
                             <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-storage"> Block USB Mass Storage (Class 08h)</label>
                             <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-network"> Block Network Adapters (02h/E0h)</label>
-                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block Raw USB Keyboards</label>
+                            <label class="form-check" style="margin-bottom:2px;"><input type="checkbox" id="opt-block-keyboard"> Block USB Keyboards</label>
                         </div>
                     </div>
 
@@ -246,8 +243,8 @@
             <div class="modal-footer" style="justify-content:space-between;">
                 <div style="display:flex; gap:6px;">
                     <button class="btn" onclick="openAboutModal()" title="About Auto USB/IP-QT"><img src="/icons/app-icon.png" style="width:16px;height:16px;object-fit:contain;"> About</button>
-                    <button class="btn" onclick="exportClientBackup()" title="Export all client settings and server configs to JSON"><img src="/icons/document-save.png"> Export Backup</button>
-                    <button class="btn" onclick="triggerImportClientBackup()" title="Import settings from a previously exported JSON backup"><img src="/icons/document-open.png"> Import Backup</button>
+                    <button class="btn" onclick="exportClientBackup()" title="Export settings to JSON"><img src="/icons/document-save.png"> Export Backup</button>
+                    <button class="btn" onclick="triggerImportClientBackup()" title="Import settings from JSON backup"><img src="/icons/document-open.png"> Import Backup</button>
                     <input type="file" id="client-backup-file" style="display:none;" accept=".json" onchange="handleClientBackupFile(event)">
                 </div>
                 <div style="display:flex; gap:6px;">
@@ -295,25 +292,25 @@
                     <button class="console-filter-btn" data-srv-level="ERROR" onclick="setServerConsoleLevel('ERROR')">ERROR</button>
                 </div>
 
-                <input type="text" id="srv-console-search-input" class="console-search-box" placeholder="Filter server logs...">
+                <input type="text" id="srv-console-search-input" class="console-search-box" placeholder="Filter logs...">
 
                 <div style="display:flex; gap:6px; align-items:center;">
-                    <button class="btn" id="srv-console-autoscroll-btn" onclick="toggleServerConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle automatic scrolling">Auto-Scroll</button>
-                    <button class="btn" onclick="copyServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy all logs to clipboard"><img src="/icons/document-save.png"> Copy</button>
-                    <button class="btn" onclick="exportServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Download log file"><img src="/icons/document-open.png"> Export</button>
-                    <button class="btn btn-danger" onclick="clearServerConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console buffer">Clear</button>
+                    <button class="btn" id="srv-console-autoscroll-btn" onclick="toggleServerConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle auto-scroll">Auto-Scroll</button>
+                    <button class="btn" onclick="copyServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy logs"><img src="/icons/document-save.png"> Copy</button>
+                    <button class="btn" onclick="exportServerConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Export log file"><img src="/icons/document-open.png"> Export</button>
+                    <button class="btn btn-danger" onclick="clearServerConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console">Clear</button>
                 </div>
             </div>
 
             <!-- Server Console Logs Output Body -->
             <div id="srv-console-logs-container" class="console-body">
-                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to live remote server daemon...</div>
+                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to server...</div>
             </div>
 
             <!-- Server Interactive CLI Input -->
             <div class="console-footer-cli">
                 <span id="srv-console-prompt" class="console-cli-prompt" style="color:var(--accent-color);">&gt;</span>
-                <input type="text" id="srv-console-cmd-input" class="console-cli-input" placeholder="Type a server command (e.g. 'status', 'devices', 'metrics', 'logs', 'powercycle 1-1.2', 'rebind', 'restart', 'help')..." autocomplete="off" spellcheck="false">
+                <input type="text" id="srv-console-cmd-input" class="console-cli-input" placeholder="Enter command (status, devices, metrics, logs, powercycle <busid>, restart, help)..." autocomplete="off" spellcheck="false">
                 <button class="btn btn-primary" onclick="handleServerConsoleEnterKey()" style="padding:3px 10px; font-size:0.72rem;">Run</button>
             </div>
         </div>
@@ -328,7 +325,7 @@
             </div>
             <div class="modal-body">
                 <div id="auth-prompt-msg" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
-                    Enter the server security token to authorize this configuration change.
+                    Enter the server token to authorize this change.
                 </div>
                 <div class="form-group">
                     <label>Server Security Token:</label>
@@ -336,7 +333,7 @@
                         <input type="password" id="auth-prompt-token-input" class="form-control" placeholder="Enter authentication token" autocomplete="new-password" style="padding-right:36px;" onkeydown="if(event.key==='Enter')confirmServerAuthPrompt(); if(event.key==='Escape')cancelServerAuthPrompt();">
                         <button type="button" onclick="toggleAuthPromptPasswordVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem;" title="Show/Hide Token">👁️</button>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Leave blank if the server does not currently require authentication.</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Leave blank if the server does not require authentication.</div>
                 </div>
             </div>
             <div class="modal-footer" style="justify-content:flex-end; gap:6px;">
@@ -364,13 +361,13 @@
                     <input type="password" id="srv-opt-token" class="form-control" placeholder="Server authentication secret">
                 </div>
                 <label class="form-check"><input type="checkbox" id="srv-opt-subnet"> Restrict control socket to local LAN subnets</label>
-                <label class="form-check"><input type="checkbox" id="srv-opt-rebind"> Auto re-bind physical devices on boot & hotplug</label>
-                <label class="form-check"><input type="checkbox" id="srv-opt-startup-power"> Power cycle USB ports (VBUS) on daemon startup</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-rebind"> Auto-rebind physical devices on boot and hotplug</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-startup-power"> Power cycle USB ports on startup</label>
                 <div class="form-group" style="margin-left: 20px; display:flex; align-items:center; gap:8px;">
-                    <label style="margin:0; font-size:0.8rem;">VBUS Power-off Delay (seconds):</label>
+                    <label style="margin:0; font-size:0.8rem;">Power-off delay (seconds):</label>
                     <input type="number" id="srv-opt-vbus-delay" class="form-control" style="width:75px; padding:2px 6px;" step="0.5" min="0.5" max="10.0" value="2.5">
                 </div>
-                <label class="form-check"><input type="checkbox" id="srv-opt-wol"> Send Wake-on-LAN to registered clients on USB input activity</label>
+                <label class="form-check"><input type="checkbox" id="srv-opt-wol"> Send Wake-on-LAN packets on USB input activity</label>
 
                 <!-- Blacklist Management -->
                 <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 6px 0;">Server-Side Hardware Blacklist</div>
@@ -380,7 +377,7 @@
             <!-- Remote Power & Action Controls -->
             <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn btn-secondary" onclick="restoreServerDefaultSettings()" title="Restore server options to default factory configuration"><img src="/icons/undo.png"> Restore Defaults</button>
+                    <button class="btn btn-secondary" onclick="restoreServerDefaultSettings()" title="Reset settings to defaults"><img src="/icons/undo.png"> Restore Defaults</button>
                     <button class="btn btn-warning" onclick="restartServerDaemon()"><img src="/icons/refresh.png"> Restart Daemon</button>
                     <button class="btn btn-danger" onclick="rebootServerSystem()"><img src="/icons/power-cycle.png"> Reboot System</button>
                 </div>
@@ -528,8 +525,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <span style="font-size: 0.76rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px;">DualSense Hardware Controls</span>
                     <div style="display: flex; gap: 6px; align-items: center;">
-                        <button class="btn btn-primary" onclick="testDualSenseSound()" style="padding: 3px 8px; font-size: 0.72rem;" title="Play 3-note audio chime on controller speaker/headset">🔊 Sound Test</button>
-                        <button class="btn btn-primary" onclick="testDualSenseRumble()" style="padding: 3px 8px; font-size: 0.72rem;" title="Trigger 250ms motor haptic feedback">⚡ Test Rumble</button>
+                        <button class="btn btn-primary" onclick="testDualSenseSound()" style="padding: 3px 8px; font-size: 0.72rem;" title="Play audio test tone on controller speaker">🔊 Sound Test</button>
+                        <button class="btn btn-primary" onclick="testDualSenseRumble()" style="padding: 3px 8px; font-size: 0.72rem;" title="Test rumble motors">⚡ Test Rumble</button>
                     </div>
                 </div>
                 
@@ -567,7 +564,7 @@
                 <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <span style="font-size: 0.73rem; font-weight: 700; color: var(--accent-color); display: flex; align-items: center; gap: 4px;">
-                            ⚙️ Motorized Adaptive Triggers (L2 / R2)
+                            Adaptive Triggers (L2 / R2)
                         </span>
                         <div style="display: flex; gap: 4px; align-items: center;">
                             <span style="font-size: 0.70rem; color: var(--text-muted);">Target:</span>
@@ -577,15 +574,15 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px;">
-                        <button class="btn btn-pill active" id="ds-trig-off" onclick="setDualSenseTriggerMode('off')" style="font-size: 0.70rem; padding: 2px 7px;" title="Standard smooth trigger feel">🔘 Off / Smooth</button>
-                        <button class="btn btn-pill" id="ds-trig-gun" onclick="setDualSenseTriggerMode('gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Two-stage firearm with hard mechanical wall snap">🎯 Gun Trigger (Wall Break)</button>
-                        <button class="btn btn-pill" id="ds-trig-mg" onclick="setDualSenseTriggerMode('machine_gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Motorized automatic rifle kickback vibration">🔫 Machine Gun (Recoil)</button>
-                        <button class="btn btn-pill" id="ds-trig-bow" onclick="setDualSenseTriggerMode('bow')" style="font-size: 0.70rem; padding: 2px 7px;" title="Elastic bowstring tension increasing as you pull">🏹 Archery Bow (Draw)</button>
-                        <button class="btn btn-pill" id="ds-trig-abs" onclick="setDualSenseTriggerMode('abs')" style="font-size: 0.70rem; padding: 2px 7px;" title="High-frequency anti-lock brake stutter when braking hard">🚗 ABS Brakes (Stutter)</button>
-                        <button class="btn btn-pill" id="ds-trig-heavy" onclick="setDualSenseTriggerMode('heavy')" style="font-size: 0.70rem; padding: 2px 7px;" title="Continuous hydraulic lever resistance">🕹️ Hydraulic Lever</button>
+                        <button class="btn btn-pill active" id="ds-trig-off" onclick="setDualSenseTriggerMode('off')" style="font-size: 0.70rem; padding: 2px 7px;" title="Standard trigger without resistance">Off</button>
+                        <button class="btn btn-pill" id="ds-trig-gun" onclick="setDualSenseTriggerMode('gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Two-stage pull with a distinct break point">Gun Trigger</button>
+                        <button class="btn btn-pill" id="ds-trig-mg" onclick="setDualSenseTriggerMode('machine_gun')" style="font-size: 0.70rem; padding: 2px 7px;" title="Pulsing recoil during pull">Machine Gun</button>
+                        <button class="btn btn-pill" id="ds-trig-bow" onclick="setDualSenseTriggerMode('bow')" style="font-size: 0.70rem; padding: 2px 7px;" title="Progressive tension increasing through the pull">Bow</button>
+                        <button class="btn btn-pill" id="ds-trig-abs" onclick="setDualSenseTriggerMode('abs')" style="font-size: 0.70rem; padding: 2px 7px;" title="High-frequency vibration under heavy pull">ABS Brakes</button>
+                        <button class="btn btn-pill" id="ds-trig-heavy" onclick="setDualSenseTriggerMode('heavy')" style="font-size: 0.70rem; padding: 2px 7px;" title="Continuous heavy resistance through full travel">Lever</button>
                     </div>
                     <div id="ds-trig-desc" style="font-size: 0.70rem; color: var(--text-muted); margin-bottom: 4px; font-style: italic;">
-                        Default smooth trigger feel. No motorized resistance.
+                        Standard trigger without resistance.
                     </div>
                     <div id="ds-trig-sliders" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; background: rgba(0,0,0,0.25); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
                         <div>
@@ -597,7 +594,7 @@
                         </div>
                         <div>
                             <div style="display:flex; justify-content:space-between; font-size: 0.68rem; color:var(--text-muted);">
-                                <span>Start / Wall Pos</span>
+                                <span>Start Position</span>
                                 <span id="ds-trig-pos-val">35%</span>
                             </div>
                             <input type="range" id="ds-trig-pos" min="0" max="220" value="80" oninput="onTriggerParamChange()" style="width:100%; height:4px; margin-top:2px;">
@@ -623,7 +620,7 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                     <img src="/icons/utilities-terminal.png" style="width:26px; height:26px; object-fit:contain;">
                     <h3 style="margin:0; font-size:0.95rem; font-weight:700; color:#fff;">Client Diagnostics Console</h3>
-                    <span style="font-size:0.7rem; color:var(--text-muted); background:#1a2030; padding:2px 6px; border-radius:4px;">Local Daemon Stream</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted); background:#1a2030; padding:2px 6px; border-radius:4px;">Local Stream</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center;">
                     <button class="btn btn-danger" onclick="closeConsoleModal()" style="padding:4px 10px; font-size:0.75rem;">Close</button>
@@ -652,25 +649,25 @@
                     <button class="console-filter-btn" data-level="DEBUG" onclick="setConsoleLevel('DEBUG')">DEBUG</button>
                 </div>
 
-                <input type="text" id="console-search-input" class="console-search-box" placeholder="Filter client logs...">
+                <input type="text" id="console-search-input" class="console-search-box" placeholder="Filter logs...">
 
                 <div style="display:flex; gap:6px; align-items:center;">
-                    <button class="btn" id="console-autoscroll-btn" onclick="toggleConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle automatic scrolling">Auto-Scroll</button>
-                    <button class="btn" onclick="copyConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy all logs to clipboard"><img src="/icons/document-save.png"> Copy</button>
-                    <button class="btn" onclick="exportConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Download log file"><img src="/icons/document-open.png"> Export</button>
-                    <button class="btn btn-danger" onclick="clearConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console buffer">Clear</button>
+                    <button class="btn" id="console-autoscroll-btn" onclick="toggleConsoleAutoScroll()" style="padding:3px 8px; font-size:0.72rem;" title="Toggle auto-scroll">Auto-Scroll</button>
+                    <button class="btn" onclick="copyConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Copy logs"><img src="/icons/document-save.png"> Copy</button>
+                    <button class="btn" onclick="exportConsoleLogs()" style="padding:3px 8px; font-size:0.72rem;" title="Export log file"><img src="/icons/document-open.png"> Export</button>
+                    <button class="btn btn-danger" onclick="clearConsole()" style="padding:3px 8px; font-size:0.72rem;" title="Clear console">Clear</button>
                 </div>
             </div>
 
             <!-- Console Logs Output Body -->
             <div id="console-logs-container" class="console-body">
-                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to client log stream...</div>
+                <div style="color:var(--text-muted); font-style:italic; padding:16px; text-align:center;">Connecting to log stream...</div>
             </div>
 
             <!-- Console Interactive CLI Input -->
             <div class="console-footer-cli">
                 <span class="console-cli-prompt">&gt;</span>
-                <input type="text" id="console-cmd-input" class="console-cli-input" placeholder="Type a client command (e.g. 'help', 'scan', 'status', 'devices', 'servers', 'ping', 'detach-all')..." autocomplete="off" spellcheck="false">
+                <input type="text" id="console-cmd-input" class="console-cli-input" placeholder="Enter command (help, scan, status, devices, servers, ping, detach-all)..." autocomplete="off" spellcheck="false">
                 <button class="btn btn-primary" onclick="handleConsoleEnterKey()" style="padding:3px 10px; font-size:0.72rem;">Run</button>
             </div>
         </div>

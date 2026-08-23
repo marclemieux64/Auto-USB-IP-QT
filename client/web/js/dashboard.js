@@ -775,13 +775,13 @@ async function attachSingleDevice(ip, busid) {
 }
 
 async function powerCycleDevice(ip, busid) {
-    showToast(`⚡ Initiating power cycle for USB ${busid}...`);
+    showToast(`Power cycling USB port ${busid}...`);
     try {
         const res = await API.powerCycle(ip, busid);
         if (res && res.status === "ok") {
-            showToast(`⚡ Power cycle completed for USB ${busid}.`);
+            showToast(`Power cycle complete for USB ${busid}.`);
         } else {
-            showToast(`⚡ Power cycle signal sent.`);
+            showToast(`Power cycle request sent.`);
         }
     } catch (e) {
         console.error("Error power cycling device:", e);
@@ -791,10 +791,10 @@ async function powerCycleDevice(ip, busid) {
 }
 
 async function recoverZombieConnections() {
-    showToast("⚡ Recovering USB connection: clearing stale sockets & rebinding...");
+    showToast("Recovering USB connections and rebinding ports...");
     try {
         await API.recoverZombies();
-        showToast("⚡ Rebind requested. Reconnecting devices...");
+        showToast("Rebind requested. Reconnecting devices...");
     } catch (e) {
         console.error("Error recovering zombies:", e);
     } finally {
@@ -1318,7 +1318,7 @@ async function saveServerSettings() {
 async function restoreServerDefaultSettings() {
     if (!activeServerSettingsIp) return;
     const ip = activeServerSettingsIp;
-    if (!confirm("Are you sure you want to reset all server options on " + ip + " back to factory default configuration?")) {
+    if (!confirm("Reset all server settings on " + ip + " to defaults?")) {
         return;
     }
 
@@ -1375,7 +1375,7 @@ async function restoreServerDefaultSettings() {
 async function restartServerDaemon() {
     if (!activeServerSettingsIp) return;
     const ip = activeServerSettingsIp;
-    if (confirm("Restart the background server daemon on this remote device?")) {
+    if (confirm("Restart server daemon on " + ip + "?")) {
         pendingRestartServers[ip] = { text: "Restarting...", timestamp: Date.now(), timeout: 12000 };
         renderServers();
         closeServerSettingsModal();
@@ -1391,7 +1391,7 @@ async function restartServerDaemon() {
 async function rebootServerSystem() {
     if (!activeServerSettingsIp) return;
     const ip = activeServerSettingsIp;
-    if (confirm("REBOOT the entire remote device (e.g. Raspberry Pi)?")) {
+    if (confirm("Reboot remote system on " + ip + "?")) {
         pendingRestartServers[ip] = { text: "Rebooting System...", timestamp: Date.now(), timeout: 35000 };
         renderServers();
         closeServerSettingsModal();
