@@ -67,8 +67,6 @@ try:
 except ImportError:
     HAS_PYUDEV = False
 
-GLOBAL_AVAHI_PROC = None
-
 PORT = 3240
 CONTROL_PORT = 3241
 
