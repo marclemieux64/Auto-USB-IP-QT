@@ -37,7 +37,7 @@ Categories=Utility;Network;
 Keywords=usb;usbip;remote;gamepad;controller;
 StartupNotify=true
 StartupWMClass=auto-usbip-client
-X-AppImage-Version=2.0.0
+X-AppImage-Version=2.3.0
 DESKTOP_EOF
     
     chmod 644 "${DESKTOP_DIR}/org.autousbip.client.desktop"

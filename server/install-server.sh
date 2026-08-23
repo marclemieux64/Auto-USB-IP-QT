@@ -45,7 +45,7 @@ modprobe usbip_core || true
 modprobe usbip_host || true
 
 # Persist modules across reboot
-mkdir -p /etc/modules-load.d
+mkdir -p /etc/modules-load.d /etc/auto-usbip /root/.config/auto-usbip
 cat << 'EOF_MODS' > /etc/modules-load.d/autousbip.conf
 usbip_core
 usbip_host
@@ -116,7 +116,7 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/etc/auto-usbip /root/.config/auto-usbip /var/log /sys /dev
+ReadWritePaths=-/etc/auto-usbip -/root/.config/auto-usbip /var/log /sys /dev
 PrivateTmp=true
 NoNewPrivileges=true
 

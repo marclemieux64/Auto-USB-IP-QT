@@ -174,7 +174,9 @@ class NativePlasmaPanel:
 
     def show(self, initial_js: str = ""):
         if self.isVisible():
-            return
+            if not initial_js:
+                return
+            self.hide()
 
         executable = sys.executable
         if getattr(sys, "frozen", False):

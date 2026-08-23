@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import logging
 import os
 import re
@@ -36,6 +38,16 @@ def get_primary_network_interface() -> str | None:
 
 def get_primary_mac_address() -> str | None:
     """Read the hardware MAC address of the active primary network adapter."""
+    if sys.platform == "win32":
+        try:
+            import uuid
+            node = uuid.getnode()
+            if (node >> 40) % 2 == 0:
+                mac_hex = f"{node:012x}"
+                return ":".join(mac_hex[i:i+2] for i in range(0, 12, 2)).lower()
+        except Exception:
+            pass
+
     iface = get_primary_network_interface()
     if iface:
         try:
@@ -53,6 +65,16 @@ def get_primary_mac_address() -> str | None:
         matches = re.findall(r"link/ether\s+([0-9a-fA-F:]{17})", r.stdout)
         if matches:
             return matches[0].lower()
+    except Exception:
+        pass
+
+    # Fallback to uuid.getnode()
+    try:
+        import uuid
+        node = uuid.getnode()
+        if (node >> 40) % 2 == 0:
+            mac_hex = f"{node:012x}"
+            return ":".join(mac_hex[i:i+2] for i in range(0, 12, 2)).lower()
     except Exception:
         pass
 

@@ -210,12 +210,12 @@ let konamiHistory = [];
 let lastInputState = { up: false, down: false, left: false, right: false, b: false, a: false };
 
 const TRIGGER_DESCRIPTIONS = {
-    "off": "Default smooth trigger feel. No motorized resistance.",
-    "gun": "🎯 Two-Stage Firearm: Free travel until 35%, then a hard mechanical tactile wall that requires force to snap through.",
-    "machine_gun": "🔫 Automatic Recoil: Rhythmic 15Hz motorized kickback ratcheting actively pushing against your finger as you fire.",
-    "bow": "🏹 Archery Bow: Linear progressive tension that tightens continuously the further back you draw.",
-    "abs": "🚗 ABS Brakes: High-frequency anti-lock brake stutter when applying heavy pressure beyond 50% travel.",
-    "heavy": "🕹️ Hydraulic Lever: Constant high-resistance viscosity throughout the full trigger pull."
+    "off": "Standard trigger without resistance.",
+    "gun": "Two-stage pull with a distinct break point.",
+    "machine_gun": "Pulsing recoil during trigger pull.",
+    "bow": "Progressive tension increasing through the pull.",
+    "abs": "High-frequency vibration under heavy pull.",
+    "heavy": "Continuous heavy resistance through full travel."
 };
 
 async function openGamepadTesterModal(port, titleEnc) {
@@ -677,7 +677,7 @@ function setDualSenseTriggerMode(mode) {
 
     applyTriggerEffect();
     if (mode !== "off") {
-        showToast(`⚙️ DualSense Adaptive Trigger Active: ${mode.toUpperCase()} — Squeeze L2/R2!`);
+        showToast(`Adaptive trigger set to ${mode.toUpperCase()}.`);
     }
 }
 
@@ -842,7 +842,7 @@ async function testDualSenseSound() {
     try {
         const data = await API.sendGamepadControl({ port: activeGamepadPort, action: "sound_test" });
         if (data.status === "ok") {
-            showToast("Played test chime through controller speaker / headset");
+            showToast("Played test audio on controller speaker.");
         }
     } catch (e) {}
 }

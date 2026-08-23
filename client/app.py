@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from config import ClientConfig, load_config, play_sound_cue, save_config
 from core.usb_ids import UsbIdsDatabase
-from core.usbip import attach_device, detach_all_ports, detach_device
+from core.usbip import attach_device, detach_all_ports, detach_port, detach_device
 from services import (
     AvailableDevice,
     DeviceScanner,
@@ -263,7 +263,7 @@ class AutoUsbipApp(QObject):
             self.scanner.trigger_scan()
 
     def detach_single_device(self, port: str):
-        from core.usbip import get_port_to_bus_map, detach_device
+        from core.usbip import get_port_to_bus_map, detach_port
         port_map = get_port_to_bus_map()
         p_str = str(port).strip()
         p_int = str(int(p_str)) if p_str.isdigit() else p_str
@@ -283,7 +283,7 @@ class AutoUsbipApp(QObject):
             if s_ip and bus_id:
                 self.scanner.ignored_devices[(s_ip, bus_id)] = f"Detached ({bus_id})"
 
-        detach_device(str(port))
+        detach_port(str(port))
         if hasattr(self, "scanner"):
             self.scanner.trigger_scan()
 

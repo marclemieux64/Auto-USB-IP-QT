@@ -13,6 +13,20 @@ from typing import Any
 
 logger = logging.getLogger("auto-usbip-client")
 
+import sys
+
+def _ping_host(target: str) -> str:
+    try:
+        if sys.platform == 'win32':
+            args = ['ping', '-n', '3', '-w', '2000', target]
+        else:
+            args = ['ping', '-c', '3', '-W', '2', target]
+        p = subprocess.run(args, capture_output=True, text=True, timeout=7.0)
+        return p.stdout.strip() or p.stderr.strip()
+    except Exception as e:
+        return f'Ping to {target} failed: {e}'
+
+
 
 class ConsoleLogRecord:
     __slots__ = ("id", "timestamp", "level", "name", "message", "time_epoch")
@@ -160,19 +174,19 @@ def execute_server_console_command(args: list[str], controller: Any) -> str:
     if not args or args[0].lower() in ("help", "?"):
         return (
             "=== Remote USB/IP Server Commands ===\n"
-            "  server status [ip]               - Get remote server hardware, metrics, and bound devices\n"
-            "  server metrics [ip]              - Print remote CPU temp, memory, uptime, kernel version\n"
-            "  server devices [ip]              - List physical USB hardware and active exported bus IDs\n"
-            "  server logs [ip] [lines]         - Retrieve remote daemon journalctl log stream\n"
-            "  server powercycle <busid> [ip]   - Cut and restore physical +5V VBUS power to port\n"
-            "  server rebind [ip]               - Unbind and rebind all USB devices (clears zombies)\n"
-            "  server restart [ip]              - Soft restart the remote autousbip daemon\n"
-            "  server reboot [ip]               - Cold reboot the remote server system hardware\n"
-            "  server config [ip]               - View remote server daemon settings\n"
-            "  server blacklist [ip]            - View or manage server hardware blacklist\n"
-            "  server blacklist add <vid:pid>   - Blacklist a hardware device on server\n"
-            "  server blacklist remove <vid:pid>- Unblock a hardware device on server\n"
-            "  server ping [ip]                 - Measure round-trip ping latency to server"
+            "  server status [ip]               - Get server status, metrics, and bound devices\n"
+            "  server metrics [ip]              - Show CPU temp, memory, and uptime\n"
+            "  server devices [ip]              - List USB devices and exported bus IDs\n"
+            "  server logs [ip] [lines]         - Get server log stream\n"
+            "  server powercycle <busid> [ip]   - Power cycle USB port\n"
+            "  server rebind [ip]               - Rebind all USB devices\n"
+            "  server restart [ip]              - Restart server daemon\n"
+            "  server reboot [ip]               - Reboot server system\n"
+            "  server config [ip]               - View server settings\n"
+            "  server blacklist [ip]            - View or manage server blacklist\n"
+            "  server blacklist add <vid:pid>   - Blacklist a device on server\n"
+            "  server blacklist remove <vid:pid>- Unblock a device on server\n"
+            "  server ping [ip]                 - Ping server"
         )
 
     sub = args[0].lower()
@@ -295,11 +309,7 @@ def execute_server_console_command(args: list[str], controller: Any) -> str:
         return "Usage: server blacklist [add|remove <vid:pid>]"
 
     if sub == "ping":
-        try:
-            p = subprocess.run(["ping", "-c", "3", "-W", "2", server_ip], capture_output=True, text=True, timeout=7.0)
-            return p.stdout.strip() or p.stderr.strip()
-        except Exception as e:
-            return f"Ping to {server_ip} failed: {e}"
+        return _ping_host(server_ip)
 
     return f"Unknown server subcommand: '{sub}'. Type 'server help' for command list."
 
@@ -338,25 +348,25 @@ def execute_console_command(command: str, controller: Any, target_mode: str = "c
         return (
             "=== Auto USB/IP Client Console Commands ===\n"
             "  help                         - Show this help menu\n"
-            "  status                       - Display overall client, server, and device status\n"
-            "  scan                         - Force an instant scan of all remote USB/IP servers\n"
-            "  devices                      - List all currently imported and available remote USB devices\n"
-            "  servers                      - List configured servers, reachability, and ping latency\n"
-            "  attach <ip> <busid>          - Attach a remote USB device (e.g. 'attach 192.168.2.123 1-1.2')\n"
-            "  detach <port>                - Detach a local VHCI port (e.g. 'detach 00')\n"
-            "  detach-all                   - Detach all active local VHCI ports\n"
-            "  rebind / recover             - Recover zombie connections and cycle ports\n"
-            "  ping <ip>                    - Ping server IP and measure round-trip latency\n"
-            "  audio <port>                 - Toggle audio state for controller on port\n"
-            "  mouse <port>                 - Toggle trackpad mouse mode for DualSense on port\n"
-            "  clear                        - Clear the console log buffer\n"
-            "  version                      - Show client version, kernel, and system details\n\n"
+            "  status                       - Show client, server, and device status\n"
+            "  scan                         - Scan remote servers for USB devices\n"
+            "  devices                      - List attached and available USB devices\n"
+            "  servers                      - List configured servers and latency\n"
+            "  attach <ip> <busid>          - Attach a remote USB device\n"
+            "  detach <port>                - Detach a local VHCI port\n"
+            "  detach-all                   - Detach all active local ports\n"
+            "  rebind / recover             - Clear stale connections and rebind ports\n"
+            "  ping <ip>                    - Ping server IP\n"
+            "  audio <port>                 - Toggle controller audio\n"
+            "  mouse <port>                 - Toggle touchpad mouse mode\n"
+            "  clear                        - Clear console buffer\n"
+            "  version                      - Show version and system details\n\n"
             "=== Remote Server Commands (Type 'server help' for more) ===\n"
-            "  server status                - Query remote server status, metrics, and hardware\n"
-            "  server logs [lines]          - Fetch live journalctl logs from remote server\n"
-            "  server powercycle <busid>    - Power cycle physical USB port on remote server\n"
-            "  server reboot                - Reboot remote Raspberry Pi / server system\n"
-            "  server restart               - Restart remote autousbip server daemon"
+            "  server status                - Query remote server status and metrics\n"
+            "  server logs [lines]          - Fetch logs from remote server\n"
+            "  server powercycle <busid>    - Power cycle USB port on remote server\n"
+            "  server reboot                - Reboot remote server\n"
+            "  server restart               - Restart remote server daemon"
         )
 
     if verb == "status":
@@ -442,11 +452,7 @@ def execute_console_command(command: str, controller: Any, target_mode: str = "c
 
     if verb == "ping":
         target = args[0] if args else (controller.servers[0].ip if controller.servers else "127.0.0.1")
-        try:
-            p = subprocess.run(["ping", "-c", "3", "-W", "2", target], capture_output=True, text=True, timeout=7.0)
-            return p.stdout.strip() or p.stderr.strip()
-        except Exception as e:
-            return f"Ping failed: {e}"
+        return _ping_host(target)
 
     if verb == "audio":
         if len(args) < 1:

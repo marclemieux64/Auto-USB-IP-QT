@@ -220,9 +220,10 @@ def _get_or_create_chime_wav() -> bytes:
     return _CACHED_CHIME_WAV
 
 
-def play_sound_test_chime(hidraw_path: str = "/dev/hidraw15") -> bool:
+def play_sound_test_chime(hidraw_path: str | None = None) -> bool:
     """Generate and play a 48kHz 4-channel 3-tone chime through the controller's speaker."""
-    unmute_playstation_speaker(hidraw_path)
+    if hidraw_path and os.path.exists(hidraw_path):
+        unmute_playstation_speaker(hidraw_path)
     wav_bytes = _get_or_create_chime_wav()
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:

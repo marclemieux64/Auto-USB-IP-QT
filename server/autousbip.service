@@ -1,6 +1,6 @@
 [Unit]
 Description=AutoUSBIP-QT Server Daemon
-Documentation=https://github.com/your-username/auto-usbip
+Documentation=https://github.com/marclemieux64/Auto-USB-IP-QT
 After=network-online.target systemd-udevd.service
 Wants=network-online.target
 
@@ -15,7 +15,7 @@ CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RAWIO
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/etc/auto-usbip /root/.config/auto-usbip /var/log /sys /dev
+ReadWritePaths=-/etc/auto-usbip -/root/.config/auto-usbip /var/log /sys /dev
 PrivateTmp=true
 NoNewPrivileges=true
 

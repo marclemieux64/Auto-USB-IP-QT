@@ -143,13 +143,13 @@ All security controls can be toggled on demand directly from the client options 
 ### Option A: Standalone Self-Installing Binary
 ```bash
 # Run in foreground:
-sudo ./dist/autousbip-qt-server
+sudo ./dist/AutoUSBIP-QT-Server-Linux-x86_64
 
 # Install as systemd background service (starts on boot):
-sudo ./dist/autousbip-qt-server --install
+sudo ./dist/AutoUSBIP-QT-Server-Linux-x86_64 --install
 
 # Uninstall:
-sudo ./dist/autousbip-qt-server --uninstall
+sudo ./dist/AutoUSBIP-QT-Server-Linux-x86_64 --uninstall
 ```
 
 ### Option B: Automated 1-Command Web Installer
@@ -252,10 +252,10 @@ All individual target builders are located in [`scripts/`](scripts/):
 | :--- | :--- | :--- |
 | **Linux AppImage** | `bash scripts/build-appimage.sh` | `dist/AutoUSBIP-QT-Client-Linux-x86_64.AppImage` |
 | **Linux Portable Tarball** | `bash scripts/build-tarball.sh` | `dist/AutoUSBIP-QT-Client-Linux-x86_64.tar.gz` |
-| **Linux Standalone Server** | `bash scripts/build-server-binary.sh` | `dist/autousbip-qt-server` |
+| **Linux Standalone Server** | `bash scripts/build-server-binary.sh` | `dist/AutoUSBIP-QT-Server-Linux-x86_64` |
 | **Windows Client (Single EXE)** | `scripts\build-windows-client-exe.bat` | `dist\AutoUSBIP-QT-Client-Windows-x64.exe` |
 | **Windows Client (MSI Setup)** | `scripts\build-windows-msi.bat` | `dist\AutoUSBIP-QT-Client-Setup-x64.msi` |
-| **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\autousbip-qt-server.exe` |
+| **Windows Server Daemon** | `scripts\build-windows-server-exe.bat` | `dist\AutoUSBIP-QT-Server-Windows-x64.exe` |
 
 ---
 
@@ -266,9 +266,9 @@ All individual target builders are located in [`scripts/`](scripts/):
 * **WiX MSI Setup Package**: Run `scripts\build-windows-msi.bat` to compile `dist\AutoUSBIP-QT-Client-Setup-x64.msi` with customized setup UI dialogs and auto-cleanup actions.
 * On first launch, the client automatically verifies and configures the signed `usbip-win` VHCI driver.
 
-#### 2. Windows Server Daemon (`autousbip-qt-server.exe`)
+#### 2. Windows Server Daemon (`AutoUSBIP-QT-Server-Windows-x64.exe`)
 1. Run `scripts\build-windows-server-exe.bat` to build the standalone server executable.
-2. The compiled binary is output to `dist\autousbip-qt-server.exe`.
+2. The compiled binary is output to `dist\AutoUSBIP-QT-Server-Windows-x64.exe`.
 
 ---
 

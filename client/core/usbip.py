@@ -10,6 +10,8 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+REMOTE_DEVICE_IN_USE_CACHE: dict[tuple[str, str], dict] = {}
+
 @dataclass
 class ImportedPort:
     port: str
@@ -317,11 +319,15 @@ def detach_port(port: str) -> tuple[bool, str]:
         return False, str(e)
 
 
-def detach_device(host: str, busid: str) -> tuple[bool, str]:
+def detach_device(host_or_port: str, busid: str | None = None) -> tuple[bool, str]:
     """
-    Finds the imported port corresponding to host and busid, and detaches it.
+    Finds the imported port corresponding to host and busid (or direct port if single argument), and detaches it.
     Returns (success: bool, message: str).
     """
+    if busid is None:
+        return detach_port(host_or_port)
+
+    host = host_or_port
     imported = list_imported_ports()
     target_port: Optional[str] = None
     for imp in imported:
