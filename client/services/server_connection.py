@@ -105,8 +105,8 @@ class ImportedDevice:
         return get_device_icon_from_desc(self.desc)
 
     def detach(self) -> None:
-        from core.usbip import detach_device
-        detach_device(str(self.port))
+        from core.usbip import detach_port
+        detach_port(str(self.port))
         logger.info(f"Detached device {self.desc}")
 
     def get_clean_name(self, nicknames: dict[str, str] | None = None) -> str:

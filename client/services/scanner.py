@@ -184,7 +184,7 @@ class DeviceScanner(QThread):
 
             # Enforce immediate detach on any currently attached device matching the blacklist
             if blacklisted and current_attached:
-                from core.usbip import detach_device
+                from core.usbip import detach_port
                 needs_refetch = False
                 for dev in current_attached:
                     b_id = getattr(dev, "bus_id", getattr(dev, "busid", ""))
@@ -197,7 +197,7 @@ class DeviceScanner(QThread):
                         or dev.description.lower() in blacklisted
                         or str(dev.port) in blacklisted
                     ):
-                        detach_device(str(dev.port))
+                        detach_port(str(dev.port))
                         needs_refetch = True
                 if needs_refetch:
                     current_attached = get_imported_devices()

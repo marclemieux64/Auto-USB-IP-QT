@@ -13,6 +13,20 @@ from typing import Any
 
 logger = logging.getLogger("auto-usbip-client")
 
+import sys
+
+def _ping_host(target: str) -> str:
+    try:
+        if sys.platform == 'win32':
+            args = ['ping', '-n', '3', '-w', '2000', target]
+        else:
+            args = ['ping', '-c', '3', '-W', '2', target]
+        p = subprocess.run(args, capture_output=True, text=True, timeout=7.0)
+        return p.stdout.strip() or p.stderr.strip()
+    except Exception as e:
+        return f'Ping to {target} failed: {e}'
+
+
 
 class ConsoleLogRecord:
     __slots__ = ("id", "timestamp", "level", "name", "message", "time_epoch")
@@ -295,11 +309,7 @@ def execute_server_console_command(args: list[str], controller: Any) -> str:
         return "Usage: server blacklist [add|remove <vid:pid>]"
 
     if sub == "ping":
-        try:
-            p = subprocess.run(["ping", "-c", "3", "-W", "2", server_ip], capture_output=True, text=True, timeout=7.0)
-            return p.stdout.strip() or p.stderr.strip()
-        except Exception as e:
-            return f"Ping to {server_ip} failed: {e}"
+        return _ping_host(server_ip)
 
     return f"Unknown server subcommand: '{sub}'. Type 'server help' for command list."
 
@@ -442,11 +452,7 @@ def execute_console_command(command: str, controller: Any, target_mode: str = "c
 
     if verb == "ping":
         target = args[0] if args else (controller.servers[0].ip if controller.servers else "127.0.0.1")
-        try:
-            p = subprocess.run(["ping", "-c", "3", "-W", "2", target], capture_output=True, text=True, timeout=7.0)
-            return p.stdout.strip() or p.stderr.strip()
-        except Exception as e:
-            return f"Ping failed: {e}"
+        return _ping_host(target)
 
     if verb == "audio":
         if len(args) < 1:

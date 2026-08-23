@@ -9,7 +9,10 @@ import logging
 import os
 import struct
 from pathlib import Path
-from PyQt6.QtGui import QIcon
+try:
+    from PyQt6.QtGui import QIcon
+except ImportError:
+    QIcon = None
 
 logger = logging.getLogger("auto-usbip-client")
 
@@ -71,14 +74,16 @@ def get_gamepad_battery_info(vid: int | None = None, pid: int | None = None) -> 
                         status = stat_file.read_text().strip() if stat_file.exists() else "Discharging"
                         is_charging = (status.lower() == "charging")
                         
-                        if is_charging:
-                            icon = QIcon.fromTheme("battery-charging", QIcon.fromTheme("battery-good"))
-                        elif cap <= 20:
-                            icon = QIcon.fromTheme("battery-low", QIcon.fromTheme("battery-caution"))
-                        elif cap <= 60:
-                            icon = QIcon.fromTheme("battery-good")
-                        else:
-                            icon = QIcon.fromTheme("battery-full", QIcon.fromTheme("battery-good"))
+                        icon = None
+                        if QIcon is not None:
+                            if is_charging:
+                                icon = QIcon.fromTheme("battery-charging", QIcon.fromTheme("battery-good"))
+                            elif cap <= 20:
+                                icon = QIcon.fromTheme("battery-low", QIcon.fromTheme("battery-caution"))
+                            elif cap <= 60:
+                                icon = QIcon.fromTheme("battery-good")
+                            else:
+                                icon = QIcon.fromTheme("battery-full", QIcon.fromTheme("battery-good"))
                             
                         desc = f"{cap}%" + (" ⚡ (Charging)" if is_charging else "")
                         return icon, desc

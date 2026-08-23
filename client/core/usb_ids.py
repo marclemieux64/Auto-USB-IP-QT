@@ -5,7 +5,10 @@ import re
 import subprocess
 from functools import lru_cache
 from pathlib import Path
-from PyQt6.QtGui import QIcon
+try:
+    from PyQt6.QtGui import QIcon
+except ImportError:
+    QIcon = None
 
 USB_IDS_PATHS = [
     "/usr/share/hwdata/usb.ids",
@@ -16,7 +19,9 @@ USB_IDS_PATHS = [
 RESOLVED_NAMES_CACHE: dict[str, str] = {}
 
 
-def get_device_icon_from_desc(desc: str) -> QIcon:
+def get_device_icon_from_desc(desc: str):
+    if QIcon is None:
+        return None
     desc_lower = desc.lower()
     if any(w in desc_lower for w in ("controller", "gamepad", "joystick", "xbox", "playstation", "nintendo", "steam", "dualshock", "dualsense", "pad", "8bitdo")):
         return QIcon.fromTheme("preferences-desktop-gaming", QIcon.fromTheme("games-config"))

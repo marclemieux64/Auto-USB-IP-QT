@@ -205,7 +205,7 @@ def handle_blacklist_device(controller: Any, data: Any) -> dict:
     # Force immediate detach of matching ports
     from core.usbip import detach_device
     if port:
-        detach_device(str(port))
+        detach_port(str(port))
     if hasattr(controller, "scanner"):
         for d in controller.scanner.imported_devices:
             if (
@@ -214,7 +214,7 @@ def handle_blacklist_device(controller: Any, data: Any) -> dict:
                 or (bus_id and getattr(d, 'busid', '') == bus_id)
                 or (name and d.description == name)
             ):
-                detach_device(str(d.port))
+                detach_port(str(d.port))
         controller.scanner.trigger_scan()
 
     return {"status": "ok", "message": f"Blacklisted {name or identifier}"}

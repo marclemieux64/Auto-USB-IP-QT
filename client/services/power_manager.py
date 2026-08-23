@@ -5,7 +5,10 @@ import threading
 import time
 from typing import Callable
 from PyQt6.QtCore import QObject, pyqtSlot
-from PyQt6.QtDBus import QDBusConnection
+try:
+    from PyQt6.QtDBus import QDBusConnection
+except ImportError:
+    QDBusConnection = None
 
 logger = logging.getLogger("auto-usbip-client")
 
@@ -29,6 +32,9 @@ class PowerManager(QObject):
         self._watchdog_thread.start()
 
     def _setup_dbus(self):
+        if QDBusConnection is None:
+            logger.debug("PowerManager: QtDBus not available on this platform. Using monotonic watchdog exclusively.")
+            return
         try:
             bus = QDBusConnection.systemBus()
             if bus.isConnected():
