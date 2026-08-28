@@ -1,9 +1,11 @@
 import pytest
 import sys
 import os
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.abspath('client'))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "client"))
 
 from core.usbip import detach_device, detach_port, REMOTE_DEVICE_IN_USE_CACHE
 from core.console import _ping_host

@@ -83,6 +83,9 @@ def test_web_server_api_status(live_web_server):
         data = json.loads(resp.read().decode("utf-8"))
         assert "status" in data or "servers" in data
 
+from unittest.mock import patch
+
+
 def test_web_server_post_csrf_validation(live_web_server):
     # Test POST endpoint with and without valid CSRF
     url = f"{live_web_server}/api/powercycle_device"
@@ -93,5 +96,7 @@ def test_web_server_post_csrf_validation(live_web_server):
         data=payload,
         headers={"Content-Type": "application/json", "Origin": "http://localhost:3242"}
     )
-    with urllib.request.urlopen(req, timeout=3.0) as resp:
-        assert resp.status == 200
+    with patch("api.device_routes.handle_powercycle_device", return_value={"status": "ok", "message": "Port power cycled"}), \
+         patch("core.server_control.powercycle_device", return_value={"status": "ok", "message": "Port power cycled"}):
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            assert resp.status == 200

@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       QT_QPA_PLATFORM: offscreen
+      PYTHONPATH: client:.
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +64,8 @@ jobs:
   test-windows:
     name: Windows Test & Validation (Python ${{ matrix.python-version }})
     runs-on: windows-latest
+    env:
+      PYTHONPATH: client;.
     strategy:
       fail-fast: false
       matrix:
