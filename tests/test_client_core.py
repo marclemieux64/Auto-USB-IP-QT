@@ -125,7 +125,7 @@ def test_usbip_cmd_read_vs_write():
 
         # Modifying commands when unprivileged should invoke pkexec on Linux
         with patch("core.usbip._can_write_vhci", return_value=False), \
-             patch("os.geteuid", return_value=1000), \
+             patch("os.geteuid", return_value=1000, create=True), \
              patch("core.usbip._find_usbip_bin", return_value="/usr/bin/usbip"), \
              patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
              patch("core.usbip._CAN_RUN_USBIP_DIRECT", None), \

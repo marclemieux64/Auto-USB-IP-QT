@@ -29,16 +29,12 @@ class DummyController:
 
 @pytest.fixture(scope="module")
 def live_web_server():
-    # Pick a random free port
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('127.0.0.1', 0))
-    port = s.getsockname()[1]
-    s.close()
-
     dummy_ctrl = DummyController()
     WebDashboardHandler.controller = dummy_ctrl
 
-    server = FastThreadingHTTPServer(('127.0.0.1', port), WebDashboardHandler)
+    # Bind directly to port 0 to prevent WinError 10048 address reuse races on Windows
+    server = FastThreadingHTTPServer(('127.0.0.1', 0), WebDashboardHandler)
+    port = server.server_address[1]
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
     time.sleep(0.2)
