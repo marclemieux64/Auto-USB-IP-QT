@@ -59,7 +59,7 @@ jobs:
 
       - name: Run Test Suite
         run: |
-          pytest tests/ -v
+          pytest tests/ -v -ra --tb=short
 
   test-windows:
     name: Windows Test & Validation (Python ${{ matrix.python-version }})
@@ -93,4 +93,4 @@ jobs:
 
       - name: Run Test Suite
         run: |
-          pytest tests/ -v
+          pytest tests/ -v -ra --tb=short

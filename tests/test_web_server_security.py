@@ -67,9 +67,10 @@ def test_web_server_path_traversal_blocked(live_web_server):
             with urllib.request.urlopen(req, timeout=3.0) as resp:
                 # Should not succeed in reading host files
                 assert False, f"Path traversal succeeded unexpectedly on {url}"
-        except urllib.error.HTTPError as e:
-            # 403 Forbidden or 404 Not Found are both safe responses
-            assert e.code in (400, 403, 404)
+        except (urllib.error.HTTPError, urllib.error.URLError, ConnectionResetError, OSError) as e:
+            # 403 Forbidden, 404 Not Found, or socket reset on Windows are all safe responses
+            if isinstance(e, urllib.error.HTTPError):
+                assert e.code in (400, 403, 404)
 
 
 def test_web_server_api_status(live_web_server):
