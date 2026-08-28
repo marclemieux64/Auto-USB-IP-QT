@@ -178,3 +178,5 @@ client/.agents/
 client/drivers/
 drivers_win/
 *.msi
+
+*.code-workspace

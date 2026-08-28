@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from config import ClientConfig, load_config, play_sound_cue, save_config
 from core.usb_ids import UsbIdsDatabase
-from core.usbip import attach_device, detach_all_ports, detach_port, detach_device
+from core.usbip import attach_device, detach_all_ports, detach_port, detach_device, get_remote_usb_devices_info
 from services import (
     AvailableDevice,
     DeviceScanner,

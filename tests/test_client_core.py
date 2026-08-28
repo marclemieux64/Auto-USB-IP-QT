@@ -107,3 +107,40 @@ def test_wol_enable_windows_safe():
         ok, msg = enable_client_wake_on_lan()
         assert ok is True
         assert "aa:bb:cc:dd:ee:ff" in msg
+
+
+def test_usbip_cmd_read_vs_write():
+    from core.usbip import _get_usbip_cmd, _find_usbip_bin
+
+    # Read-only commands on Linux should never require elevation
+    with patch("sys.platform", "linux"):
+        port_cmd = _get_usbip_cmd(["port"])
+        assert port_cmd[0] == _find_usbip_bin()
+        assert port_cmd[1] == "port"
+
+        list_cmd = _get_usbip_cmd(["list", "-r", "192.168.1.100"])
+        assert list_cmd[0] == _find_usbip_bin()
+
+        # Modifying commands when unprivileged should invoke pkexec on Linux
+        with patch("core.usbip._can_write_vhci", return_value=False), \
+             patch("os.geteuid", return_value=1000), \
+             patch("core.usbip._find_usbip_bin", return_value="/usr/bin/usbip"), \
+             patch("shutil.which", side_effect=lambda x: f"/usr/bin/{x}"), \
+             patch("core.usbip._CAN_RUN_USBIP_DIRECT", None), \
+             patch("core.usbip._HAS_PKEXEC", True):
+            attach_cmd = _get_usbip_cmd(["attach", "-r", "192.168.1.100", "-b", "1-1.2"])
+            assert attach_cmd[0] == "pkexec"
+            assert "--disable-internal-agent" in attach_cmd
+            assert attach_cmd[-2:] == ["-b", "1-1.2"]
+
+        # When direct write is available on Linux, should run directly
+        with patch("core.usbip._can_write_vhci", return_value=True), \
+             patch("core.usbip._CAN_RUN_USBIP_DIRECT", None):
+            attach_direct = _get_usbip_cmd(["attach", "-r", "192.168.1.100", "-b", "1-1.2"])
+            assert attach_direct[0] == _find_usbip_bin()
+
+    # Windows should use usbip.exe
+    with patch("sys.platform", "win32"):
+        win_cmd = _get_usbip_cmd(["attach", "-r", "192.168.1.100", "-b", "1-1.2"])
+        assert win_cmd[0].endswith("usbip.exe")
+        assert win_cmd[1] == "attach" 

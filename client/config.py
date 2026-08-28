@@ -188,6 +188,7 @@ class ClientConfig:
         self.block_hid_keyboards = cfg.get("block_hid_keyboards", False)
         self.blacklist = cfg.get("blacklisted_devices", [])
         self.nicknames = cfg.get("nicknames", {})
+        self.ignored_devices = cfg.get("ignored_devices", {})
 
     def save(self):
         cfg = {
@@ -220,6 +221,7 @@ class ClientConfig:
             "block_hid_keyboards": getattr(self, "block_hid_keyboards", False),
             "blacklisted_devices": self.blacklist,
             "nicknames": self.nicknames,
+            "ignored_devices": getattr(self, "ignored_devices", {}),
         }
         old = load_config()
         old.update(cfg)

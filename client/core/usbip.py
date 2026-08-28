@@ -154,7 +154,18 @@ def _find_usbip_bin() -> str:
     return "usbip"
 
 
-def _get_usbip_cmd(args: list[str]) -> list[str]:
+def _can_write_vhci() -> bool:
+    """Check if the current process has direct write access to the Linux VHCI sysfs interface."""
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return True
+    for p in ("/sys/devices/platform/vhci_hcd.0/attach", "/sys/devices/platform/vhci_hcd/attach"):
+        path_obj = Path(p)
+        if path_obj.exists():
+            return os.access(path_obj, os.W_OK)
+    return False
+
+
+def _get_usbip_cmd(args: list[str], privileged: bool | None = None) -> list[str]:
     global _CAN_RUN_USBIP_DIRECT, _HAS_PKEXEC
     if sys.platform == "win32":
         bundled_win_usbip = _get_windows_driver_dir() / "usbip.exe"
@@ -162,18 +173,24 @@ def _get_usbip_cmd(args: list[str]) -> list[str]:
             return [str(bundled_win_usbip)] + args
         return ["usbip.exe"] + args
 
-    if hasattr(os, "geteuid") and os.geteuid() == 0:
-        return [_find_usbip_bin()] + args
-
-    # 1. Direct execution (udev TAG+="uaccess" or cap_net_admin,cap_sys_admin+ep)
-    if _CAN_RUN_USBIP_DIRECT is None:
-        try:
-            test_res = subprocess.run([_find_usbip_bin(), "port"], capture_output=True, text=True, timeout=0.4)
-            _CAN_RUN_USBIP_DIRECT = (test_res.returncode == 0 or "permission denied" not in test_res.stderr.lower())
-        except Exception:
-            _CAN_RUN_USBIP_DIRECT = False
-
     usbip_path = _find_usbip_bin()
+
+    # Determine if this command requires elevated privileges
+    # Read-only operations like "port" and "list" can always execute unprivileged
+    is_privileged = privileged
+    if is_privileged is None:
+        is_privileged = bool(args and args[0] in ("attach", "detach"))
+
+    if not is_privileged:
+        return [usbip_path] + args
+
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return [usbip_path] + args
+
+    # 1. Direct execution if user has write access to VHCI sysfs (or udev / setcap granted access)
+    if _CAN_RUN_USBIP_DIRECT is None:
+        _CAN_RUN_USBIP_DIRECT = _can_write_vhci()
+
     if _CAN_RUN_USBIP_DIRECT:
         return [usbip_path] + args
 
@@ -207,18 +224,20 @@ def list_imported_ports() -> List[ImportedPort]:
     current_port: Optional[ImportedPort] = None
     
     # Regex patterns
-    # Port 00: <Port in Use> at Full Speed(12Mbps) OR Port 0: <Port in Use>
+    # Port 00: <Port in Use> at High Speed(480Mbps) OR Port 0: <Port in Use>
     port_header_re = re.compile(r"^Port\s+(\d+):\s+<([^>]+)>\s*(?:at\s+([^(]+)\s*(?:\(([^)]+)\))?)?")
-    # -> usbip://192.168.1.100:3240/1-1
-    uri_re = re.compile(r"^\s*->\s+usbip://([^/:]+(?::\d+)?)/(\S+)")
-    # (Port in Use) or device details
-    #   Vendor 046d : Logitech, Inc. (046d:c216)
+    # -> usbip://192.168.1.100:3240/1-1 or 7-1 -> 192.168.1.100:3240
+    uri_re = re.compile(r"(?:->\s+usbip://|->\s+)([^\s/:]+(?::\d+)?)(?:/(\S+))?")
+    local_bus_re = re.compile(r"^\s*([0-9]+-[0-9.]+)\s+->")
+    # Vendor / product details: Sony Corp. : DualSense wireless controller (PS5) (054c:0ce6)
     devid_re = re.compile(r"\(([0-9a-fA-F]{4}:[0-9a-fA-F]{4})\)")
 
     for line in lines:
         p_match = port_header_re.search(line)
         if p_match:
-            if current_port and current_port.busid:
+            if current_port and (current_port.busid or current_port.devid or "in use" in current_port.status.lower() or current_port.device_name):
+                if not current_port.busid:
+                    current_port.busid = f"port-{current_port.port}"
                 ports.append(current_port)
             p_num = p_match.group(1)
             p_status = p_match.group(2).strip()
@@ -235,22 +254,31 @@ def list_imported_ports() -> List[ImportedPort]:
             continue
             
         if current_port:
-            u_match = uri_re.search(line)
-            if u_match:
-                current_port.uri = u_match.group(1)
-                current_port.busid = u_match.group(2)
-                continue
-                
             d_match = devid_re.search(line)
             if d_match and not current_port.devid:
                 current_port.devid = d_match.group(1).lower()
-                # Clean up rest of line for description if available
                 dev_desc = line.split("->")[0].strip()
                 if dev_desc:
                     current_port.device_name = dev_desc
                 continue
 
-    if current_port and current_port.busid:
+            l_match = local_bus_re.search(line)
+            if l_match and not current_port.busid:
+                current_port.busid = l_match.group(1)
+
+            u_match = uri_re.search(line)
+            if u_match:
+                matched_uri = u_match.group(1)
+                if matched_uri and not any(k in matched_uri.lower() for k in ("unknown", "remote", "<")):
+                    current_port.uri = matched_uri
+                matched_bus = u_match.group(2)
+                if matched_bus and not any(k in matched_bus.lower() for k in ("unknown", "remote", "<")):
+                    current_port.busid = matched_bus
+                continue
+
+    if current_port and (current_port.busid or current_port.devid or "in use" in current_port.status.lower() or current_port.device_name):
+        if not current_port.busid:
+            current_port.busid = f"port-{current_port.port}"
         ports.append(current_port)
 
     return ports
@@ -274,17 +302,27 @@ def attach_device(host: str, busid: str, port: int = 3240) -> tuple[bool, str]:
     if port != 3240:
         args.extend(["-p", str(port)])
         
-    cmd = _get_usbip_cmd(args)
+    cmd = _get_usbip_cmd(args, privileged=True)
     try:
         logger.info(f"Executing USB/IP attach: {' '.join(cmd)}")
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=8.0, **_SUBPROCESS_KWARGS)
         if res.returncode == 0:
             logger.info(f"Successfully attached device {busid} from {host}")
             return True, "Successfully attached device"
-        else:
-            err = res.stderr.strip() or res.stdout.strip()
-            logger.warning(f"Failed to attach device {busid}: {err}")
-            return False, f"Attach failed: {err}"
+        
+        err = res.stderr.strip() or res.stdout.strip()
+        # Retry with passwordless sudo if pkexec is rejected or missing policy
+        if "pkexec" in cmd and res.returncode != 0:
+            sudo_cmd = ["sudo", "-n", _find_usbip_bin()] + args
+            logger.info(f"Retrying USB/IP attach with sudo fallback: {' '.join(sudo_cmd)}")
+            res_sudo = subprocess.run(sudo_cmd, capture_output=True, text=True, timeout=8.0, **_SUBPROCESS_KWARGS)
+            if res_sudo.returncode == 0:
+                logger.info(f"Successfully attached device {busid} from {host} via sudo")
+                return True, "Successfully attached device"
+            err = res_sudo.stderr.strip() or res_sudo.stdout.strip() or err
+
+        logger.warning(f"Failed to attach device {busid}: {err}")
+        return False, f"Attach failed: {err}"
     except subprocess.TimeoutExpired:
         logger.error(f"Attach command timed out for {busid}@{host}")
         return False, "Attach command timed out"
@@ -300,17 +338,28 @@ def detach_port(port: str) -> tuple[bool, str]:
     """
     ensure_vhci_loaded()
     # Normalize port string (e.g. '00' -> '0' if needed depending on tool, but standard accepts integer string)
-    cmd = _get_usbip_cmd(["detach", "-p", str(int(port))])
+    args = ["detach", "-p", str(int(port))]
+    cmd = _get_usbip_cmd(args, privileged=True)
     try:
         logger.info(f"Executing USB/IP detach for port {port}: {' '.join(cmd)}")
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=5.0, **_SUBPROCESS_KWARGS)
         if res.returncode == 0:
             logger.info(f"Successfully detached port {port}")
             return True, f"Port {port} detached"
-        else:
-            err = res.stderr.strip() or res.stdout.strip()
-            logger.warning(f"Failed to detach port {port}: {err}")
-            return False, f"Detach failed: {err}"
+
+        err = res.stderr.strip() or res.stdout.strip()
+        # Retry with passwordless sudo if pkexec is rejected or missing policy
+        if "pkexec" in cmd and res.returncode != 0:
+            sudo_cmd = ["sudo", "-n", _find_usbip_bin()] + args
+            logger.info(f"Retrying USB/IP detach with sudo fallback: {' '.join(sudo_cmd)}")
+            res_sudo = subprocess.run(sudo_cmd, capture_output=True, text=True, timeout=5.0, **_SUBPROCESS_KWARGS)
+            if res_sudo.returncode == 0:
+                logger.info(f"Successfully detached port {port} via sudo")
+                return True, f"Port {port} detached"
+            err = res_sudo.stderr.strip() or res_sudo.stdout.strip() or err
+
+        logger.warning(f"Failed to detach port {port}: {err}")
+        return False, f"Detach failed: {err}"
     except subprocess.TimeoutExpired:
         logger.error(f"Detach command timed out for port {port}")
         return False, "Detach timed out"
@@ -384,14 +433,20 @@ def get_imported_devices() -> list:
     ports = list_imported_ports()
     imported_list = []
     for p in ports:
-        imported_list.append(
-            ImportedDevice(
-                port=p.port,
-                speed_raw=p.speed,
-                desc_raw=f"{p.device_name} ({p.devid})" if p.devid else (p.device_name or "USB Device"),
-                serial_connections=[]
-            )
+        raw_name = p.device_name or "USB Device"
+        if p.devid and f"({p.devid})" not in raw_name.lower():
+            raw_desc = f"{raw_name} ({p.devid})"
+        else:
+            raw_desc = raw_name
+        dev = ImportedDevice(
+            port=p.port,
+            speed_raw=p.speed,
+            desc_raw=raw_desc,
+            serial_connections=[]
         )
+        if p.busid:
+            dev.bus_id = p.busid
+        imported_list.append(dev)
     return imported_list
 
 def get_remote_usb_devices_info(server: str, port: int = 3240, token: str = "") -> list[tuple[str, str]] | None:
