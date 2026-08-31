@@ -46,6 +46,9 @@
       <image>https://raw.githubusercontent.com/marclemieux64/Auto-USB-IP-QT/dev/assets/screenshots/console_diagnostics.png</image>
     </screenshot>
   </screenshots>
+  <developer id="org.autousbip">
+    <name>Marc Lemieux</name>
+  </developer>
   <content_rating type="oars-1.1" />
   <releases>
     <release version="2.3.0" date="2026-08-23">

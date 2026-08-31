@@ -41,6 +41,7 @@ def handle_status(controller: Any) -> dict:
 
     attached_data = []
     from core.usbip import get_port_to_bus_map, get_locally_attached_vid_pids
+    from core.audio_control import is_device_audio_enabled
     port_map = get_port_to_bus_map()
 
     enabled_ips = {s.ip.strip().lower() for s in controller.servers if s.enabled}
@@ -251,6 +252,12 @@ def handle_status(controller: Any) -> dict:
         "allow_lan_access": getattr(controller.config, "allow_lan_access", True),
         "play_sound_cues": getattr(controller.config, "play_sound_cues", True),
         "power_cycle_on_attach": getattr(controller.config, "power_cycle_on_attach", True),
+        "enable_web_csrf": getattr(controller.config, "enable_web_csrf", True),
+        "enable_device_class_filter": getattr(controller.config, "enable_device_class_filter", False),
+        "block_mass_storage": getattr(controller.config, "block_mass_storage", False),
+        "block_network_devices": getattr(controller.config, "block_network_devices", False),
+        "block_hid_keyboards": getattr(controller.config, "block_hid_keyboards", False),
+        "enable_tls_pinning": getattr(controller.config, "enable_tls_pinning", False),
         "nicknames": controller.config.nicknames,
     }
 
@@ -290,15 +297,16 @@ def handle_save_options(controller: Any, data: dict) -> dict:
         if hasattr(controller.config, k):
             setattr(controller.config, k, v)
     
-    # If Wake-on-LAN wake is enabled, automatically activate WoL on the client NIC and sync to servers
-    if controller.config.enable_wol_wake:
-        from core.wol import enable_client_wake_on_lan, sync_client_wol_to_servers, get_primary_mac_address
-        enable_client_wake_on_lan()
-        controller.config.client_mac = get_primary_mac_address() or ""
-        sync_client_wol_to_servers(controller)
-    else:
-        from core.wol import sync_client_wol_to_servers
-        sync_client_wol_to_servers(controller)
+    # If Wake-on-LAN wake toggle was explicitly modified, update system NIC and sync to servers
+    if "enable_wol_wake" in data:
+        if controller.config.enable_wol_wake:
+            from core.wol import enable_client_wake_on_lan, sync_client_wol_to_servers, get_primary_mac_address
+            enable_client_wake_on_lan()
+            controller.config.client_mac = get_primary_mac_address() or ""
+            sync_client_wol_to_servers(controller)
+        else:
+            from core.wol import sync_client_wol_to_servers
+            sync_client_wol_to_servers(controller)
 
     controller.config.save()
     if hasattr(controller, "scanner") and hasattr(controller.config, "polling_interval"):
@@ -354,6 +362,10 @@ def handle_import_client_config(controller: Any, data: dict) -> dict:
                 enabled=s.get("enabled", True)
             ))
         controller.servers = new_srvs
+        controller.save_servers_to_config()
+        if hasattr(controller, "scanner"):
+            controller.scanner.set_servers(controller.servers)
+            controller.scanner.trigger_scan()
 
     controller.config.save()
     return {"status": "ok", "message": "Client configuration imported successfully"}

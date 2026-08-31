@@ -17,7 +17,6 @@ from core.gamepad import (
     send_playstation_output_report,
     build_dualsense_trigger_effect,
     play_sound_test_chime,
-    play_konami_easter_egg,
 )
 
 logger = logging.getLogger("auto-usbip-client")
@@ -330,9 +329,6 @@ def handle_gamepad_control(controller: Any, query: dict) -> dict:
         played = play_sound_test_chime(hidraw_path)
         return {"status": "ok", "played": played}
 
-    elif action == "konami_egg":
-        played, title = play_konami_easter_egg(track_name=None, hidraw_path=hidraw_path)
-        return {"status": "ok", "title": title, "played": played}
 
     r = int(query.get("r", [0])[0])
     g = int(query.get("g", [100])[0])

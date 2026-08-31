@@ -474,7 +474,7 @@ def execute_console_command(command: str, controller: Any, target_mode: str = "c
 
     if verb in ("version", "ver", "about"):
         return (
-            f"Auto USB/IP Client v2.3.0\n"
+            f"Auto USB/IP Client v2.4.0\n"
             f"Python: {platform.python_version()}\n"
             f"OS / Kernel: {platform.system()} {platform.release()} ({platform.machine()})\n"
             f"Host: {platform.node()}"

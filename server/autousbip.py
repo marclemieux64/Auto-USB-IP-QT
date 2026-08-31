@@ -67,8 +67,6 @@ try:
 except ImportError:
     HAS_PYUDEV = False
 
-GLOBAL_AVAHI_PROC = None
-
 PORT = 3240
 CONTROL_PORT = 3241
 
@@ -182,13 +180,19 @@ def load_server_config() -> dict:
 
 
 def save_server_config(cfg: dict) -> bool:
-    global _CACHED_CONFIG, _CACHED_CONFIG_MTIME
+    global BLACKLIST_VID_PID, _CACHED_CONFIG, _CACHED_CONFIG_MTIME
     with _CONFIG_LOCK:
         try:
             SERVER_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            SERVER_CONFIG_PATH.write_text(json.dumps(cfg, indent=4))
+            tmp_path = SERVER_CONFIG_PATH.with_suffix(".json.tmp")
+            tmp_path.write_text(json.dumps(cfg, indent=4), encoding="utf-8")
+            tmp_path.replace(SERVER_CONFIG_PATH)
             _CACHED_CONFIG = cfg.copy()
             _CACHED_CONFIG_MTIME = SERVER_CONFIG_PATH.stat().st_mtime
+            if "blacklist" in cfg and isinstance(cfg["blacklist"], list):
+                BLACKLIST_VID_PID = set(DEFAULT_BLACKLIST_VID_PID).union(set(cfg["blacklist"]))
+            else:
+                BLACKLIST_VID_PID = set(DEFAULT_BLACKLIST_VID_PID)
             return True
         except Exception as e:
             logger.warning(f"Could not save server config: {e}")
@@ -224,7 +228,7 @@ def update_zeroconf_broadcast(enable: bool):
                     addresses=[socket.inet_aton(local_ip)],
                     port=PORT,
                     properties={
-                        "version": "2.3.0",
+                        "version": "2.4.0",
                         "host": hostname,
                         "auth_required": "true" if auth_needed else "false",
                         "tls": "true" if cfg.get("enable_tls", True) else "false"
@@ -250,7 +254,7 @@ def update_zeroconf_broadcast(enable: bool):
                 cfg = load_server_config()
                 auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
                 txt_records = [
-                    "version=2.3.0",
+                    "version=2.4.0",
                     f"host={hostname}",
                     f"auth_required={'true' if auth_needed else 'false'}",
                     f"tls={'true' if cfg.get('enable_tls', True) else 'false'}"
@@ -469,6 +473,24 @@ def unbind_usbdevice(busid: str):
     subprocess.run(["usbip", "unbind", "-b", busid], capture_output=True)
 
 
+def _parse_proc_ip(ip_hex: str) -> str:
+    try:
+        if len(ip_hex) == 8:
+            return socket.inet_ntoa(struct.pack("<L", int(ip_hex, 16)))
+        elif len(ip_hex) == 32:
+            # Linux tcp6 stores 4 32-bit words in little endian format
+            raw_bytes = bytearray()
+            for i in range(0, 32, 8):
+                raw_bytes.extend(struct.pack("<I", int(ip_hex[i:i+8], 16)))
+            # Check for IPv4-mapped IPv6 address (::ffff:x.x.x.x)
+            if raw_bytes[:12] == b"\x00" * 10 + b"\xff\xff":
+                return socket.inet_ntoa(raw_bytes[12:])
+            return socket.inet_ntop(socket.AF_INET6, bytes(raw_bytes))
+    except Exception:
+        pass
+    return ip_hex
+
+
 def get_in_use_devices_map() -> dict[str, dict]:
     """Inspect active TCP sockets and kernel usbip state to map busids to holding client IPs."""
     in_use = {}
@@ -489,30 +511,14 @@ def get_in_use_devices_map() -> dict[str, dict]:
                     state = parts[3]
                     if ":0CA8" in local_hex.upper() and state == "01":  # 01 = TCP_ESTABLISHED
                         rem_ip_hex, _ = rem_hex.split(":")
-                        if len(rem_ip_hex) == 8:
-                            client_ip = socket.inet_ntoa(struct.pack("<L", int(rem_ip_hex, 16)))
-                        elif len(rem_ip_hex) == 32:
-                            client_ip = socket.inet_ntop(socket.AF_INET6, bytes.fromhex(rem_ip_hex))
-                        else:
-                            client_ip = rem_ip_hex
-                        if client_ip not in ("127.0.0.1", "::1"):
+                        client_ip = _parse_proc_ip(rem_ip_hex)
+                        if client_ip not in ("127.0.0.1", "::1", "0.0.0.0"):
                             active_remote_ips.append(client_ip)
         except Exception:
             pass
 
-    # 2. Check /sys/bus/usb/drivers/usbip-host/ for busids assigned to usbip-host
-    usbip_host_dir = Path("/sys/bus/usb/drivers/usbip-host")
-    if usbip_host_dir.exists():
-        for item in usbip_host_dir.iterdir():
-            if re.match(r"^[0-9]+-[0-9]+(\.[0-9]+)*$", item.name):
-                busid = item.name
-                assigned_ip = ", ".join(sorted(set(active_remote_ips))) if active_remote_ips else "Remote Client"
-                in_use[busid] = {
-                    "client_ip": assigned_ip,
-                    "status": "In Use"
-                }
-
-    # 3. Fallback: Parse `usbip list -p -l` or `usbip list -l` for status
+    # 2. Check usbip list -l or sysfs usbip_status for devices actually in active use
+    in_use_busids = set()
     try:
         res = subprocess.run(["usbip", "list", "-l"], capture_output=True, text=True, timeout=0.8)
         current_busid = None
@@ -521,14 +527,33 @@ def get_in_use_devices_map() -> dict[str, dict]:
             if m_bus:
                 current_busid = m_bus.group(1).strip()
             if current_busid and "In Use" in line:
-                if current_busid not in in_use:
-                    assigned_ip = ", ".join(sorted(set(active_remote_ips))) if active_remote_ips else "Remote Client"
-                    in_use[current_busid] = {
-                        "client_ip": assigned_ip,
-                        "status": "In Use"
-                    }
+                in_use_busids.add(current_busid)
     except Exception:
         pass
+
+    # 3. Check sysfs /sys/bus/usb/drivers/usbip-host/*/usbip_status fallback
+    usbip_host_dir = Path("/sys/bus/usb/drivers/usbip-host")
+    if usbip_host_dir.exists():
+        for item in usbip_host_dir.iterdir():
+            if re.match(r"^[0-9]+-[0-9]+(\.[0-9]+)*$", item.name):
+                st_file = item / "usbip_status"
+                if st_file.exists():
+                    try:
+                        st_val = st_file.read_text().strip()
+                        # Status 1 or SDEV_ST_USED indicates actively connected to client
+                        if st_val not in ("0", "SDEV_ST_AVAILABLE", "SDEV_ST_ERROR"):
+                            in_use_busids.add(item.name)
+                    except Exception:
+                        pass
+
+    # If active TCP connections exist on port 3240, allocate assigned client IPs
+    if active_remote_ips or in_use_busids:
+        assigned_ip = ", ".join(sorted(set(active_remote_ips))) if active_remote_ips else "Remote Client"
+        for busid in in_use_busids:
+            in_use[busid] = {
+                "client_ip": assigned_ip,
+                "status": "In Use"
+            }
 
     return in_use
 
@@ -841,17 +866,28 @@ def start_control_socket_thread(killer: GracefulKiller):
                             continue
 
                     conn = raw_conn
-                    if ssl_ctx and cfg_sec.get("enable_tls", True):
-                        try:
-                            conn = ssl_ctx.wrap_socket(raw_conn, server_side=True)
-                        except ssl.SSLError as ssl_err:
-                            logger.debug(f"[TLS] Handshake rejected/failed from {client_ip}: {ssl_err}")
-                            raw_conn.close()
-                            continue
-                        except Exception as e:
-                            logger.debug(f"[TLS] Connection wrap error from {client_ip}: {e}")
-                            raw_conn.close()
-                            continue
+                    if cfg_sec.get("enable_tls", True):
+                        if ssl_ctx is None:
+                            tls_files = ensure_tls_certificates()
+                            if tls_files:
+                                cert_f, key_f = tls_files
+                                try:
+                                    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                                    ssl_ctx.load_cert_chain(certfile=cert_f, keyfile=key_f)
+                                except Exception as e:
+                                    logger.warning(f"[TLS] Dynamic SSL context error: {e}")
+                                    ssl_ctx = None
+                        if ssl_ctx is not None:
+                            try:
+                                conn = ssl_ctx.wrap_socket(raw_conn, server_side=True)
+                            except ssl.SSLError as ssl_err:
+                                logger.debug(f"[TLS] Handshake rejected/failed from {client_ip}: {ssl_err}")
+                                raw_conn.close()
+                                continue
+                            except Exception as e:
+                                logger.debug(f"[TLS] Connection wrap error from {client_ip}: {e}")
+                                raw_conn.close()
+                                continue
 
                     data = conn.recv(4096)
                     if data:
@@ -1200,6 +1236,13 @@ def main():
     configure_tcp_keepalive()
     power_cycle_vbus_ports()
 
+    # Apply dynamic low-latency runtime profile (Wi-Fi power-save, EEE, CPU governor, sysctls)
+    try:
+        from latency_optimizer import init_server_latency_optimizer
+        init_server_latency_optimizer()
+    except Exception as e:
+        logger.debug(f"Latency optimizer init: {e}")
+
     killer = GracefulKiller()
     start_control_socket_thread(killer)
     start_wol_input_monitor_thread(killer)
@@ -1303,6 +1346,13 @@ def main():
             except Exception:
                 pass
         update_zeroconf_broadcast(False)
+        try:
+            from latency_optimizer import get_server_latency_optimizer
+            opt = get_server_latency_optimizer()
+            if opt:
+                opt.restore_all()
+        except Exception:
+            pass
         logger.info("Cleanup complete.")
 
 

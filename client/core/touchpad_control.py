@@ -141,7 +141,7 @@ def set_touchpad_mouse_enabled(port: str | int | None, enabled: bool) -> bool:
         # Release grab -> enable desktop mouse
         if TOUCHPAD_GRABBED.get(ev_node, False):
             try:
-                fcntl.ioctl(fd, EVIOCGRAB, 0)
+                fcntl.ioctl(fd, EVIOCGRAB, 0) if fcntl is not None else None
             except Exception as e:
                 logger.debug(f"EVIOCGRAB release error on {ev_node}: {e}")
             TOUCHPAD_GRABBED[ev_node] = False
@@ -151,7 +151,7 @@ def set_touchpad_mouse_enabled(port: str | int | None, enabled: bool) -> bool:
         # Acquire grab -> disable desktop mouse (Gaming Mode)
         if not TOUCHPAD_GRABBED.get(ev_node, False):
             try:
-                fcntl.ioctl(fd, EVIOCGRAB, 1)
+                fcntl.ioctl(fd, EVIOCGRAB, 1) if fcntl is not None else None
                 TOUCHPAD_GRABBED[ev_node] = True
                 logger.info(f"Acquired trackpad grab on {ev_node} (port {port}). Desktop mouse disabled.")
             except OSError as err:
@@ -324,7 +324,7 @@ def cleanup_all_touchpad_grabs() -> None:
     for node, fd in list(TOUCHPAD_FDS.items()):
         if fd > 0:
             try:
-                fcntl.ioctl(fd, EVIOCGRAB, 0)
+                fcntl.ioctl(fd, EVIOCGRAB, 0) if fcntl is not None else None
             except Exception:
                 pass
             try:

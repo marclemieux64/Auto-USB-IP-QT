@@ -231,37 +231,37 @@ def play_sound_test_chime(hidraw_path: str | None = None) -> bool:
         f.write(wav_bytes)
 
     played = False
-    sink_id = find_dualsense_pipewire_sink(force_refresh=True)
+    try:
+        sink_id = find_dualsense_pipewire_sink(force_refresh=True)
+        if sink_id:
+            if shutil.which("paplay"):
+                try:
+                    res = subprocess.run(["paplay", f"--device={sink_id}", wav_path], timeout=2.0)
+                    if res.returncode == 0:
+                        played = True
+                except Exception:
+                    pass
 
-    if sink_id:
-        if shutil.which("paplay"):
+            if not played and shutil.which("pw-play"):
+                try:
+                    res = subprocess.run(["pw-play", "--target", sink_id, wav_path], timeout=2.0)
+                    if res.returncode == 0:
+                        played = True
+                except Exception:
+                    pass
+
+        if not played and shutil.which("aplay"):
             try:
-                res = subprocess.run(["paplay", f"--device={sink_id}", wav_path], timeout=2.0)
+                res = subprocess.run(["aplay", "-D", "plughw:CARD=Controller,DEV=0", "-q", wav_path], timeout=2.0)
                 if res.returncode == 0:
                     played = True
             except Exception:
                 pass
-
-        if not played and shutil.which("pw-play"):
-            try:
-                res = subprocess.run(["pw-play", "--target", sink_id, wav_path], timeout=2.0)
-                if res.returncode == 0:
-                    played = True
-            except Exception:
-                pass
-
-    if not played and shutil.which("aplay"):
+    finally:
         try:
-            res = subprocess.run(["aplay", "-D", "plughw:CARD=Controller,DEV=0", "-q", wav_path], timeout=2.0)
-            if res.returncode == 0:
-                played = True
+            os.unlink(wav_path)
         except Exception:
             pass
-
-    try:
-        os.unlink(wav_path)
-    except Exception:
-        pass
 
     return played
 

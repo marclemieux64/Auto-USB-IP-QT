@@ -112,8 +112,10 @@ def load_config() -> dict:
 def save_config(config_data: dict) -> None:
     try:
         CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        tmp_path = CONFIG_PATH.with_suffix(".json.tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=4)
+        tmp_path.replace(CONFIG_PATH)
     except Exception as e:
         logger.error(f"Failed to save configuration: {e}")
 
@@ -186,6 +188,7 @@ class ClientConfig:
         self.block_hid_keyboards = cfg.get("block_hid_keyboards", False)
         self.blacklist = cfg.get("blacklisted_devices", [])
         self.nicknames = cfg.get("nicknames", {})
+        self.ignored_devices = cfg.get("ignored_devices", {})
 
     def save(self):
         cfg = {
@@ -218,6 +221,7 @@ class ClientConfig:
             "block_hid_keyboards": getattr(self, "block_hid_keyboards", False),
             "blacklisted_devices": self.blacklist,
             "nicknames": self.nicknames,
+            "ignored_devices": getattr(self, "ignored_devices", {}),
         }
         old = load_config()
         old.update(cfg)

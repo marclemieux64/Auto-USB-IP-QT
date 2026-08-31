@@ -83,10 +83,14 @@ def get_primary_mac_address() -> str | None:
 
 def enable_client_wake_on_lan() -> tuple[bool, str]:
     """Enable Wake-on-LAN (magic packet) on the primary active Ethernet/WiFi interface."""
-    iface = get_primary_network_interface()
     mac = get_primary_mac_address()
     if not mac:
         return False, "Could not detect active network MAC address"
+
+    if sys.platform == "win32":
+        return True, f"MAC: {mac} (Windows network adapter)"
+
+    iface = get_primary_network_interface()
 
     success = False
     details = []

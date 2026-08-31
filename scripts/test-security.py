@@ -247,7 +247,19 @@ def main():
     cve_ok = run_dependency_cve_audit()
     
     if not args.skip_remote:
-        fuzz_ok = test_remote_socket_fuzzing(host=args.host, port=args.port, auth_token=args.token)
+        token = args.token
+        if not token:
+            try:
+                sys.path.insert(0, str(REPO_ROOT / 'client'))
+                from config import load_config
+                cfg = load_config()
+                for s in cfg.get('servers', []):
+                    if s.get('ip') == args.host and s.get('token'):
+                        token = s.get('token')
+                        break
+            except Exception:
+                pass
+        fuzz_ok = test_remote_socket_fuzzing(host=args.host, port=args.port, auth_token=token)
         sys_ok = test_systemd_hardening(host=args.host)
     else:
         fuzz_ok = True

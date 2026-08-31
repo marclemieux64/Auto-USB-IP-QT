@@ -203,7 +203,7 @@ def handle_blacklist_device(controller: Any, data: Any) -> dict:
         controller.config.save()
 
     # Force immediate detach of matching ports
-    from core.usbip import detach_device
+    from core.usbip import detach_device, detach_port
     if port:
         detach_port(str(port))
     if hasattr(controller, "scanner"):
