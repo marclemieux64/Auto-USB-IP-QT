@@ -54,15 +54,20 @@ def test_server_latency_optimizer_lifecycle(tmp_path):
 
 
 def test_latency_optimizer_safe_execution():
-    """Verify that apply_all runs safely and returns a dictionary of statuses without throwing."""
+    """Verify that apply_all runs safely cross-platform and returns a dictionary of statuses without throwing."""
     optimizer = RuntimeLatencyOptimizer(elevated_priority=False)
     results = optimizer.apply_all()
     assert isinstance(results, dict)
-    assert "wifi_powersave" in results
-    assert "ethernet_eee" in results
-    assert "cpu_governor" in results
-    assert "network_sysctl" in results
-    assert "usb_autosuspend" in results
+    if sys.platform == "win32":
+        assert "win_timer_resolution" in results
+        assert "win_process_priority" in results
+        assert "win_power_throttling" in results
+    else:
+        assert "wifi_powersave" in results
+        assert "ethernet_eee" in results
+        assert "cpu_governor" in results
+        assert "network_sysctl" in results
+        assert "usb_autosuspend" in results
     
     # Cleanup
     optimizer.restore_all()
