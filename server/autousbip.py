@@ -228,7 +228,7 @@ def update_zeroconf_broadcast(enable: bool):
                     addresses=[socket.inet_aton(local_ip)],
                     port=PORT,
                     properties={
-                        "version": "2.3.0",
+                        "version": "2.4.0",
                         "host": hostname,
                         "auth_required": "true" if auth_needed else "false",
                         "tls": "true" if cfg.get("enable_tls", True) else "false"
@@ -254,7 +254,7 @@ def update_zeroconf_broadcast(enable: bool):
                 cfg = load_server_config()
                 auth_needed = (cfg.get("enable_auth", False) or bool(cfg.get("auth_token", ""))) and bool(str(cfg.get("auth_token", "")).strip())
                 txt_records = [
-                    "version=2.3.0",
+                    "version=2.4.0",
                     f"host={hostname}",
                     f"auth_required={'true' if auth_needed else 'false'}",
                     f"tls={'true' if cfg.get('enable_tls', True) else 'false'}"
