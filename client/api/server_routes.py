@@ -69,18 +69,18 @@ def handle_remove_server(controller: Any, ip: str, port: int) -> dict:
         if not remaining_servers:
             if hasattr(controller.scanner, "last_device_map"):
                 controller.scanner.last_device_map.clear()
-            if hasattr(controller.scanner, "available_devices"):
-                controller.scanner.available_devices.clear()
+            if hasattr(controller.scanner, "cached_available_devices"):
+                controller.scanner.cached_available_devices.clear()
         else:
             if hasattr(controller.scanner, "last_device_map"):
                 controller.scanner.last_device_map = {
                     k: d for k, d in controller.scanner.last_device_map.items()
                     if getattr(d, "server_ip", "").strip().lower() != clean_ip
                 }
-            if hasattr(controller.scanner, "available_devices"):
-                controller.scanner.available_devices = [
-                    d for d in controller.scanner.available_devices
-                    if getattr(d, "server_ip", "").strip().lower() != clean_ip
+            if hasattr(controller.scanner, "cached_available_devices"):
+                controller.scanner.cached_available_devices = [
+                    d for d in controller.scanner.cached_available_devices
+                    if (d.get("server_ip") if isinstance(d, dict) else getattr(d, "server_ip", "")).strip().lower() != clean_ip
                 ]
 
         keys_to_del = [
@@ -96,7 +96,7 @@ def handle_remove_server(controller: Any, ip: str, port: int) -> dict:
         d_s_ip = getattr(d, "server_ip", "").strip().lower()
         d_port = getattr(d, "port", "")
         pair = port_map.get(str(d_port))
-        if d_s_ip == clean_ip or (pair and pair[0].strip().lower() == clean_ip) or not remaining_servers:
+        if (d_s_ip == clean_ip or (pair and pair[0].strip().lower() == clean_ip)) and str(d_port).isdigit():
             detach_port(str(d_port))
 
     if hasattr(controller, "scanner"):
@@ -121,7 +121,7 @@ def handle_toggle_server(controller: Any, ip: str) -> dict:
             d_s_ip = getattr(d, "server_ip", "")
             d_port = getattr(d, "port", "")
             pair = port_map.get(str(d_port))
-            if d_s_ip == ip or (pair and pair[0] == ip) or not active_servers:
+            if (d_s_ip == ip or (pair and pair[0] == ip)) and str(d_port).isdigit():
                 detach_port(str(d_port))
 
     controller.save_servers_to_config()

@@ -369,9 +369,9 @@ class WebDashboardHandler(BaseHTTPRequestHandler):
                 self.send_json_response(api.handle_toggle_touchpad_mouse(self.controller, port, enabled))
             elif path == "/api/set_nickname":
                 self.send_json_response(api.handle_set_nickname(self.controller, data))
-            elif path == "/api/blacklist_device":
+            elif path in ("/api/blacklist_device", "/api/blacklist"):
                 self.send_json_response(api.handle_blacklist_device(self.controller, data))
-            elif path == "/api/unblacklist_device":
+            elif path in ("/api/unblacklist_device", "/api/unblacklist"):
                 self.send_json_response(api.handle_unblacklist_device(self.controller, data))
             elif path == "/api/attach":
                 ip = data.get("ip", "")

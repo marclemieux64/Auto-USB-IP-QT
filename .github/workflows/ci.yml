@@ -64,6 +64,9 @@ jobs:
   test-windows:
     name: Windows Test & Validation (Python ${{ matrix.python-version }})
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     env:
       PYTHONPATH: client;.
     strategy:

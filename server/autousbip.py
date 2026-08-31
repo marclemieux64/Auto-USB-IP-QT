@@ -180,7 +180,7 @@ def load_server_config() -> dict:
 
 
 def save_server_config(cfg: dict) -> bool:
-    global _CACHED_CONFIG, _CACHED_CONFIG_MTIME
+    global BLACKLIST_VID_PID, _CACHED_CONFIG, _CACHED_CONFIG_MTIME
     with _CONFIG_LOCK:
         try:
             SERVER_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -189,6 +189,10 @@ def save_server_config(cfg: dict) -> bool:
             tmp_path.replace(SERVER_CONFIG_PATH)
             _CACHED_CONFIG = cfg.copy()
             _CACHED_CONFIG_MTIME = SERVER_CONFIG_PATH.stat().st_mtime
+            if "blacklist" in cfg and isinstance(cfg["blacklist"], list):
+                BLACKLIST_VID_PID = set(DEFAULT_BLACKLIST_VID_PID).union(set(cfg["blacklist"]))
+            else:
+                BLACKLIST_VID_PID = set(DEFAULT_BLACKLIST_VID_PID)
             return True
         except Exception as e:
             logger.warning(f"Could not save server config: {e}")
@@ -1232,6 +1236,13 @@ def main():
     configure_tcp_keepalive()
     power_cycle_vbus_ports()
 
+    # Apply dynamic low-latency runtime profile (Wi-Fi power-save, EEE, CPU governor, sysctls)
+    try:
+        from latency_optimizer import init_server_latency_optimizer
+        init_server_latency_optimizer()
+    except Exception as e:
+        logger.debug(f"Latency optimizer init: {e}")
+
     killer = GracefulKiller()
     start_control_socket_thread(killer)
     start_wol_input_monitor_thread(killer)
@@ -1335,6 +1346,13 @@ def main():
             except Exception:
                 pass
         update_zeroconf_broadcast(False)
+        try:
+            from latency_optimizer import get_server_latency_optimizer
+            opt = get_server_latency_optimizer()
+            if opt:
+                opt.restore_all()
+        except Exception:
+            pass
         logger.info("Cleanup complete.")
 
 

@@ -90,6 +90,8 @@ def main():
     init_client_console()
     from core.notifications import init_notification_subsystem
     init_notification_subsystem()
+    from core.latency_optimizer import init_latency_optimizer
+    init_latency_optimizer()
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
 
